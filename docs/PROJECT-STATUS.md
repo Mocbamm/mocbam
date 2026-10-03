@@ -13,7 +13,7 @@ The initial catalog, artwork, contact information and policies remain demonstrat
 
 ## Verified
 
-- TypeScript, lint and production build passed; 31 unit/database tests and 9 browser tests passed. GitHub CI passed for the application commit.
+- TypeScript, lint and production build passed; 38 unit/database tests and 9 browser tests passed. GitHub CI passed for the initial application commit; the analytics follow-up is checked separately by CI.
 - Local API checks confirmed contact submission persists in Supabase, anonymous admin reads/updates and order history are rejected, malformed checkout is rejected, and unknown receipts/unpublished media are inaccessible. The temporary verification inquiry was removed.
 - Eight hosted Supabase verification groups passed, including real concurrent checkout checks, row-level access controls, cancellation/stock behavior and storage access. Temporary verification resources were cleaned up.
 - A browser checkout on the production deployment persisted one 99,000₫ guest order, reserved stock, cleared the cart and displayed its awaiting-payment receipt. Production APIs rejected anonymous admin/history access; the synthetic order and temporary product were removed.

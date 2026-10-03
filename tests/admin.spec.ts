@@ -46,7 +46,9 @@ test("private reads reject anonymous requests", async ({ request }) => {
     const body = await response.json();
     expect(typeof body.error).toBe("string");
     expect(body).not.toHaveProperty("data");
-    expect(response.headers()["cache-control"]).toBe("no-store");
+    expect(response.headers()["cache-control"]).toMatch(
+      /(?:^|,)\s*no-store\s*(?:,|$)/,
+    );
   }
 });
 

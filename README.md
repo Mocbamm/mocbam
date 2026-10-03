@@ -33,7 +33,7 @@ Open `/admin` after signing in with an account in `admin_members`. Manage produc
 
 ## Tracking
 
-Set `NEXT_PUBLIC_GA_ID` and/or `NEXT_PUBLIC_META_PIXEL_ID` on the production deployment. Tracking is opt-in and disabled on admin, authentication, receipt and ordinary preview routes. The event layer sends views, cart additions, checkout starts and `order_submitted`; it never sends a purchase for an unpaid order. Personal contact and address information are excluded. See [verification guide](docs/VERIFICATION.md).
+Set `NEXT_PUBLIC_GA_ID` and/or `NEXT_PUBLIC_META_PIXEL_ID` on the production deployment. Tracking is opt-in and disabled on admin, authentication, receipt and ordinary preview routes. The event layer sends views, cart additions/removals (including quantity deltas), checkout starts and `order_submitted`; Meta uses the custom `RemoveFromCart` event for removals and `OrderSubmitted` for accepted orders. It never sends a purchase for an unpaid order. Personal contact and address information are excluded. See [verification guide](docs/VERIFICATION.md).
 
 ## Checks
 

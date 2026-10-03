@@ -6,7 +6,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { Product } from "@/lib/types";
-import { trackStoreEvent } from "@/lib/analytics";
+import { trackCartQuantityChange } from "@/lib/analytics";
 import { toast } from "sonner";
 const STORAGE_KEY = "mocbam.cart.v1";
 const MAX_QUANTITY = 10;
@@ -148,39 +148,34 @@ export function CartProvider({
           )
         : [...current, { product_id: product.id, quantity }],
     );
-    trackStoreEvent("add_to_cart", {
-      currency: "VND",
-      value: product.price * quantity,
-      items: [
-        {
-          item_id: product.id,
-          item_name: product.name,
-          price: product.price,
-          quantity,
-        },
-      ],
-      content_ids: [product.id],
-      content_type: "product",
-    });
+    trackCartQuantityChange(
+      catalogProduct,
+      found?.quantity || 0,
+      (found?.quantity || 0) + quantity,
+    );
     toast.success("Đã thêm vào giỏ hàng");
     return true;
   }
   function update(id: string, quantity: number) {
-    const product = products.find((p) => p.id === id);
+    const product = products.find((p) => p.id === id && p.active);
     if (!product || !Number.isInteger(quantity)) return;
     const current = currentCart();
+    const item = current.find((i) => i.product_id === id);
+    if (!item) return;
+    const nextQuantity = Math.max(
+      0,
+      Math.min(quantity, MAX_QUANTITY, product.stock),
+    );
+    const delta = nextQuantity - item.quantity;
+    if (!delta) return;
     persist(
-      quantity < 1
+      nextQuantity === 0
         ? current.filter((i) => i.product_id !== id)
         : current.map((i) =>
-            i.product_id === id
-              ? {
-                  ...i,
-                  quantity: Math.min(quantity, MAX_QUANTITY, product.stock),
-                }
-              : i,
+            i.product_id === id ? { ...i, quantity: nextQuantity } : i,
           ),
     );
+    trackCartQuantityChange(product, item.quantity, nextQuantity);
   }
   const value = {
     items,
@@ -189,8 +184,7 @@ export function CartProvider({
     ready,
     add,
     update,
-    remove: (id: string) =>
-      persist(currentCart().filter((i) => i.product_id !== id)),
+    remove: (id: string) => update(id, 0),
     clear: () => persist([]),
   };
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

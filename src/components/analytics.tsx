@@ -2,13 +2,14 @@
 import Script from "next/script";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  createAnalyticsSession,
+  isAnalyticsEnabled,
+  isAnalyticsPathAllowed,
+  syncAnalyticsPage,
+} from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 
-type AnalyticsWindow = Window & {
-  gtag?: (...args: unknown[]) => void;
-  fbq?: (...args: unknown[]) => void;
-  mocbamAnalyticsConsent?: boolean;
-};
 type Consent = "pending" | "granted" | "denied";
 let memoryConsent: Consent = "pending";
 const consentListeners = new Set<() => void>();
@@ -51,51 +52,33 @@ export function Analytics({
     () => "pending" as Consent,
   );
   const [loaded, setLoaded] = useState(false);
-  const lastPage = useRef("");
+  const session = useRef(createAnalyticsSession());
   const gaId = /^G-[A-Z0-9]+$/.test(process.env.NEXT_PUBLIC_GA_ID || "")
     ? process.env.NEXT_PUBLIC_GA_ID
     : "";
   const metaId = /^\d+$/.test(process.env.NEXT_PUBLIC_META_PIXEL_ID || "")
     ? process.env.NEXT_PUBLIC_META_PIXEL_ID
     : "";
-  const enabled =
-    !preview &&
-    (production || process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "true") &&
-    Boolean(gaId || metaId);
-  const eligible = !/^\/(admin|auth|don-hang)(\/|$)/.test(pathname);
+  const enabled = isAnalyticsEnabled({
+    production,
+    preview,
+    localOverride: process.env.NEXT_PUBLIC_ANALYTICS_ENABLED === "true",
+    hasProvider: Boolean(gaId || metaId),
+  });
+  const eligible = isAnalyticsPathAllowed(pathname);
   useEffect(() => {
-    const target = window as AnalyticsWindow;
-    target.mocbamAnalyticsConsent =
-      enabled && consent === "granted" && eligible && loaded;
-    if (gaId)
-      (target as unknown as Record<string, unknown>)[`ga-disable-${gaId}`] =
-        consent !== "granted";
-    if (consent === "denied") {
-      target.fbq?.("consent", "revoke");
-      lastPage.current = "";
-    }
-    if (
-      !enabled ||
-      consent !== "granted" ||
-      !eligible ||
-      !loaded ||
-      lastPage.current === pathname
-    )
-      return;
-    lastPage.current = pathname;
-    target.gtag?.("event", "page_view", {
-      page_path: pathname,
-      page_location: `${window.location.origin}${pathname}`,
-      page_referrer: window.location.origin,
+    syncAnalyticsPage(session.current, {
+      pathname,
+      enabled,
+      consent,
+      loaded,
+      gaId: gaId || "",
     });
-    target.fbq?.("consent", "grant");
-    target.fbq?.("track", "PageView");
-    window.dispatchEvent(new Event("mocbam:analytics-ready"));
-  }, [consent, enabled, eligible, gaId, loaded, pathname]);
+  }, [consent, enabled, gaId, loaded, pathname]);
   function choose(value: "granted" | "denied") {
     saveConsent(value);
   }
-  const bootstrap = `window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};${gaId ? `gtag('js',new Date());gtag('config',${JSON.stringify(gaId)},{send_page_view:false,allow_google_signals:false});` : ""}${metaId ? `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('set','autoConfig',false,${JSON.stringify(metaId)});fbq('init',${JSON.stringify(metaId)});` : ""}`;
+  const bootstrap = `window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};${gaId ? `gtag('js',new Date());gtag('config',${JSON.stringify(gaId)},{send_page_view:false,allow_google_signals:false,page_location:location.origin+location.pathname,page_referrer:location.origin});` : ""}${metaId ? `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('set','autoConfig',false,${JSON.stringify(metaId)});fbq('init',${JSON.stringify(metaId)});` : ""}`;
   if (!enabled || !eligible) return null;
   return (
     <>
