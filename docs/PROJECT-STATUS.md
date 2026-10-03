@@ -5,7 +5,7 @@ Last verified: 3 October 2026. This records the current deployment and checks; f
 ## Deployment
 
 - Live storefront: [mocbam.vercel.app](https://mocbam.vercel.app).
-- Repository: [Mocbamm/mocbam](https://github.com/Mocbamm/mocbam), `main`, application commit `ef34c1d`.
+- Repository: [Mocbamm/mocbam](https://github.com/Mocbamm/mocbam), `main`, latest application commit `525d620`.
 - Vercel: project `mocbam`, Hobby plan, production deployment Ready, functions in Singapore (`sin1`).
 - Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Migration and seed applied: 8 products, 2 posts and 6 editable content records; initial flat shipping fee is 0₫.
 
@@ -13,10 +13,12 @@ The initial catalog, artwork, contact information and policies remain demonstrat
 
 ## Verified
 
-- TypeScript, lint and production build passed; 38 unit/database tests and 9 browser tests passed. GitHub CI passed for the initial application commit; the analytics follow-up is checked separately by CI.
+- TypeScript, lint and production build passed; 38 unit/database tests and 9 browser tests passed. GitHub CI passed for application commit `525d620`, which is deployed to production.
 - Local API checks confirmed contact submission persists in Supabase, anonymous admin reads/updates and order history are rejected, malformed checkout is rejected, and unknown receipts/unpublished media are inaccessible. The temporary verification inquiry was removed.
 - Eight hosted Supabase verification groups passed, including real concurrent checkout checks, row-level access controls, cancellation/stock behavior and storage access. Temporary verification resources were cleaned up.
+- Eight authenticated admin HTTP verification groups passed against the local app and hosted Supabase: product/post management, image upload and visibility, content, settings, inquiry resolution and order updates. A regular signed-in customer was denied access in all 17 admin read/write checks. Only temporary verification resources were created and removed; settings were checked using their existing values.
 - A browser checkout on the production deployment persisted one 99,000₫ guest order, reserved stock, cleared the cart and displayed its awaiting-payment receipt. Production APIs rejected anonymous admin/history access; the synthetic order and temporary product were removed.
+- The latest production deployment passed anonymous access checks for every admin collection and customer order history. Unknown receipt requests disclose no order data; receipt pages use no-store, no-referrer and noindex headers.
 
 ## Remaining setup and acceptance
 
