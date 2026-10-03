@@ -210,8 +210,7 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
           © {new Date().getFullYear()} Mộc Bàm. Từ gỗ, với thương yêu.
         </span>
         <span className="flex items-center gap-2">
-          <Leaf size={12} /> Dự án tốt nghiệp · Thanh toán trực tuyến đang chuẩn
-          bị
+          <Leaf size={12} /> Dự án tốt nghiệp · Thanh toán khi nhận hàng (COD)
         </span>
       </div>
     </footer>
