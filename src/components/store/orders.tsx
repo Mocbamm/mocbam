@@ -1,8 +1,14 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, Package, ArrowUpRight, RefreshCw } from "lucide-react";
-import type { Order, OrderStatus } from "@/lib/types";
+import { Check, Package, ArrowUpRight, RefreshCw, X } from "lucide-react";
+import type { BankTransfer, Order, OrderStatus } from "@/lib/types";
+import {
+  paymentMethodLabels,
+  paymentStatusLabels,
+  transferReference,
+} from "@/lib/payments";
 import { Button } from "@/components/ui/button";
 import { money, dateLabel } from "./format";
 export const statusLabels: Record<OrderStatus, string> = {
@@ -13,6 +19,166 @@ export const statusLabels: Record<OrderStatus, string> = {
   completed: "Hoàn thành",
   cancelled: "Đã hủy",
 };
+function PaymentDetails({
+  order,
+  transfer,
+}: {
+  order: Order;
+  transfer?: BankTransfer | null;
+}) {
+  const cancelled = order.status === "cancelled";
+  const paid = order.payment_status === "paid";
+  const refunded = order.payment_status === "refunded";
+  const showBankInstructions =
+    order.payment_method === "bank_transfer" &&
+    order.total > 0 &&
+    !cancelled &&
+    !paid &&
+    !refunded;
+  const bank = showBankInstructions
+    ? transfer ||
+      (order.payment_bank_name &&
+      order.payment_bank_account_number &&
+      order.payment_bank_account_name
+        ? {
+            bankName: order.payment_bank_name,
+            accountNumber: order.payment_bank_account_number,
+            accountName: order.payment_bank_account_name,
+            amount: order.total,
+            reference: transferReference(order.reference),
+            qrDataUrl: null,
+          }
+        : null)
+    : null;
+  return (
+    <section className="bg-[#edf0e5] p-5 sm:p-7">
+      <h2 className="font-serif text-2xl text-[#29412d]">
+        Thanh toán đơn hàng
+      </h2>
+      <dl className="mt-5 flex flex-wrap gap-x-12 gap-y-4 text-sm">
+        <div>
+          <dt className="text-[10px] uppercase tracking-widest text-[#859174]">
+            Phương thức
+          </dt>
+          <dd className="mt-2 font-medium text-[#29412d]">
+            {paymentMethodLabels[order.payment_method]}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[10px] uppercase tracking-widest text-[#859174]">
+            Trạng thái thanh toán
+          </dt>
+          <dd className="mt-2 font-medium text-[#29412d]">
+            {paymentStatusLabels[order.payment_status]}
+          </dd>
+        </div>
+      </dl>
+      {order.total === 0 ? (
+        <p className="mt-5 text-sm leading-7 text-[#60754f]">
+          Đơn hàng này có tổng tiền 0₫. Bạn không cần thanh toán hoặc chuyển
+          khoản.
+        </p>
+      ) : refunded ? (
+        <p className="mt-5 text-sm leading-7 text-[#60754f]">
+          Mộc đã xác nhận hoàn tiền
+          {order.refunded_at ? ` vào ${dateLabel(order.refunded_at)}` : ""}. Nếu
+          bạn cần đối soát giao dịch, hãy liên hệ cửa hàng với mã đơn{" "}
+          {order.reference}.
+        </p>
+      ) : cancelled && paid ? (
+        <p role="status" className="mt-5 text-sm leading-7 text-[#847044]">
+          Đơn đã hủy nhưng đã thanh toán. Cửa hàng cần xử lý hoàn tiền thủ công;
+          trạng thái sẽ được cập nhật sau khi tiền đã được hoàn. Vui lòng liên
+          hệ Mộc với mã đơn {order.reference} để đối soát.
+        </p>
+      ) : paid ? (
+        <p className="mt-5 text-sm leading-7 text-[#60754f]">
+          Mộc đã xác nhận nhận đủ tiền
+          {order.paid_at ? ` vào ${dateLabel(order.paid_at)}` : ""}. Bạn không
+          cần thanh toán lại cho đơn này.
+        </p>
+      ) : cancelled ? (
+        <p className="mt-5 text-sm leading-7 text-[#7c866b]">
+          Bạn không cần thanh toán cho đơn đã hủy.
+          {order.payment_method === "bank_transfer"
+            ? " Vui lòng không chuyển tiền. Nếu bạn đã chuyển trước khi đơn bị hủy, hãy liên hệ Mộc để đối soát và xử lý hoàn tiền."
+            : ""}
+        </p>
+      ) : order.payment_method === "cod" ? (
+        <p className="mt-5 text-sm leading-7 text-[#7c866b]">
+          Thanh toán{" "}
+          <strong className="text-[#29412d]">{money(order.total)}</strong> cho
+          nhân viên giao hàng khi nhận được đơn. Trạng thái sẽ được cập nhật khi
+          Mộc xác nhận đã thu tiền.
+        </p>
+      ) : showBankInstructions ? (
+        bank ? (
+          <div className="mt-6 grid gap-7 border-t border-[#d4dcc7] pt-6 sm:grid-cols-[1fr_auto]">
+            <div className="min-w-0">
+              <p className="text-sm leading-7 text-[#7c866b]">
+                Chuyển đúng số tiền và nội dung bên dưới để Mộc đối soát đơn.
+                Thông tin nhận tiền được lưu theo đơn hàng này.
+              </p>
+              <dl className="mt-5 space-y-4 text-sm">
+                {[
+                  ["Ngân hàng", bank.bankName],
+                  ["Số tài khoản", bank.accountNumber],
+                  ["Chủ tài khoản", bank.accountName],
+                  ["Số tiền", money(bank.amount)],
+                  ["Nội dung chuyển khoản", bank.reference],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <dt className="text-xs text-[#7c866b]">{label}</dt>
+                    <dd className="mt-1 break-words font-medium text-[#29412d]">
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="mt-5 text-xs leading-6 text-[#7c866b]">
+                Chuyển khoản không tự đổi trạng thái thanh toán. Mộc sẽ kiểm tra
+                tiền vào tài khoản và xác nhận thủ công. Nếu đã chuyển mà chưa
+                thấy cập nhật, hãy liên hệ cửa hàng với mã đơn {order.reference}
+                .
+              </p>
+            </div>
+            {bank.qrDataUrl ? (
+              <div className="self-start text-center">
+                <Image
+                  src={bank.qrDataUrl}
+                  alt={`Mã QR chuyển khoản cho đơn ${order.reference}`}
+                  width={224}
+                  height={224}
+                  unoptimized
+                  className="mx-auto h-56 w-56 border border-[#d4dcc7] bg-white p-3"
+                />
+                <p className="mt-3 text-[11px] text-[#7c866b]">
+                  Quét bằng ứng dụng ngân hàng
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p role="status" className="mt-5 text-sm leading-7 text-[#7c866b]">
+            Chưa mở được thông tin nhận tiền của đơn. Vui lòng liên hệ Mộc với
+            mã đơn {order.reference} trước khi chuyển khoản.
+          </p>
+        )
+      ) : (
+        <p className="mt-5 text-sm leading-7 text-[#7c866b]">
+          Đơn này chưa chọn phương thức thanh toán. Vui lòng liên hệ Mộc với mã
+          đơn {order.reference} để được hướng dẫn.
+        </p>
+      )}
+      <Link
+        href="/lien-he"
+        className="mt-5 inline-flex items-center gap-2 text-xs underline underline-offset-4"
+      >
+        Liên hệ về đơn hàng <ArrowUpRight size={13} />
+      </Link>
+    </section>
+  );
+}
 function OrderLines({ order }: { order: Order }) {
   return (
     <>
@@ -51,6 +217,7 @@ function OrderLines({ order }: { order: Order }) {
 }
 export function ReceiptScreen({ id, token }: { id: string; token: string }) {
   const [order, setOrder] = useState<Order | null>(null);
+  const [transfer, setTransfer] = useState<BankTransfer | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
@@ -66,6 +233,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
         if (!response.ok)
           throw new Error(result.error || "Không thể xem đơn hàng.");
         setOrder(result.order);
+        setTransfer(result.transfer || null);
       } catch (cause) {
         if (!controller.signal.aborted)
           setError(
@@ -119,18 +287,28 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
     <>
       <div className="mb-10 text-center">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e5ecda] text-[#456237]">
-          <Check size={24} strokeWidth={1.5} />
+          {order.status === "cancelled" ? (
+            <X size={24} strokeWidth={1.5} />
+          ) : (
+            <Check size={24} strokeWidth={1.5} />
+          )}
         </span>
         <p className="mt-6 text-[10px] uppercase tracking-[0.2em] text-[#889777]">
           Đơn hàng {order.reference}
         </p>
         <h1 className="mt-3 font-serif text-4xl tracking-tight text-[#29412d] sm:text-5xl">
-          Mộc đã nhận lời nhắn của bạn.
+          {order.status === "cancelled"
+            ? "Đơn hàng đã được hủy."
+            : order.payment_status === "refunded"
+              ? "Mộc đã xác nhận hoàn tiền."
+              : order.payment_status === "paid"
+                ? "Mộc đã xác nhận thanh toán."
+                : "Mộc đã nhận đơn hàng của bạn."}
         </h1>
         <p className="mx-auto mt-5 max-w-lg text-sm leading-7 text-[#7c866b]">
-          Cảm ơn bạn đã chọn một chút Mộc. Đơn đang chờ xác nhận và{" "}
-          <strong>chưa được thanh toán</strong>. Cửa hàng sẽ trao đổi trước khi
-          xử lý.
+          Trạng thái xử lý: <strong>{statusLabels[order.status]}</strong>. Thanh
+          toán: <strong>{paymentStatusLabels[order.payment_status]}</strong>.
+          Bạn có thể cập nhật trạng thái để xem thông tin mới nhất từ Mộc.
         </p>
       </div>
       <div className="grid gap-7 md:grid-cols-2">
@@ -153,12 +331,6 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
                 Trạng thái
               </dt>
               <dd className="mt-2">{statusLabels[order.status]}</dd>
-            </div>
-            <div>
-              <dt className="text-[10px] uppercase tracking-widest text-[#859174]">
-                Thanh toán
-              </dt>
-              <dd className="mt-2">Chờ thanh toán · chưa thu tiền</dd>
             </div>
             <div>
               <dt className="text-[10px] uppercase tracking-widest text-[#859174]">
@@ -197,6 +369,9 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
             <RefreshCw size={12} /> Cập nhật trạng thái
           </button>
         </section>
+      </div>
+      <div className="mt-7">
+        <PaymentDetails order={order} transfer={transfer} />
       </div>
       <div className="mt-8 text-center">
         <Button asChild variant="outline">
@@ -276,6 +451,9 @@ export function AccountOrders() {
             </span>
             <span className="text-xs text-[#657957]">
               {statusLabels[order.status]}
+              <span className="mt-1 block text-[#8b947d]">
+                {paymentStatusLabels[order.payment_status]}
+              </span>
             </span>
             <span>{money(order.total)}</span>
           </summary>
@@ -284,9 +462,9 @@ export function AccountOrders() {
             <p className="mt-5 text-xs text-[#7c866b]">
               Giao đến: {order.address}, {order.city}
             </p>
-            <p className="mt-2 text-xs text-[#7c866b]">
-              Thanh toán: chờ thanh toán.
-            </p>
+            <div className="mt-5">
+              <PaymentDetails order={order} />
+            </div>
           </div>
         </details>
       ))}

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { getAdminDashboard, getAdminOrders } from "@/lib/catalog";
 import { formatDate, formatPrice } from "@/lib/utils";
+import { paymentStatusLabels } from "@/lib/payments";
 import { AdminHeading } from "@/components/admin/admin-shell";
 import { EmptyState, StatusBadge } from "@/components/admin/admin-common";
 import { canRenderAdmin } from "@/components/admin/admin-access";
@@ -37,7 +38,7 @@ export default async function AdminDashboard() {
     {
       title: "Giá trị đơn hàng",
       value: formatPrice(stats.total_order_value),
-      note: "Giá trị đơn không bị hủy",
+      note: "Đơn không bị hủy, gồm đơn chưa thanh toán",
       icon: Wallet,
     },
     {
@@ -90,7 +91,7 @@ export default async function AdminDashboard() {
                   <th className="pr-4 font-medium">Khách hàng</th>
                   <th className="pr-4 font-medium">Ngày đặt</th>
                   <th className="pr-4 font-medium">Tổng tiền</th>
-                  <th className="font-medium">Trạng thái</th>
+                  <th className="font-medium">Xử lý đơn / Thanh toán</th>
                 </tr>
               </thead>
               <tbody>
@@ -109,6 +110,9 @@ export default async function AdminDashboard() {
                     </td>
                     <td>
                       <StatusBadge status={order.status} />
+                      <p className="mt-2 text-xs text-[#6b7867]">
+                        {paymentStatusLabels[order.payment_status]}
+                      </p>
                     </td>
                   </tr>
                 ))}
@@ -118,10 +122,11 @@ export default async function AdminDashboard() {
         )}
       </div>
       <div className="mt-6 rounded-2xl bg-[#eaf0e2] p-5 text-sm leading-6 text-[#53664a]">
-        <strong>Nhắc nhỏ:</strong> Phương thức thanh toán chưa được thiết lập;
-        website chưa thu tiền trực tuyến. Đơn đặt hàng hiển thị “Chờ thanh
-        toán”. Trạng thái xử lý đơn được cập nhật riêng trong mục Đơn hàng và
-        không xác nhận việc thanh toán.
+        <strong>Đối soát thanh toán:</strong> Khách có thể chọn COD hoặc chuyển
+        khoản khi cửa hàng đã bật và lưu thông tin ngân hàng. Trong mục Đơn
+        hàng, chỉ xác nhận đã nhận tiền sau khi kiểm tra tiền thực tế. Xử lý đơn
+        và thanh toán có trạng thái riêng; hủy đơn đã nhận tiền cần hoàn trả bên
+        ngoài website, rồi ghi nhận hoàn tiền.
       </div>
     </>
   );

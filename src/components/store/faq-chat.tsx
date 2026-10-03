@@ -19,7 +19,7 @@ const answers = [
     question: "Thanh toán ra sao?",
     keywords: ["thanh toán", "chuyển khoản", "payment"],
     answer:
-      "Đợt này Mộc chỉ tiếp nhận đơn và chờ xác nhận thanh toán. Cổng thanh toán trực tuyến đang được chuẩn bị; website chưa thu tiền trực tuyến.",
+      "Bạn có thể thanh toán khi nhận hàng (COD). Chuyển khoản ngân hàng sẽ xuất hiện ở bước đặt hàng khi cửa hàng cập nhật tài khoản nhận tiền; sau khi đặt, đơn sẽ có thông tin và mã QR riêng. Mộc kiểm tra giao dịch và xác nhận thanh toán thủ công.",
   },
   {
     question: "Phí giao hàng là bao nhiêu?",

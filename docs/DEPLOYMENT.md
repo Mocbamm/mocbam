@@ -2,7 +2,12 @@
 
 ## Database
 
-Create a Supabase Free project named `mocbam` in the Mộc Bàm organization/account, in Singapore. Run the committed migration files, then `supabase/seed.sql`. The schema explicitly grants access and enables RLS; no public role receives unrestricted order or admin-table access.
+Create a Supabase Free project named `mocbam` in the Mộc Bàm organization/account, in Singapore. The schema explicitly grants access and enables RLS; no public role receives unrestricted order or admin-table access.
+
+- Fresh database: apply `supabase/migrations/202610030001_initial.sql`, then `202610030002_manual_payments.sql`, then `supabase/seed.sql`.
+- Existing database with migration 001 applied: apply migration 002 once. Do not rerun migration 001 or the seed; they are not an upgrade/reset procedure.
+
+The hosted project has applied migration 002 successfully and its new settings were verified through the SDK: transfer is disabled and receiving fields are blank. Deployment and production acceptance of the matching application revision remain pending; see [project status](PROJECT-STATUS.md).
 
 Copy only these values into local/Vercel environment configuration:
 
@@ -41,6 +46,14 @@ on conflict (user_id) do nothing;
 
 Only the project owner/database administrator performs this step. Shopper accounts and their metadata cannot grant membership.
 
+## COD and manual bank transfer
+
+COD is available by default. Receiving-account setup is deferred by the owner, so leave bank transfer disabled until those details are supplied and checked. In Admin → Settings, select the bank, enter the receiving account number and holder name, enable transfer, then save. The form, server and database require complete valid details before enabling it. These are public receiving instructions, not banking credentials; never put account passwords, PINs or OTPs in the repository or settings.
+
+New bank orders save an immutable bank/account snapshot, server-calculated total and order transfer reference. Later settings changes affect new orders only. The server generates NAPAS/VietQR account-transfer QR images locally, with no external QR-image service or customer information in the payload. Receipts also provide the exact details for a manual transfer. Paid, refunded, cancelled and zero-total orders do not offer payment QR/instructions. Existing orders from before this migration retain method `unconfigured`.
+
+An admin verifies the full amount received outside the website before recording `paid` with a transaction reference or reconciliation note. The database saves the admin actor, amount and timestamp in an audit entry. The website does not charge, move funds or confirm bank settlement automatically. Cancelling a paid order leaves it paid and restores stock once; refund money manually, then record `refunded` with a separate audit note. Fulfillment updates do not mark an order paid. See the [admin guide](ADMIN.md).
+
 ## Vercel
 
 Sign in with the Mộc Bàm account, import the public GitHub repository, choose Next.js, and add the environment values above. Vercel uses the committed pnpm lockfile and Node 24. Use the default Vercel domain and committed Singapore region. After the first deployment, update `NEXT_PUBLIC_SITE_URL` and Supabase URL configuration, then redeploy.
@@ -53,8 +66,8 @@ The current GA4 Measurement ID is `G-PV2R92QXC7`; production delivery has been v
 
 - **GA4:** create a Web data stream for `https://mocbam.vercel.app` and copy its Measurement ID (`G-...`), not the numeric property ID or a GTM container ID. Use Vietnam's time zone and VND for reporting. Turn Enhanced Measurement off for this explicit-event demo; if retaining any options, disable Page views → advanced → **Page changes based on browser history events** and **Form interactions**. `send_page_view: false` in code does not disable automatic history views. See [Google's pageview guide](https://developers.google.com/analytics/devguides/collection/ga4/views).
 - **Meta:** use the intended numeric Pixel/dataset ID with browser events enabled. In Events Manager, keep Automatic Advanced Matching and automatic events disabled, and do not add Event Setup Tool rules that duplicate the app's events. If a traffic permission allowlist is enabled, include `mocbam.vercel.app`. This application uses browser Pixel events only; do not install a second tag or a Conversions API integration for this setup. Code disables automatic configuration and history tracking before initializing the Pixel, following the [official Meta template](https://github.com/facebook/GoogleTagManager-WebTemplate-For-FacebookPixel/blob/main/template.tpl).
-- **Delivery check:** connect Google Tag Assistant to enable debug mode for the test browser, then inspect GA4 DebugView and Meta Events Manager → Test Events with consent granted and browser tracking blockers disabled. Check the correct property/Pixel, one event per intended action, and no events on account, admin, auth or receipt routes. `RemoveFromCart` and `OrderSubmitted` are Meta custom events; unpaid orders must not generate `Purchase`. See [Google's DebugView guide](https://support.google.com/analytics/answer/7201382).
+- **Delivery check:** connect Google Tag Assistant to enable debug mode for the test browser, then inspect GA4 DebugView and Meta Events Manager → Test Events with consent granted and browser tracking blockers disabled. Check the correct property/Pixel, one event per intended action, and no events on account, admin, auth or receipt routes. Existing store events remain unchanged. `RemoveFromCart` and `OrderSubmitted` are Meta custom events; checkout and manual admin payment/refund records must not generate `Purchase`, including demo records. See [Google's DebugView guide](https://support.google.com/analytics/answer/7201382).
 
 ## Rehearsal
 
-Core production customer/admin acceptance and verification-data cleanup are complete. Before the presentation, confirm the Supabase project is active and check images/contact settings. For future rehearsals, sign in as owner and a separate shopper, submit a test guest order, open its receipt, confirm it in admin, and verify stock. Delete/reset only clearly identified test data and label sample policies/data as demo content.
+The earlier storefront/customer/admin acceptance and its verification-data cleanup are complete. The new manual-payment revision still needs deployment and production acceptance. Rehearse COD submission, receipt/account method and status, admin reconciliation, paid cancellation and manual refund records using clearly marked verification data; check stock and audit entries. Bank-transfer activation remains deferred until real receiving details are available. Before the presentation, confirm the Supabase project is active and check images/contact settings. Remove only identified test data and label sample policies/data as demo content. See the [verification checklist](VERIFICATION.md).

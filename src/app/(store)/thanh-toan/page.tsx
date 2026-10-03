@@ -1,5 +1,6 @@
 import { getSettings, isConfigured } from "@/lib/catalog";
 import { getCurrentUser } from "@/lib/auth";
+import { isBankTransferAvailable } from "@/lib/payments";
 import { CheckoutScreen } from "@/components/store/cart-checkout";
 export const metadata = {
   title: "Đặt hàng",
@@ -18,6 +19,7 @@ export default async function CheckoutPage() {
       <CheckoutScreen
         shippingFee={settings.shipping_fee}
         configured={isConfigured()}
+        bankTransferAvailable={isBankTransferAvailable(settings)}
         initialEmail={user?.email || ""}
       />
     </main>

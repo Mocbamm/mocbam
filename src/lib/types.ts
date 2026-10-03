@@ -37,6 +37,21 @@ export type SiteSettings = {
   facebook_url: string;
   instagram_url: string;
   tiktok_url: string;
+  bank_transfer_enabled: boolean;
+  bank_bin: string;
+  bank_name: string;
+  bank_account_number: string;
+  bank_account_name: string;
+};
+export type PaymentMethod = "cod" | "bank_transfer" | "unconfigured";
+export type PaymentStatus = "awaiting_payment" | "paid" | "refunded";
+export type BankTransfer = {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  amount: number;
+  reference: string;
+  qrDataUrl: string;
 };
 export type OrderStatus =
   | "pending"
@@ -66,7 +81,14 @@ export type Order = {
   shipping_fee: number;
   total: number;
   status: OrderStatus;
-  payment_status: "awaiting_payment";
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
+  paid_at: string | null;
+  refunded_at: string | null;
+  payment_bank_bin: string;
+  payment_bank_name: string;
+  payment_bank_account_number: string;
+  payment_bank_account_name: string;
   created_at: string;
   items?: OrderItem[];
 };

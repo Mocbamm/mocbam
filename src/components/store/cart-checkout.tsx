@@ -9,7 +9,8 @@ import {
   Plus,
   Trash2,
   ShoppingBag,
-  Check,
+  Truck,
+  Landmark,
   LockKeyhole,
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
@@ -152,8 +153,8 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
           </Link>
         </Button>
         <p className="mt-4 text-[11px] leading-6 text-[#8b947d]">
-          Giá và tồn kho sẽ được kiểm tra lại trước khi tiếp nhận đơn. Website
-          hiện chưa thu tiền trực tuyến.
+          Giá và tồn kho sẽ được kiểm tra lại trước khi tiếp nhận đơn. Bạn chọn
+          phương thức thanh toán tại bước đặt hàng.
         </p>
       </aside>
     </div>
@@ -162,16 +163,21 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
 export function CheckoutScreen({
   shippingFee,
   configured,
+  bankTransferAvailable,
   initialEmail = "",
 }: {
   shippingFee: number;
   configured: boolean;
+  bankTransferAvailable: boolean;
   initialEmail?: string;
 }) {
   const { items, subtotal, ready, clear } = useCart();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">(
+    "cod",
+  );
   const idempotency = useRef("");
   const submittedDraft = useRef("");
   const started = useRef(false);
@@ -213,6 +219,7 @@ export function CheckoutScreen({
     setError("");
     const form = new FormData(event.currentTarget);
     const draft = {
+      payment_method: paymentMethod,
       items: items.map(({ product, quantity }) => ({
         product_id: product.id,
         quantity,
@@ -356,17 +363,71 @@ export function CheckoutScreen({
             />
           </div>
         </div>
-        <div className="mt-8 border-t border-[#dde1d0] pt-6">
-          <h2 className="font-serif text-2xl text-[#29412d]">Về thanh toán</h2>
-          <p className="mt-4 flex items-center gap-2 text-xs font-medium text-[#60754f]">
-            <Check size={15} /> Gửi đơn để Mộc xác nhận
+        <fieldset
+          disabled={busy}
+          className="mt-8 border-t border-[#dde1d0] pt-6"
+        >
+          <legend className="pt-6 font-serif text-2xl text-[#29412d]">
+            Bạn muốn thanh toán thế nào?
+          </legend>
+          <div className="mt-4 space-y-3">
+            <label
+              className={`flex cursor-pointer items-start gap-3 border p-5 ${paymentMethod === "cod" ? "border-[#70865c] bg-[#edf0e5]" : "border-[#dde1d0]"}`}
+            >
+              <input
+                type="radio"
+                name="payment_method"
+                value="cod"
+                checked={paymentMethod === "cod"}
+                onChange={() => setPaymentMethod("cod")}
+                className="mt-1 h-4 w-4 shrink-0 accent-[#546b43]"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-sm font-medium text-[#29412d]">
+                  <Truck size={17} strokeWidth={1.5} /> Thanh toán khi nhận hàng
+                  (COD)
+                </span>
+                <span className="mt-2 block text-xs leading-6 text-[#7c866b]">
+                  Trả tiền cho nhân viên giao hàng khi nhận được đơn. Mộc sẽ xác
+                  nhận đơn trước khi gửi.
+                </span>
+              </span>
+            </label>
+            {bankTransferAvailable ? (
+              <label
+                className={`flex cursor-pointer items-start gap-3 border p-5 ${paymentMethod === "bank_transfer" ? "border-[#70865c] bg-[#edf0e5]" : "border-[#dde1d0]"}`}
+              >
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value="bank_transfer"
+                  checked={paymentMethod === "bank_transfer"}
+                  onChange={() => setPaymentMethod("bank_transfer")}
+                  className="mt-1 h-4 w-4 shrink-0 accent-[#546b43]"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2 text-sm font-medium text-[#29412d]">
+                    <Landmark size={17} strokeWidth={1.5} /> Chuyển khoản ngân
+                    hàng
+                  </span>
+                  <span className="mt-2 block text-xs leading-6 text-[#7c866b]">
+                    Thông tin nhận tiền và mã QR sẽ xuất hiện sau khi đặt đơn.
+                    Mộc kiểm tra giao dịch rồi xác nhận thanh toán thủ công.
+                  </span>
+                </span>
+              </label>
+            ) : (
+              <p className="text-xs leading-6 text-[#7c866b]">
+                Chuyển khoản sẽ được mở khi cửa hàng cập nhật tài khoản nhận
+                tiền.
+              </p>
+            )}
+          </div>
+          <p className="mt-4 text-xs leading-6 text-[#7c866b]">
+            Gửi đơn chưa xác nhận đã thanh toán. Trạng thái sẽ cập nhật khi Mộc
+            xác nhận đã nhận tiền.
           </p>
-          <p className="mt-3 text-sm leading-7 text-[#7c866b]">
-            Website chưa có cổng thu tiền trực tuyến. Đơn được lưu ở trạng thái{" "}
-            <strong>chờ thanh toán</strong>; Mộc sẽ liên hệ để xác nhận thông
-            tin trước khi xử lý.
-          </p>
-        </div>
+        </fieldset>
       </div>
       <aside className="self-start bg-[#edf0e5] p-7">
         <h2 className="font-serif text-2xl text-[#29412d]">

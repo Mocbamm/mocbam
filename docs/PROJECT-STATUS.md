@@ -1,19 +1,25 @@
 # Project status
 
-Last verified: 3 October 2026. Core production customer/admin acceptance and verification-data cleanup are complete. Revocation of the previous Supabase server key remains an owner action.
+Last verified: 3 October 2026. The earlier production storefront/customer/admin acceptance and verification-data cleanup are complete. The manual-payment database migration is applied; deployment and production acceptance of the matching application revision are pending. Revocation of the previous Supabase server key remains an owner action.
 
 ## Deployment
 
 - Live storefront: [mocbam.vercel.app](https://mocbam.vercel.app).
 - Repository: [Mocbamm/mocbam](https://github.com/Mocbamm/mocbam), `main`.
-- Vercel: project `mocbam`, Hobby plan, production deployment Ready, functions in Singapore (`sin1`).
-- Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Migration and seed applied: 8 products, 2 posts and 6 editable content records; initial flat shipping fee is 0₫.
+- Vercel: project `mocbam`, Hobby plan, earlier production deployment Ready, functions in Singapore (`sin1`). The manual-payment application revision has not yet completed deployment/acceptance.
+- Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Initial migration/seed and manual-payment migration `202610030002_manual_payments.sql` applied. Seed catalog: 8 products, 2 posts and 6 editable content records; initial flat shipping fee is 0₫.
 - GA4: account `410553554`, property `557218756`, Web stream `16000604251`, Measurement ID `G-PV2R92QXC7`, configured on production. Enhanced Measurement is off; email and URL parameters `token`, `code`, `email`, `phone` and `address` have redaction enabled. Actual event delivery was verified through Tag Assistant and GA4 Realtime.
 - Google Cloud: project `mocbam`, app branding and Web OAuth client configured; Supabase's Google provider is enabled. The verified owner `mocbamm@gmail.com` is permanently enrolled in `admin_members`.
 
-The initial catalog, artwork, contact information and policies remain demonstration content. Orders remain `awaiting_payment`; payment integration is deferred and the website does not collect payment. Meta Pixel setup is explicitly deferred by the project owner; no Pixel ID is configured.
+The initial catalog, artwork, contact information and policies remain demonstration content. The selected payment approach is COD plus manual bank transfer/QR. Bank transfer remains disabled with blank receiving settings because the owner has deferred account setup. Orders begin `awaiting_payment`; an admin independently verifies money received/refunded and records `paid`/`refunded` with audit entries. The application does not move money or confirm settlement automatically. Historical orders retain method `unconfigured`. Meta Pixel setup is explicitly deferred by the project owner; no Pixel ID is configured.
 
 ## Verified
+
+- Hosted migration 002 completed successfully in the SQL editor. SDK reads confirmed bank transfer is disabled and all receiving fields are blank. This verifies migration/settings availability, not the new application's production payment flow.
+- TypeScript, lint and the production build passed for the manual-payment revision. All 88 unit/database/API tests passed, including four focused legacy HTTP retry tests. The full local browser suite passed 18 checks; one configured-auth check was skipped as expected in the read-only demo environment and still needs hosted production verification.
+- Nine local payment browser fixtures passed: COD default and unavailable-transfer copy, exact bank receipt instructions, QR hiding after payment/cancellation/refund, COD receipt messaging and zero-total orders for all methods. These use synthetic browser fixtures and do not verify actual bank settlement.
+
+The following production checks apply to the earlier storefront revision:
 
 - At source commit `29a310a`, the production build and GitHub CI passed; 43 unit/database tests and 9 browser tests passed. CI checks TypeScript, lint, unit/database tests, a production build and browser tests.
 - Local API checks confirmed contact submission persists in Supabase, anonymous admin reads/updates and order history are rejected, malformed checkout is rejected, and unknown receipts/unpublished media are inaccessible. The temporary verification inquiry was removed.
@@ -28,9 +34,10 @@ The initial catalog, artwork, contact information and policies remain demonstrat
 - The analytics guest checkout created temporary order MB-6 for 99,000₫, shipping 0₫, quantity 1 and `awaiting_payment`; stock changed from 3 to 2. Exact guarded cleanup removed only its order, product and category. All 8 seeded product rows remained unchanged.
 - Chrome's uBlock Origin Lite initially replaced the Google tag with an extension stub. A temporary site-only allowance enabled provider testing; the original Optimal filtering on `mocbam.vercel.app` was restored and confirmed after verification.
 
-## Remaining owner action and deferred work
+## Remaining deployment checks, owner action and deferred work
 
+- Deploy the tested manual-payment application revision and verify actual production COD checkout, receipt/account status, admin payment audit, paid cancellation/stock restoration and refund record. Remove only the identified QA resources afterward; see [verification](VERIFICATION.md).
 - The owner still needs to revoke the previous Supabase `SECRET default` server key. The replacement is active; revocation of the old key has not been confirmed.
-- Meta Pixel setup/provider verification and payment integration remain explicitly deferred by the project owner.
+- Real receiving-bank details/transfer activation and Meta Pixel setup/provider verification remain explicitly deferred by the project owner. Automatic payment gateways/bank confirmation are outside this implementation.
 
 Check the Supabase Free project is active before the graduation presentation. The [verification checklist](VERIFICATION.md) documents the flows to rehearse after future changes.

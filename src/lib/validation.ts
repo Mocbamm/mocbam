@@ -74,6 +74,43 @@ export const settingsSchema = z
     facebook_url: social,
     instagram_url: social,
     tiktok_url: social,
+    bank_transfer_enabled: z.boolean().optional(),
+    bank_bin: z
+      .union([z.literal(""), z.string().regex(/^[0-9]{6}$/)])
+      .optional(),
+    bank_name: z.string().trim().max(100).optional(),
+    bank_account_number: z
+      .union([
+        z.literal(""),
+        z
+          .string()
+          .trim()
+          .regex(/^[A-Za-z0-9]{5,19}$/),
+      ])
+      .optional(),
+    bank_account_name: z.string().trim().max(100).optional(),
+  })
+  .strict()
+  .superRefine((settings, context) => {
+    if (
+      settings.bank_transfer_enabled &&
+      ![
+        settings.bank_bin,
+        settings.bank_name,
+        settings.bank_account_number,
+        settings.bank_account_name,
+      ].every(Boolean)
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["bank_transfer_enabled"],
+        message: "Điền đầy đủ tài khoản nhận tiền trước khi bật chuyển khoản.",
+      });
+  });
+export const manualPaymentSchema = z
+  .object({
+    action: z.enum(["paid", "refunded"]),
+    note: short(200),
   })
   .strict();
 export const statusSchema = z
@@ -126,6 +163,7 @@ export const orderSchema = z
       })
       .strict(),
     idempotency_key: z.uuid(),
+    payment_method: z.enum(["cod", "bank_transfer"]).default("cod"),
   })
   .strict();
 
@@ -134,6 +172,7 @@ export type OrderInput = z.infer<typeof orderSchema>;
 export function canonicalOrderPayload(
   input: OrderInput,
   userId: string | null,
+  includePaymentMethod = true,
 ) {
   return JSON.stringify({
     items: [...input.items].sort((a, b) =>
@@ -141,6 +180,7 @@ export function canonicalOrderPayload(
     ),
     customer: input.customer,
     user_id: userId,
+    ...(includePaymentMethod ? { payment_method: input.payment_method } : {}),
   });
 }
 

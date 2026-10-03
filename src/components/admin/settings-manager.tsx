@@ -6,7 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { SiteSettings } from "@/lib/types";
-import { adminRequest, panelClass, reportError } from "./admin-common";
+import { BANKS } from "@/lib/banks";
+import {
+  adminRequest,
+  CheckField,
+  fieldClass,
+  panelClass,
+  reportError,
+} from "./admin-common";
 
 export function SettingsManager({ settings }: { settings: SiteSettings }) {
   const router = useRouter();
@@ -22,7 +29,8 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
     event.preventDefault();
     setSaving(true);
     try {
-      await adminRequest("/api/admin/settings", "PATCH", draft);
+      const result = await adminRequest("/api/admin/settings", "PATCH", draft);
+      setDraft(result.data);
       toast.success("Đã lưu cài đặt cửa hàng.");
       router.refresh();
     } catch (error) {
@@ -64,6 +72,95 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
               Áp dụng cho đơn đặt mới; đơn đã đặt giữ nguyên phí giao hàng.
             </p>
           </div>
+        </section>
+        <section className={panelClass}>
+          <h2 className="mb-4 text-xl font-semibold">Chuyển khoản ngân hàng</h2>
+          <CheckField
+            label="Cho phép khách hàng chọn chuyển khoản"
+            checked={draft.bank_transfer_enabled}
+            onChange={(checked) => update("bank_transfer_enabled", checked)}
+          />
+          <p className="mt-3 text-sm leading-6 text-[#6b7867]">
+            COD luôn có sẵn. Khi bật chuyển khoản, thông tin tài khoản bên dưới
+            sẽ hiển thị cho khách hàng. Kiểm tra đúng tài khoản nhận tiền trước
+            khi lưu; việc xác nhận tiền nhận được do quản trị viên thực hiện.
+          </p>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="bank-select">Ngân hàng nhận tiền</Label>
+              <select
+                id="bank-select"
+                className={fieldClass}
+                required={draft.bank_transfer_enabled}
+                value={draft.bank_bin}
+                onChange={(event) => {
+                  const bank = BANKS.find(
+                    (entry) => entry.bin === event.target.value,
+                  );
+                  setDraft((previous) => ({
+                    ...previous,
+                    bank_bin: bank?.bin || "",
+                    bank_name: bank?.name || "",
+                  }));
+                }}
+              >
+                <option value="">Chọn ngân hàng</option>
+                {!!draft.bank_bin &&
+                  !BANKS.some((bank) => bank.bin === draft.bank_bin) && (
+                    <option value={draft.bank_bin}>
+                      {draft.bank_name} · {draft.bank_bin} (đã lưu)
+                    </option>
+                  )}
+                {BANKS.map((bank) => (
+                  <option key={bank.bin} value={bank.bin}>
+                    {bank.name} · {bank.code}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bank-bin">Mã BIN ngân hàng (6 chữ số)</Label>
+              <Input id="bank-bin" value={draft.bank_bin} readOnly />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bank-account-number">
+                Số tài khoản nhận tiền
+              </Label>
+              <Input
+                id="bank-account-number"
+                autoComplete="off"
+                pattern="[A-Za-z0-9]{5,19}"
+                minLength={5}
+                maxLength={19}
+                required={draft.bank_transfer_enabled}
+                value={draft.bank_account_number}
+                onChange={(event) =>
+                  update("bank_account_number", event.target.value)
+                }
+              />
+              <p className="text-xs leading-5 text-[#788273]">
+                Từ 5 đến 19 chữ cái hoặc chữ số, giữ nguyên số 0 ở đầu.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bank-account-name">Tên chủ tài khoản</Label>
+              <Input
+                id="bank-account-name"
+                autoComplete="off"
+                required={draft.bank_transfer_enabled}
+                maxLength={100}
+                value={draft.bank_account_name}
+                onChange={(event) =>
+                  update("bank_account_name", event.target.value)
+                }
+              />
+            </div>
+          </div>
+          <p className="mt-4 text-xs leading-6 text-[#788273]">
+            Chỉ nhập thông tin nhận chuyển khoản, không cần PIN, mật khẩu ngân
+            hàng hay OTP. Thay đổi áp dụng cho đơn mới; đơn cũ giữ thông tin
+            ngân hàng tại thời điểm đặt.
+          </p>
         </section>
         <section className={panelClass}>
           <h2 className="mb-5 text-xl font-semibold">Thông tin liên hệ</h2>

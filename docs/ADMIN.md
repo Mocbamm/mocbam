@@ -22,13 +22,22 @@ Tìm đơn bằng mã, tên khách hàng, email hoặc số điện thoại. Ch�
 
 Chọn **Đã hủy** và xác nhận để hủy đơn. Máy chủ hoàn lại tồn kho một lần; đơn đã hủy không thể mở lại. Đơn đã hoàn tất cũng không thể đổi trạng thái. Không hủy đơn chỉ để thử giao diện trên dữ liệu thật.
 
-Trạng thái thanh toán **Chờ thanh toán** được hiển thị riêng, chỉ đọc. Phiên bản đồ án không có chức năng đánh dấu đã thanh toán hoặc kết nối xác nhận giao dịch tự động. Việc cập nhật trạng thái xử lý đơn không xác nhận thanh toán.
+Trạng thái xử lý đơn và thanh toán được hiển thị riêng. Khách có thể chọn **COD** hoặc **Chuyển khoản ngân hàng** nếu cửa hàng đã bật chuyển khoản. Đơn cũ trước khi bổ sung thanh toán giữ phương thức “Chưa chọn phương thức”. Cập nhật xử lý đơn không xác nhận tiền đã nhận.
+
+### Nhận tiền và hoàn tiền
+
+- **Nhận tiền:** mở chi tiết đơn, kiểm tra tài khoản nhận tiền hoặc khoản tiền mặt thực tế đã nhận đủ bằng tổng đơn. Với chuyển khoản, đối chiếu ngân hàng, số tài khoản và nội dung chuyển khoản của chính đơn đó. Nhập mã giao dịch hoặc ghi chú tiền mặt, chọn **Xác nhận đã nhận đủ tiền**, rồi đọc và xác nhận hộp thoại. Đơn chuyển sang **Đã thanh toán** và lưu thời điểm nhận tiền.
+- **Hủy đơn đã nhận tiền:** hủy chỉ hoàn tồn kho. Thực hiện hoàn trả đủ tiền cho khách bên ngoài website, sau đó nhập mã giao dịch hoàn tiền hoặc ghi chú đối soát và chọn **Ghi nhận đã hoàn tiền**. Hộp thoại yêu cầu xác nhận khoản hoàn trả đã thực hiện; thao tác trên website không tự chuyển tiền cho khách.
+- **Lịch sử đối soát:** mỗi lần ghi nhận lưu số tiền, ghi chú và thời điểm. Lịch sử này chỉ quản trị viên được xem. Không nhập số thẻ, PIN, mật khẩu ngân hàng hay OTP vào ghi chú.
+
+Đơn đã hủy khi chưa nhận tiền không thể ghi nhận thanh toán. Chỉ đơn đã hủy và đã thanh toán mới có thao tác ghi nhận hoàn tiền. Đơn đã hoàn tiền không thể chuyển lại sang chờ thanh toán; giao diện không hỗ trợ thanh toán hoặc hoàn tiền từng phần. Các trạng thái này được kiểm tra lại trên máy chủ. Giá trị đơn hàng trên trang tổng quan gồm đơn chưa thanh toán và không thể dùng thay cho tổng tiền đã thu.
 
 ## Nội dung, liên hệ và cài đặt
 
 - **Nội dung:** chỉnh sửa giới thiệu trang chủ, Về Mộc Bàm, chính sách giao hàng/đổi trả/bảo mật và điều khoản. Nhập văn bản thuần rồi lưu từng mục.
 - **Liên hệ:** đọc lời nhắn, dùng email hoặc số điện thoại được khách cung cấp để phản hồi bên ngoài website, sau đó đánh dấu “Đã xử lý”. Có thể mở lại yêu cầu. Trang quản trị không tự gửi email.
 - **Cài đặt:** cập nhật phí giao hàng cố định, thông tin liên lạc, giờ mở cửa và URL Facebook/Instagram/TikTok. Phí mới áp dụng cho đơn đặt sau khi lưu; đơn cũ giữ nguyên phí đã tính.
+- **Chuyển khoản ngân hàng:** chọn ngân hàng trong danh sách, nhập số tài khoản và tên chủ tài khoản, kiểm tra đúng thông tin rồi bật **Cho phép khách hàng chọn chuyển khoản** và lưu. Mã BIN được điền theo ngân hàng đã chọn. Số tài khoản nhận tiền gồm 5–19 chữ cái hoặc chữ số; giữ nguyên số 0 ở đầu. Các thông tin này sẽ hiển thị cho khách, chỉ nhập thông tin nhận tiền và không cần PIN, mật khẩu hay OTP. Thay đổi áp dụng cho đơn mới; thông tin ngân hàng của đơn cũ giữ nguyên tại thời điểm đặt. Khi tắt chuyển khoản, khách đặt đơn mới vẫn dùng được COD.
 
 ## Analytics
 

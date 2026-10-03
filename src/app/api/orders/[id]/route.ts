@@ -4,6 +4,8 @@ import { orderColumns } from "@/lib/catalog";
 import { apiError, databaseError, HttpError, json } from "@/lib/http";
 import { createServiceSupabase } from "@/lib/supabase/admin";
 import { matchesReceipt } from "@/lib/supabase/receipts";
+import { bankTransferInstructions } from "@/lib/bank-transfer";
+import type { Order } from "@/lib/types";
 
 export async function GET(
   request: Request,
@@ -28,7 +30,10 @@ export async function GET(
       throw new HttpError(404, "Không tìm thấy đơn hàng.");
     const { guest_access_hash: _secret, ...order } = data;
     void _secret;
-    return json({ order });
+    return json({
+      order,
+      transfer: await bankTransferInstructions(order as unknown as Order),
+    });
   } catch (error) {
     return apiError(error);
   }

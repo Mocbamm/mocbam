@@ -49,11 +49,14 @@ export default async function PoliciesPage() {
                 hàng.
               </li>
               <li>
-                3. Gửi đơn. Giá và tồn kho được kiểm tra lại trên hệ thống.
+                3. Chọn phương thức thanh toán và gửi đơn. Giá và tồn kho được
+                kiểm tra lại trên hệ thống.
               </li>
               <li>
-                4. Lưu liên kết đơn để theo dõi. Đơn đang chờ thanh toán;
-                website chưa thu tiền trực tuyến.
+                4. Lưu liên kết đơn để theo dõi. Với COD, thanh toán khi nhận
+                hàng. Nếu chọn chuyển khoản, dùng đúng tài khoản, số tiền và nội
+                dung trên đơn; Mộc xác nhận thanh toán sau khi kiểm tra giao
+                dịch.
               </li>
             </ol>
           </section>
