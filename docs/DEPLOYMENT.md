@@ -14,22 +14,24 @@ Copy only these values into local/Vercel environment configuration:
 
 Do not rotate `ORDER_TOKEN_SECRET` casually: earlier idempotent checkout retries derive their tokens from it. Existing receipt tokens stored by customers still validate against their database hashes.
 
+The replacement Supabase server key is active in Vercel Production. The previous `SECRET default` key still needs to be revoked by the owner in Supabase. This is the remaining credential cleanup action; see [project status](PROJECT-STATUS.md).
+
 ## Google login and admin
 
-The Google Cloud project `mocbam` and branding exist. Finish the prepared Web OAuth client Create action, then save the generated client ID and secret directly in Supabase Authentication → Providers → Google. Never place the secret in public source or browser environment variables. Configure these exact URLs:
+The Google Cloud project `mocbam`, branding and Web OAuth client are configured, and Supabase's Google provider is enabled. Production Google sign-in and admin access have been verified for the permanent owner `mocbamm@gmail.com`. Client credentials belong in Supabase Authentication → Providers → Google; never place the secret in public source or browser environment variables. The configuration uses these exact URLs:
 
-| Setting | Value |
-| --- | --- |
-| Google authorized JavaScript origins | `https://mocbam.vercel.app`; optionally `http://localhost:3000` for development |
-| Google authorized redirect URI | `https://ciyhftqiwbmbvnybygxy.supabase.co/auth/v1/callback` |
-| Supabase Site URL | `https://mocbam.vercel.app` |
-| Supabase allowed redirect URLs | `https://mocbam.vercel.app/auth/callback`; optionally `http://localhost:3000/auth/callback` |
+| Setting                              | Value                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Google authorized JavaScript origins | `https://mocbam.vercel.app`; optionally `http://localhost:3000` for development             |
+| Google authorized redirect URI       | `https://ciyhftqiwbmbvnybygxy.supabase.co/auth/v1/callback`                                 |
+| Supabase Site URL                    | `https://mocbam.vercel.app`                                                                 |
+| Supabase allowed redirect URLs       | `https://mocbam.vercel.app/auth/callback`; optionally `http://localhost:3000/auth/callback` |
 
 Run production sign-in checks from `https://mocbam.vercel.app`, matching `NEXT_PUBLIC_SITE_URL`. The PKCE verifier cookie and application callback must use the same domain; starting on another Vercel deployment hostname can prevent the callback exchange.
 
 Request only basic identity scopes (`openid`, `email`, `profile`). Google documents an exception to Testing-mode test-user restrictions and seven-day authorization expiry for these basic identity-only requests. Additional scopes remove that exception; Google account availability and Workspace policies can still restrict access. Do not treat the Testing allowlist as an admin access control. See [Google's audience guidance](https://support.google.com/cloud/answer/15549945?hl=en).
 
-After the owner signs in through the app, check the account in Authentication → Users. Use its exact verified user UUID in the SQL editor:
+For a new owner account, first sign in through the app and check the account in Authentication → Users. Use its exact verified user UUID in the SQL editor:
 
 ```sql
 insert into public.admin_members (user_id)
@@ -55,4 +57,4 @@ The current GA4 Measurement ID is `G-PV2R92QXC7`; production delivery has been v
 
 ## Rehearsal
 
-Confirm the Supabase project is active, sign in as owner and a separate shopper, submit a test guest order, open its receipt, confirm it in admin, and verify stock. Delete/reset only clearly identified test data when preparing the final demo. Check images/contact settings, and label sample policies/data as demo content.
+Core production customer/admin acceptance and verification-data cleanup are complete. Before the presentation, confirm the Supabase project is active and check images/contact settings. For future rehearsals, sign in as owner and a separate shopper, submit a test guest order, open its receipt, confirm it in admin, and verify stock. Delete/reset only clearly identified test data and label sample policies/data as demo content.

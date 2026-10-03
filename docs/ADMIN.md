@@ -4,7 +4,9 @@
 
 Trang quản trị nằm tại `/admin`. Đăng nhập Google qua trang **Tài khoản**. Chỉ tài khoản có `user_id` trong bảng Supabase `admin_members` được truy cập quản trị. Tài khoản khách hàng không tự có quyền này.
 
-Sau khi cấu hình Supabase và chạy migration theo README, đăng nhập một lần để tạo tài khoản trong Supabase Authentication. Chủ dự án thêm UUID người dùng đó vào bảng `admin_members` bằng Supabase Dashboard/SQL Editor. Không cấp quyền bằng mã phía trình duyệt hoặc dùng khóa service role ở phía client.
+Google đã được cấu hình trên bản triển khai chính thức. Chủ cửa hàng `mocbamm@gmail.com` đã đăng nhập và được cấp quyền quản trị lâu dài; dữ liệu kiểm tra đã được dọn, tài khoản và quyền này được giữ lại.
+
+Khi cần cấp quyền cho tài khoản quản trị mới, đăng nhập một lần để tạo tài khoản trong Supabase Authentication. Chủ dự án thêm UUID người dùng đó vào bảng `admin_members` bằng Supabase Dashboard/SQL Editor. Không cấp quyền bằng mã phía trình duyệt hoặc dùng khóa service role ở phía client.
 
 Nếu chưa cấu hình Supabase, trang quản trị hiển thị hướng dẫn thiết lập. Nếu đã đăng nhập nhưng chưa được cấp quyền, trang hiển thị thông báo hạn chế truy cập. API quản trị cũng kiểm tra quyền trên máy chủ.
 
@@ -30,7 +32,7 @@ Trạng thái thanh toán **Chờ thanh toán** được hiển thị riêng, ch
 
 ## Analytics
 
-Google Analytics và Meta Pixel được cấu hình qua biến môi trường theo README; không nhập khóa bí mật vào các ô nội dung. Các trang `/admin` được loại khỏi tracking của cửa hàng. Khách hàng lựa chọn chấp thuận analytics trước khi công cụ theo dõi được kích hoạt.
+Google Analytics đã được cấu hình và kiểm tra trên bản triển khai chính thức. Meta Pixel đang được hoãn theo lựa chọn của chủ dự án. Các mã tracking được cấu hình qua biến môi trường theo README; không nhập khóa bí mật vào các ô nội dung. Các trang `/admin` được loại khỏi tracking của cửa hàng. Khách hàng lựa chọn chấp thuận analytics trước khi công cụ theo dõi được kích hoạt.
 
 ## Kiểm tra sau khi cập nhật
 

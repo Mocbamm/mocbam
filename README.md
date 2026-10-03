@@ -2,7 +2,7 @@
 
 A Vietnamese graduation-project shop: Next.js App Router, TypeScript, Tailwind CSS/shadcn/ui and Supabase. The public storefront and protected admin are one application. Payment-gateway selection is deferred; submitting an order does not collect money.
 
-Live demo: [mocbam.vercel.app](https://mocbam.vercel.app). See [project status](docs/PROJECT-STATUS.md) for deployed resources, completed checks and remaining setup.
+Live demo: [mocbam.vercel.app](https://mocbam.vercel.app). Core production customer/admin acceptance is complete. See [project status](docs/PROJECT-STATUS.md) for deployed resources, completed checks, deferred features and the remaining owner action.
 
 ## Run locally
 
@@ -31,7 +31,7 @@ Products use one price/stock count each. Checkout recalculates database prices, 
 
 Open `/admin` after signing in with an account in `admin_members`. Manage products/images/stock, fulfillment, blog posts, page content, contact inquiries and store settings. Image uploads stay private until used by an active product or published post. See [admin guide](docs/ADMIN.md).
 
-Google OAuth setup, owner sign-in through the application and owner admin enrollment remain pending. See [project status](docs/PROJECT-STATUS.md) for the current acceptance checklist.
+Google sign-in is configured, and the permanent owner admin `mocbamm@gmail.com` has verified production access, product/image management, signed-in checkout, account order history and order cancellation. Verification data has been removed; the seeded catalog and permanent owner access are retained.
 
 ## Tracking
 
