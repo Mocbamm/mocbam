@@ -21,7 +21,7 @@ const itemStrings = new Set(["item_id", "item_name", "item_category"]);
 const itemNumbers = new Set(["price", "quantity"]);
 
 export function isAnalyticsPathAllowed(pathname: string) {
-  return !/^\/(admin|auth|don-hang)(\/|$)/.test(pathname);
+  return !/^\/(admin|auth|tai-khoan|don-hang)(\/|$)/.test(pathname);
 }
 export function isAnalyticsEnabled({
   production,

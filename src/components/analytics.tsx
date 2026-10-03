@@ -78,7 +78,8 @@ export function Analytics({
   function choose(value: "granted" | "denied") {
     saveConsent(value);
   }
-  const bootstrap = `window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};${gaId ? `gtag('js',new Date());gtag('config',${JSON.stringify(gaId)},{send_page_view:false,allow_google_signals:false,page_location:location.origin+location.pathname,page_referrer:location.origin});` : ""}${metaId ? `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('set','autoConfig',false,${JSON.stringify(metaId)});fbq('init',${JSON.stringify(metaId)});` : ""}`;
+  // Meta history tracking is separate from autoConfig; PageViews are sent manually.
+  const bootstrap = `window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};${gaId ? `gtag('js',new Date());gtag('config',${JSON.stringify(gaId)},{send_page_view:false,allow_google_signals:false,page_location:location.origin+location.pathname,page_referrer:location.origin});` : ""}${metaId ? `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq.disablePushState=true;fbq('set','autoConfig',false,${JSON.stringify(metaId)});fbq('init',${JSON.stringify(metaId)});` : ""}`;
   if (!enabled || !eligible) return null;
   return (
     <>

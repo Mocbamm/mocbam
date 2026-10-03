@@ -27,15 +27,19 @@ describe("shopping analytics", () => {
     expect(gtag).not.toHaveBeenCalled();
     expect(fbq).not.toHaveBeenCalled();
   });
-  it.each(["/admin", "/admin/orders", "/auth/callback", "/don-hang/private"])(
-    "excludes %s",
-    (path) => {
-      const { gtag, fbq } = browser(path, true);
-      trackStoreEvent("begin_checkout", { value: 10 });
-      expect(gtag).not.toHaveBeenCalled();
-      expect(fbq).not.toHaveBeenCalled();
-    },
-  );
+  it.each([
+    "/admin",
+    "/admin/orders",
+    "/auth/callback",
+    "/tai-khoan",
+    "/tai-khoan/orders",
+    "/don-hang/private",
+  ])("excludes %s", (path) => {
+    const { gtag, fbq } = browser(path, true);
+    trackStoreEvent("begin_checkout", { value: 10 });
+    expect(gtag).not.toHaveBeenCalled();
+    expect(fbq).not.toHaveBeenCalled();
+  });
   it("maps an unpaid order to a custom event and excludes personal data", () => {
     const { gtag, fbq } = browser("/thanh-toan", true);
     trackStoreEvent("order_submitted", {
@@ -169,6 +173,35 @@ describe("analytics page lifecycle", () => {
     expect(gtag.mock.calls[0][2].page_location).toBe(
       "https://mocbam.example/san-pham/meo-moc",
     );
+  });
+  it("revokes tracking on account pages and resumes on a public route", () => {
+    const { gtag, fbq } = browser(options.pathname, true);
+    const session = createAnalyticsSession();
+    const gaId = "G-TEST";
+    syncAnalyticsPage(session, { ...options, gaId });
+    syncAnalyticsPage(session, { ...options, gaId, pathname: "/tai-khoan" });
+    syncAnalyticsPage(session, {
+      ...options,
+      gaId,
+      pathname: "/tai-khoan/orders",
+    });
+    const target = window as Window & {
+      mocbamAnalyticsConsent?: boolean;
+      "ga-disable-G-TEST"?: boolean;
+    };
+    expect(target.mocbamAnalyticsConsent).toBe(false);
+    expect(target["ga-disable-G-TEST"]).toBe(true);
+    expect(
+      gtag.mock.calls.filter((call) => call[1] === "page_view"),
+    ).toHaveLength(1);
+    expect(fbq).toHaveBeenCalledWith("consent", "revoke");
+    syncAnalyticsPage(session, { ...options, gaId });
+    expect(target.mocbamAnalyticsConsent).toBe(true);
+    expect(target["ga-disable-G-TEST"]).toBe(false);
+    expect(
+      gtag.mock.calls.filter((call) => call[1] === "page_view"),
+    ).toHaveLength(2);
+    expect(JSON.stringify(gtag.mock.calls)).not.toContain("tai-khoan");
   });
   it("disables previews even when a local analytics override is enabled", () => {
     expect(

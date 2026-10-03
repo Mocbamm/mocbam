@@ -17,6 +17,8 @@ Embedded PostgreSQL verifies real SQL, transactions and RLS. It serializes a sin
 
 ## Analytics
 
-Before consent, no GA/Meta scripts or events. After consent, one page view for each eligible navigation, one product view, one cart event per action, checkout start and order submission. Receipt/auth/admin pages and preview deployments must not be tracked. Do not send names, emails, phones, addresses, receipt tokens or authentication codes. No `Purchase` event exists while payments are deferred.
+Before consent, no GA/Meta scripts or events. After consent, one page view for each eligible navigation, one product view, one cart event per action, checkout start and order submission. Receipt/auth/admin pages, account/order-history pages (`/tai-khoan` and its descendants), and preview deployments must not be tracked. Do not send names, emails, phones, addresses, receipt tokens or authentication codes. No `Purchase` event exists while payments are deferred.
 
 Use GA4 DebugView/Tag Assistant and Meta Test Events to verify destination delivery after IDs are configured. Client-stub tests prove mapping/gating; they cannot prove delivery to an unconfigured provider.
+
+Follow the [provider settings checklist](DEPLOYMENT.md#tracking-provider-settings) before testing. Use Tag Assistant to enable GA4 debug mode for the verification browser; ordinary events do not automatically appear in DebugView. Check both providers through navigation to account, admin and receipt pages, then back to the public store. There must be no automatic history page views or duplicate manual views. Reopen cookie options, refuse consent and confirm new events stop; grant it again and confirm tracking resumes without repeating the current page view.

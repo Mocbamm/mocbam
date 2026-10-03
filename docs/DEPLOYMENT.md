@@ -32,7 +32,13 @@ Only the project owner/database administrator performs this step. Shopper accoun
 
 Sign in with the Mộc Bàm account, import the public GitHub repository, choose Next.js, and add the environment values above. Vercel uses the committed pnpm lockfile and Node 24. Use the default Vercel domain and committed Singapore region. After the first deployment, update `NEXT_PUBLIC_SITE_URL` and Supabase URL configuration, then redeploy.
 
-Add optional `NEXT_PUBLIC_GA_ID` and `NEXT_PUBLIC_META_PIXEL_ID` only when their properties are available. Turn off GA4 Enhanced Measurement's automatic page views/form tracking in the web data stream; this app sends explicit events and excludes sensitive routes. Verify in GA4 DebugView/Tag Assistant and Meta Test Events using a browser without tracking blockers and consent granted. Do not add fake identifiers to demonstrate success.
+Add optional `NEXT_PUBLIC_GA_ID` and `NEXT_PUBLIC_META_PIXEL_ID` only when their properties are available. These public values are embedded at build time: set them for Vercel Production, then rebuild/redeploy. Do not add fake identifiers to demonstrate success.
+
+## Tracking provider settings
+
+- **GA4:** create a Web data stream for `https://mocbam.vercel.app` and copy its Measurement ID (`G-...`), not the numeric property ID or a GTM container ID. Use Vietnam's time zone and VND for reporting. Turn Enhanced Measurement off for this explicit-event demo; if retaining any options, disable Page views → advanced → **Page changes based on browser history events** and **Form interactions**. `send_page_view: false` in code does not disable automatic history views. See [Google's pageview guide](https://developers.google.com/analytics/devguides/collection/ga4/views).
+- **Meta:** use the intended numeric Pixel/dataset ID with browser events enabled. In Events Manager, keep Automatic Advanced Matching and automatic events disabled, and do not add Event Setup Tool rules that duplicate the app's events. If a traffic permission allowlist is enabled, include `mocbam.vercel.app`. This application uses browser Pixel events only; do not install a second tag or a Conversions API integration for this setup. Code disables automatic configuration and history tracking before initializing the Pixel, following the [official Meta template](https://github.com/facebook/GoogleTagManager-WebTemplate-For-FacebookPixel/blob/main/template.tpl).
+- **Delivery check:** connect Google Tag Assistant to enable debug mode for the test browser, then inspect GA4 DebugView and Meta Events Manager → Test Events with consent granted and browser tracking blockers disabled. Check the correct property/Pixel, one event per intended action, and no events on account, admin, auth or receipt routes. `RemoveFromCart` and `OrderSubmitted` are Meta custom events; unpaid orders must not generate `Purchase`. See [Google's DebugView guide](https://support.google.com/analytics/answer/7201382).
 
 ## Rehearsal
 
