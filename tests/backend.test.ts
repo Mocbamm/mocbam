@@ -4,6 +4,7 @@ import {
   canonicalOrderPayload,
   imageExtension,
   orderSchema,
+  postSchema,
   productSchema,
   statusSchema,
 } from "@/lib/validation";
@@ -173,6 +174,36 @@ describe("input integrity and guest receipts", () => {
       statusSchema.safeParse({ status: "confirmed", payment_status: "paid" })
         .success,
     ).toBe(false);
+  });
+  it("allows storefront-compatible fixture, upload and Supabase image URLs for products and posts", () => {
+    for (const image_url of [
+      "/images/product-01.svg",
+      "/api/media/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.webp",
+      "https://demo-project.supabase.co/storage/v1/object/public/catalog/product.png?width=600",
+    ]) {
+      expect(productSchema.partial().safeParse({ image_url }).success).toBe(
+        true,
+      );
+      expect(postSchema.partial().safeParse({ image_url }).success).toBe(true);
+    }
+  });
+  it("rejects image hosts the storefront cannot render and misleading Supabase URLs", () => {
+    for (const image_url of [
+      "https://images.example.com/product.png",
+      "https://demo-project.supabase.co.attacker.example/product.png",
+      "https://attacker.example@demo-project.supabase.co/product.png",
+      "https://demo-project.supabase.co@attacker.example/product.png",
+      "http://demo-project.supabase.co/product.png",
+      "https:/demo-project.supabase.co/product.png",
+      "//demo-project.supabase.co/product.png",
+      "https://demo-project.supabase.co/product image.png",
+      "https://",
+    ]) {
+      expect(productSchema.partial().safeParse({ image_url }).success).toBe(
+        false,
+      );
+      expect(postSchema.partial().safeParse({ image_url }).success).toBe(false);
+    }
   });
   it("requires raster signature to match MIME and rejects SVG", () => {
     expect(

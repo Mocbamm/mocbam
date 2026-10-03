@@ -7,13 +7,25 @@ const slug = short(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const image = z
   .string()
   .max(500)
-  .refine(
-    (v) =>
+  .refine((v) => {
+    if (
       /^\/images\/[a-zA-Z0-9._-]+$/.test(v) ||
-      /^\/api\/media\/[a-f0-9-]+\.(jpg|png|webp)$/.test(v) ||
-      /^https:\/\/[^\s]+$/.test(v),
-    "Đường dẫn hình ảnh không hợp lệ.",
-  );
+      /^\/api\/media\/[a-f0-9-]+\.(jpg|png|webp)$/.test(v)
+    )
+      return true;
+    if (!v.startsWith("https://") || /\s/.test(v)) return false;
+    try {
+      const url = new URL(v);
+      return (
+        url.protocol === "https:" &&
+        /^[a-z0-9-]+\.supabase\.co$/.test(url.hostname) &&
+        !url.username &&
+        !url.password
+      );
+    } catch {
+      return false;
+    }
+  }, "Chọn ảnh đã tải, /images/... hoặc URL HTTPS từ Supabase.");
 const social = z.union([
   z.literal(""),
   z.url().refine((v) => new URL(v).protocol === "https:"),

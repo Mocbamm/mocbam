@@ -118,9 +118,10 @@ export default async function AdminDashboard() {
         )}
       </div>
       <div className="mt-6 rounded-2xl bg-[#eaf0e2] p-5 text-sm leading-6 text-[#53664a]">
-        <strong>Nhắc nhỏ:</strong> Cửa hàng hiện dùng phương thức thanh toán
-        chuyển khoản. Đơn đặt hàng luôn hiển thị “Chờ thanh toán”; trạng thái xử
-        lý đơn được cập nhật riêng trong mục Đơn hàng.
+        <strong>Nhắc nhỏ:</strong> Phương thức thanh toán chưa được thiết lập;
+        website chưa thu tiền trực tuyến. Đơn đặt hàng hiển thị “Chờ thanh
+        toán”. Trạng thái xử lý đơn được cập nhật riêng trong mục Đơn hàng và
+        không xác nhận việc thanh toán.
       </div>
     </>
   );

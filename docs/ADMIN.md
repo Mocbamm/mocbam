@@ -11,7 +11,7 @@ Nếu chưa cấu hình Supabase, trang quản trị hiển thị hướng dẫn
 ## Sản phẩm và bài viết
 
 - **Sản phẩm:** chọn “Thêm sản phẩm”, nhập tên, đường dẫn không dấu dạng `ten-san-pham`, danh mục, giá VNĐ, tồn kho, ảnh và mô tả. “Hiển thị trên cửa hàng” cho phép ẩn sản phẩm; “Sản phẩm nổi bật” chọn sản phẩm cho trang chủ. Khi hết hàng, cập nhật tồn kho về 0.
-- **Ảnh:** nhập URL HTTPS hoặc tải ảnh JPG/PNG/WebP tối đa 4 MB. Tệp tải lên được lưu trong Supabase Storage đã cấu hình theo README.
+- **Ảnh:** tải ảnh JPG/PNG/WebP tối đa 4 MB, dùng ảnh mẫu tại `/images/...`, hoặc nhập URL ảnh công khai HTTPS từ host `<project>.supabase.co`. Host ảnh bên ngoài khác không được hỗ trợ. Tệp tải lên được lưu trong Supabase Storage đã cấu hình theo README và dùng đường dẫn `/api/media/...` do ứng dụng cung cấp.
 - **Bài viết:** nhập tiêu đề, đường dẫn, mô tả ngắn, ảnh và nội dung. Nội dung là văn bản thuần, ngăn các đoạn bằng một dòng trống. Bỏ chọn “Xuất bản trên cửa hàng” để giữ bản nháp hoặc ẩn bài viết.
 
 ## Xử lý đơn hàng

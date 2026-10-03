@@ -152,7 +152,7 @@ export function ImageField({
         <div className="flex-1 space-y-2">
           <Input
             type="text"
-            placeholder="https://... hoặc đường dẫn ảnh đã tải"
+            placeholder="URL ảnh Supabase hoặc đường dẫn ảnh đã tải"
             value={value}
             onChange={(event) => onChange(event.target.value)}
             disabled={disabled || uploading}
@@ -182,7 +182,8 @@ export function ImageField({
             {uploading ? "Đang tải..." : "Tải ảnh lên"}
           </Button>
           <p className="text-xs text-[#788273]">
-            JPG, PNG hoặc WebP · tối đa 4 MB
+            URL HTTPS từ Supabase, /images/... hoặc ảnh đã tải. Tải JPG, PNG
+            hoặc WebP · tối đa 4 MB.
           </p>
         </div>
       </div>
