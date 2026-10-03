@@ -8,7 +8,8 @@ Last verified: 3 October 2026. This records the current deployment and checks; f
 - Repository: [Mocbamm/mocbam](https://github.com/Mocbamm/mocbam), `main`.
 - Vercel: project `mocbam`, Hobby plan, production deployment Ready, functions in Singapore (`sin1`).
 - Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Migration and seed applied: 8 products, 2 posts and 6 editable content records; initial flat shipping fee is 0₫.
-- GA4: account `410553554`, property `557218756`, Web stream `16000604251`, Measurement ID `G-PV2R92QXC7`, configured on production. Enhanced Measurement is off; email and URL parameters `token`, `code`, `email`, `phone` and `address` have redaction enabled. Provider reception is still under verification.
+- GA4: account `410553554`, property `557218756`, Web stream `16000604251`, Measurement ID `G-PV2R92QXC7`, configured on production. Enhanced Measurement is off; email and URL parameters `token`, `code`, `email`, `phone` and `address` have redaction enabled. Actual event delivery was verified through Tag Assistant and GA4 Realtime.
+- Google Cloud: project `mocbam` and app branding created; the Web OAuth client form is prepared, with the owner's Create action and provider configuration still pending.
 
 The initial catalog, artwork, contact information and policies remain demonstration content. Orders remain `awaiting_payment`; payment integration is deferred and the website does not collect payment. Meta Pixel setup is explicitly deferred by the project owner; no Pixel ID is configured.
 
@@ -21,12 +22,14 @@ The initial catalog, artwork, contact information and policies remain demonstrat
 - A browser checkout on the production deployment persisted one 99,000₫ guest order, reserved stock, cleared the cart and displayed its awaiting-payment receipt. Production APIs rejected anonymous admin/history access; the synthetic order and temporary product were removed.
 - The latest production deployment passed anonymous access checks for every admin collection and customer order history. Unknown receipt requests disclose no order data; receipt pages use no-store, no-referrer and noindex headers.
 - A replacement Supabase server key was saved in Vercel Production and verified through a persisted contact inquiry; the temporary inquiry was removed.
+- Production GA4 delivery was verified in Tag Assistant and GA4 Realtime: `page_view` 6 (including 2 earlier reloads), `view_item` 1, `add_to_cart` 2, `remove_from_cart` 1, `begin_checkout` 1 and `order_submitted` 1; no `Purchase`. The clean verification window contained the expected 4 page views: About after consent, product, cart and checkout. Receipt/account visits and denied-consent routes added no page views.
+- The analytics guest checkout created temporary order MB-6 for 99,000₫, shipping 0₫, quantity 1 and `awaiting_payment`; stock changed from 3 to 2. Exact guarded cleanup removed only its order, product and category. All 8 seeded product rows remained unchanged.
+- Chrome's uBlock Origin Lite initially replaced the Google tag with an extension stub. A temporary site-only allowance enabled provider testing; the original Optimal filtering on `mocbam.vercel.app` was restored and confirmed after verification.
 
 ## Remaining setup and acceptance
 
-- Configure Google OAuth and grant the intended owner membership in `admin_members`; verify real owner and shopper sign-in through the deployed app.
-- Verify opt-in consent and actual reception in GA4 using Tag Assistant/DebugView; deployment of the Measurement ID does not prove event delivery. Meta provider verification remains deferred with its setup.
-  - Chrome's uBlock Origin Lite was observed replacing `googletagmanager/gtag/js` with the extension's `google-analytics_analytics.js`. A temporary allowance for this site only was requested for provider testing; this observation does not demonstrate an application bug or successful delivery.
+- Finish the prepared Google Web OAuth client Create action, save its client ID/secret directly to the Supabase Google provider, and grant the intended owner membership in `admin_members`; verify real owner and shopper sign-in through the deployed app. Exact origins, redirect URLs and canonical-domain checks are documented in [provider setup](DEPLOYMENT.md#google-login-and-admin).
+- Meta Pixel setup and provider verification remain explicitly deferred by the project owner.
 - Finish revoking the previous Supabase server key through the prepared owner action.
 - Complete the final production end-to-end customer/admin flow after external configuration is finished, including checkout, receipt, fulfillment, content changes and contact handling. See [verification checklist](VERIFICATION.md).
 

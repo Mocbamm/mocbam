@@ -35,7 +35,7 @@ Google OAuth setup, owner sign-in through the application and owner admin enroll
 
 ## Tracking
 
-GA4 Measurement ID `G-PV2R92QXC7` is configured on production. Enhanced Measurement is off; email and the URL parameters `token`, `code`, `email`, `phone` and `address` have provider-side redaction enabled. Actual reception in GA4 is still being verified. Meta Pixel configuration is deferred by the project owner; no Pixel ID is configured. Payment integration is also deferred.
+GA4 Measurement ID `G-PV2R92QXC7` is configured on production. Enhanced Measurement is off; email and the URL parameters `token`, `code`, `email`, `phone` and `address` have provider-side redaction enabled. Actual production events were verified in Tag Assistant and GA4 Realtime, including product views, cart changes, checkout start and an accepted unpaid order. No `Purchase` was sent. The site's original uBlock filtering was restored after verification. Meta Pixel configuration is deferred by the project owner; no Pixel ID is configured. Payment integration is also deferred.
 
 Tracking is opt-in and disabled on admin, authentication, account/order-history (`/tai-khoan`), receipt and ordinary preview routes. The event layer supports views, cart additions/removals (including quantity deltas), checkout starts and `order_submitted`; its optional Meta mapping uses the custom `RemoveFromCart` event for removals and `OrderSubmitted` for accepted orders. It never sends a purchase for an unpaid order. Personal contact and address information are excluded. See [provider setup](docs/DEPLOYMENT.md) and the [verification guide](docs/VERIFICATION.md).
 

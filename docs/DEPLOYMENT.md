@@ -16,7 +16,18 @@ Do not rotate `ORDER_TOKEN_SECRET` casually: earlier idempotent checkout retries
 
 ## Google login and admin
 
-Create a Google OAuth Web client, configure Supabase's `/auth/v1/callback` as its authorized redirect URI, then add its client ID/secret to the Supabase Google provider. Set Supabase's Site URL to the application; add the exact app `/auth/callback` URLs used for production/local development. If Google's consent app is in testing, add demo users to the permitted test users list.
+The Google Cloud project `mocbam` and branding exist. Finish the prepared Web OAuth client Create action, then save the generated client ID and secret directly in Supabase Authentication → Providers → Google. Never place the secret in public source or browser environment variables. Configure these exact URLs:
+
+| Setting | Value |
+| --- | --- |
+| Google authorized JavaScript origins | `https://mocbam.vercel.app`; optionally `http://localhost:3000` for development |
+| Google authorized redirect URI | `https://ciyhftqiwbmbvnybygxy.supabase.co/auth/v1/callback` |
+| Supabase Site URL | `https://mocbam.vercel.app` |
+| Supabase allowed redirect URLs | `https://mocbam.vercel.app/auth/callback`; optionally `http://localhost:3000/auth/callback` |
+
+Run production sign-in checks from `https://mocbam.vercel.app`, matching `NEXT_PUBLIC_SITE_URL`. The PKCE verifier cookie and application callback must use the same domain; starting on another Vercel deployment hostname can prevent the callback exchange.
+
+Request only basic identity scopes (`openid`, `email`, `profile`). Google documents an exception to Testing-mode test-user restrictions and seven-day authorization expiry for these basic identity-only requests. Additional scopes remove that exception; Google account availability and Workspace policies can still restrict access. Do not treat the Testing allowlist as an admin access control. See [Google's audience guidance](https://support.google.com/cloud/answer/15549945?hl=en).
 
 After the owner signs in through the app, check the account in Authentication → Users. Use its exact verified user UUID in the SQL editor:
 
@@ -35,6 +46,8 @@ Sign in with the Mộc Bàm account, import the public GitHub repository, choose
 Add optional `NEXT_PUBLIC_GA_ID` and `NEXT_PUBLIC_META_PIXEL_ID` only when their properties are available. These public values are embedded at build time: set them for Vercel Production, then rebuild/redeploy. Do not add fake identifiers to demonstrate success.
 
 ## Tracking provider settings
+
+The current GA4 Measurement ID is `G-PV2R92QXC7`; production delivery has been verified through Tag Assistant and GA4 Realtime. Enhanced Measurement is off and provider-side email/URL redaction is configured. Meta setup is deferred and no Pixel ID is configured; its instructions below apply only if that work is resumed. Restore any temporary site-only blocker allowance after provider testing; the original uBlock Optimal filtering was restored after the current verification.
 
 - **GA4:** create a Web data stream for `https://mocbam.vercel.app` and copy its Measurement ID (`G-...`), not the numeric property ID or a GTM container ID. Use Vietnam's time zone and VND for reporting. Turn Enhanced Measurement off for this explicit-event demo; if retaining any options, disable Page views → advanced → **Page changes based on browser history events** and **Form interactions**. `send_page_view: false` in code does not disable automatic history views. See [Google's pageview guide](https://developers.google.com/analytics/devguides/collection/ga4/views).
 - **Meta:** use the intended numeric Pixel/dataset ID with browser events enabled. In Events Manager, keep Automatic Advanced Matching and automatic events disabled, and do not add Event Setup Tool rules that duplicate the app's events. If a traffic permission allowlist is enabled, include `mocbam.vercel.app`. This application uses browser Pixel events only; do not install a second tag or a Conversions API integration for this setup. Code disables automatic configuration and history tracking before initializing the Pixel, following the [official Meta template](https://github.com/facebook/GoogleTagManager-WebTemplate-For-FacebookPixel/blob/main/template.tpl).
