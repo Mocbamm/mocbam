@@ -7,7 +7,7 @@ Create a Supabase Free project named `mocbam` in the Mộc Bàm organization/acc
 - Fresh database: apply `supabase/migrations/202610030001_initial.sql`, then `202610030002_manual_payments.sql`, then `supabase/seed.sql`.
 - Existing database with migration 001 applied: apply migration 002 once. Do not rerun migration 001 or the seed; they are not an upgrade/reset procedure.
 
-The hosted project has applied migration 002 successfully and its new settings were verified through the SDK: transfer is disabled and receiving fields are blank. Deployment and production acceptance of the matching application revision remain pending; see [project status](PROJECT-STATUS.md).
+The hosted project has applied migration 002 successfully and its new settings were verified through the SDK: transfer is disabled and receiving fields are blank. The matching application revision passed production HTTP and browser verification using the owner account; stock checks and exact QA cleanup are complete. See [project status](PROJECT-STATUS.md).
 
 Copy only these values into local/Vercel environment configuration:
 
@@ -70,4 +70,4 @@ The current GA4 Measurement ID is `G-PV2R92QXC7`; production delivery has been v
 
 ## Rehearsal
 
-The earlier storefront/customer/admin acceptance and its verification-data cleanup are complete. The new manual-payment revision still needs deployment and production acceptance. Rehearse COD submission, receipt/account method and status, admin reconciliation, paid cancellation and manual refund records using clearly marked verification data; check stock and audit entries. Bank-transfer activation remains deferred until real receiving details are available. Before the presentation, confirm the Supabase project is active and check images/contact settings. Remove only identified test data and label sample policies/data as demo content. See the [verification checklist](VERIFICATION.md).
+Production manual-payment acceptance, stock checks and exact QA cleanup are complete. For future rehearsals, use clearly marked verification data and check receipts/account history, stock and audit entries. These checks verify recording, not actual bank settlement. Bank-transfer activation and real bank/provider verification remain deferred until receiving details are available. Before the presentation, confirm the Supabase project is active and check images/contact settings. Remove only identified test data and label sample policies/data as demo content. See the [verification checklist](VERIFICATION.md).

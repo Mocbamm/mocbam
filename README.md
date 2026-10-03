@@ -2,7 +2,7 @@
 
 A Vietnamese graduation-project shop: Next.js App Router, TypeScript, Tailwind CSS/shadcn/ui and Supabase. The public storefront and protected admin are one application. Payments use COD or manual bank transfer with a locally generated QR; submitting an order does not move money or confirm receipt of payment.
 
-Live demo: [mocbam.vercel.app](https://mocbam.vercel.app). The existing storefront has passed production acceptance. The manual-payment database migration is applied; application deployment and production verification of this revision are pending. See [project status](docs/PROJECT-STATUS.md).
+Live demo: [mocbam.vercel.app](https://mocbam.vercel.app). Production HTTP and browser verification using the owner account passed COD checkout, payment recording, paid cancellation and refund recording. QA resources were removed; seeded data and permanent owner access were retained. See [project status](docs/PROJECT-STATUS.md).
 
 ## Run locally
 

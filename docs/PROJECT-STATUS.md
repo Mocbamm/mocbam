@@ -1,12 +1,12 @@
 # Project status
 
-Last verified: 3 October 2026. The earlier production storefront/customer/admin acceptance and verification-data cleanup are complete. The manual-payment database migration is applied; deployment and production acceptance of the matching application revision are pending. Revocation of the previous Supabase server key remains an owner action.
+Last verified: 3 October 2026. Production acceptance, stock verification and exact QA cleanup are complete for COD checkout, payment recording, paid cancellation and refund recording. Revocation of the previous Supabase server key remains an owner action; real bank activation/provider verification and Meta setup are deferred.
 
 ## Deployment
 
 - Live storefront: [mocbam.vercel.app](https://mocbam.vercel.app).
 - Repository: [Mocbamm/mocbam](https://github.com/Mocbamm/mocbam), `main`.
-- Vercel: project `mocbam`, Hobby plan, earlier production deployment Ready, functions in Singapore (`sin1`). The manual-payment application revision has not yet completed deployment/acceptance.
+- Vercel: project `mocbam`, Hobby plan, functions in Singapore (`sin1`). Acceptance source `ec1393d` was verified Ready/Current in the [deployment UI](https://vercel.com/mocbam/mocbam/87xUxf2J6b2vZpQcM6h5oNzb93GH); [GitHub CI run 37131724976](https://github.com/Mocbamm/mocbam/actions/runs/37131724976) passed. This revision aligns the footer after manual-payment core `574dc7e`, whose deployment and CI also passed.
 - Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Initial migration/seed and manual-payment migration `202610030002_manual_payments.sql` applied. Seed catalog: 8 products, 2 posts and 6 editable content records; initial flat shipping fee is 0₫.
 - GA4: account `410553554`, property `557218756`, Web stream `16000604251`, Measurement ID `G-PV2R92QXC7`, configured on production. Enhanced Measurement is off; email and URL parameters `token`, `code`, `email`, `phone` and `address` have redaction enabled. Actual event delivery was verified through Tag Assistant and GA4 Realtime.
 - Google Cloud: project `mocbam`, app branding and Web OAuth client configured; Supabase's Google provider is enabled. The verified owner `mocbamm@gmail.com` is permanently enrolled in `admin_members`.
@@ -16,8 +16,12 @@ The initial catalog, artwork, contact information and policies remain demonstrat
 ## Verified
 
 - Hosted migration 002 completed successfully in the SQL editor. SDK reads confirmed bank transfer is disabled and all receiving fields are blank. This verifies migration/settings availability, not the new application's production payment flow.
-- TypeScript, lint and the production build passed for the manual-payment revision. All 88 unit/database/API tests passed, including four focused legacy HTTP retry tests. The full local browser suite passed 18 checks; one configured-auth check was skipped as expected in the read-only demo environment and still needs hosted production verification.
+- TypeScript, lint and the production build passed for the manual-payment revision. All 88 unit/database/API tests passed, including four focused legacy HTTP retry tests. The full local browser suite passed 18 checks; one configured-auth check was skipped as expected in the read-only demo environment. Hosted authenticated checks are recorded separately below.
 - Nine local payment browser fixtures passed: COD default and unavailable-transfer copy, exact bank receipt instructions, QR hiding after payment/cancellation/refund, COD receipt messaging and zero-total orders for all methods. These use synthetic browser fixtures and do not verify actual bank settlement.
+- All nine production manual-payment HTTP verification groups passed on the deployed application. Exact cleanup removed two QA orders, two payment audit entries, one product, one category and two temporary users. The baseline 8 seeded products, 2 categories, 2 posts, 6 content rows, settings and permanent owner/admin membership remained unchanged. Bank transfer is still disabled with blank receiving details; no real money was moved.
+- Browser verification using the owner account passed the production payment flow on `ec1393d` with synthetic COD order MB-11: 99,000₫ total, shipping 0₫, quantity 1, `awaiting_payment` and cart cleared. Admin payment recording left fulfillment `pending` and set payment `paid` with one audit entry; the dated receipt and owner history showed paid. Cancelling through admin left `cancelled` + `paid` and displayed the manual-refund warning in admin and receipt. Recording the synthetic refund set `refunded`, displayed both audit notes, and updated the receipt date and owner history. No real money was moved.
+- Final helper verification confirmed MB-11 belonged to the permanent Google owner, finished `cancelled` + `refunded`, restored product stock to 3 and had exactly two matching paid/refund audit notes. Exact cleanup removed its one order, cascading order items/two audit entries, and one marked product. Seeded products/settings/category and the permanent owner/admin membership remained unchanged by hash; transfer stays disabled with blank bank details. All QA cleanup is complete.
+- The final admin UI showed 8 products, 0 orders and 0 inquiries, with permanent `mocbamm@gmail.com` admin access retained. Default shipping/terms copy was synchronized using exact-content guards that preserve owner-edited policies; the COD footer copy was verified live. Normal local development configuration was restored and localhost returned HTTP 200.
 
 The following production checks apply to the earlier storefront revision:
 
@@ -34,10 +38,9 @@ The following production checks apply to the earlier storefront revision:
 - The analytics guest checkout created temporary order MB-6 for 99,000₫, shipping 0₫, quantity 1 and `awaiting_payment`; stock changed from 3 to 2. Exact guarded cleanup removed only its order, product and category. All 8 seeded product rows remained unchanged.
 - Chrome's uBlock Origin Lite initially replaced the Google tag with an extension stub. A temporary site-only allowance enabled provider testing; the original Optimal filtering on `mocbam.vercel.app` was restored and confirmed after verification.
 
-## Remaining deployment checks, owner action and deferred work
+## Remaining owner action and deferred work
 
-- Deploy the tested manual-payment application revision and verify actual production COD checkout, receipt/account status, admin payment audit, paid cancellation/stock restoration and refund record. Remove only the identified QA resources afterward; see [verification](VERIFICATION.md).
 - The owner still needs to revoke the previous Supabase `SECRET default` server key. The replacement is active; revocation of the old key has not been confirmed.
-- Real receiving-bank details/transfer activation and Meta Pixel setup/provider verification remain explicitly deferred by the project owner. Automatic payment gateways/bank confirmation are outside this implementation.
+- Real receiving-bank details/transfer activation, actual bank/provider settlement verification and Meta Pixel setup/provider verification remain explicitly deferred by the project owner. Automatic payment gateways/bank confirmation are outside this implementation.
 
 Check the Supabase Free project is active before the graduation presentation. The [verification checklist](VERIFICATION.md) documents the flows to rehearse after future changes.
