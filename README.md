@@ -31,9 +31,13 @@ Products use one price/stock count each. Checkout recalculates database prices, 
 
 Open `/admin` after signing in with an account in `admin_members`. Manage products/images/stock, fulfillment, blog posts, page content, contact inquiries and store settings. Image uploads stay private until used by an active product or published post. See [admin guide](docs/ADMIN.md).
 
+Google OAuth setup, owner sign-in through the application and owner admin enrollment remain pending. See [project status](docs/PROJECT-STATUS.md) for the current acceptance checklist.
+
 ## Tracking
 
-Set `NEXT_PUBLIC_GA_ID` and/or `NEXT_PUBLIC_META_PIXEL_ID` on the production deployment. Tracking is opt-in and disabled on admin, authentication, account/order-history (`/tai-khoan`), receipt and ordinary preview routes. The event layer sends views, cart additions/removals (including quantity deltas), checkout starts and `order_submitted`; Meta uses the custom `RemoveFromCart` event for removals and `OrderSubmitted` for accepted orders. It never sends a purchase for an unpaid order. Personal contact and address information are excluded. See [provider setup](docs/DEPLOYMENT.md) and the [verification guide](docs/VERIFICATION.md).
+GA4 Measurement ID `G-PV2R92QXC7` is configured on production. Enhanced Measurement is off; email and the URL parameters `token`, `code`, `email`, `phone` and `address` have provider-side redaction enabled. Actual reception in GA4 is still being verified. Meta Pixel configuration is deferred by the project owner; no Pixel ID is configured. Payment integration is also deferred.
+
+Tracking is opt-in and disabled on admin, authentication, account/order-history (`/tai-khoan`), receipt and ordinary preview routes. The event layer supports views, cart additions/removals (including quantity deltas), checkout starts and `order_submitted`; its optional Meta mapping uses the custom `RemoveFromCart` event for removals and `OrderSubmitted` for accepted orders. It never sends a purchase for an unpaid order. Personal contact and address information are excluded. See [provider setup](docs/DEPLOYMENT.md) and the [verification guide](docs/VERIFICATION.md).
 
 ## Checks
 

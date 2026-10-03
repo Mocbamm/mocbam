@@ -8,8 +8,9 @@ Last verified: 3 October 2026. This records the current deployment and checks; f
 - Repository: [Mocbamm/mocbam](https://github.com/Mocbamm/mocbam), `main`.
 - Vercel: project `mocbam`, Hobby plan, production deployment Ready, functions in Singapore (`sin1`).
 - Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Migration and seed applied: 8 products, 2 posts and 6 editable content records; initial flat shipping fee is 0₫.
+- GA4: account `410553554`, property `557218756`, Web stream `16000604251`, Measurement ID `G-PV2R92QXC7`, configured on production. Enhanced Measurement is off; email and URL parameters `token`, `code`, `email`, `phone` and `address` have redaction enabled. Provider reception is still under verification.
 
-The initial catalog, artwork, contact information and policies remain demonstration content. Orders remain `awaiting_payment`; the website does not collect payment.
+The initial catalog, artwork, contact information and policies remain demonstration content. Orders remain `awaiting_payment`; payment integration is deferred and the website does not collect payment. Meta Pixel setup is explicitly deferred by the project owner; no Pixel ID is configured.
 
 ## Verified
 
@@ -19,12 +20,14 @@ The initial catalog, artwork, contact information and policies remain demonstrat
 - Eight authenticated admin HTTP verification groups passed against the local app and hosted Supabase: product/post management, image upload and visibility, content, settings, inquiry resolution and order updates. A regular signed-in customer was denied access in all 17 admin read/write checks. Only temporary verification resources were created and removed; settings were checked using their existing values.
 - A browser checkout on the production deployment persisted one 99,000₫ guest order, reserved stock, cleared the cart and displayed its awaiting-payment receipt. Production APIs rejected anonymous admin/history access; the synthetic order and temporary product were removed.
 - The latest production deployment passed anonymous access checks for every admin collection and customer order history. Unknown receipt requests disclose no order data; receipt pages use no-store, no-referrer and noindex headers.
-- A replacement Supabase server key was saved in Vercel Production and verified through a persisted contact inquiry; the temporary inquiry was removed. Revocation of the previous key requires the owner to finish the prepared Supabase action.
+- A replacement Supabase server key was saved in Vercel Production and verified through a persisted contact inquiry; the temporary inquiry was removed.
 
 ## Remaining setup and acceptance
 
 - Configure Google OAuth and grant the intended owner membership in `admin_members`; verify real owner and shopper sign-in through the deployed app.
-- Configure GA4 and Meta Pixel identifiers, then verify consent and actual event delivery in the providers' tools.
+- Verify opt-in consent and actual reception in GA4 using Tag Assistant/DebugView; deployment of the Measurement ID does not prove event delivery. Meta provider verification remains deferred with its setup.
+  - Chrome's uBlock Origin Lite was observed replacing `googletagmanager/gtag/js` with the extension's `google-analytics_analytics.js`. A temporary allowance for this site only was requested for provider testing; this observation does not demonstrate an application bug or successful delivery.
+- Finish revoking the previous Supabase server key through the prepared owner action.
 - Complete the final production end-to-end customer/admin flow after external configuration is finished, including checkout, receipt, fulfillment, content changes and contact handling. See [verification checklist](VERIFICATION.md).
 
 Passing local and hosted component checks does not establish complete production acceptance. Check the Supabase Free project is active before the graduation presentation.
