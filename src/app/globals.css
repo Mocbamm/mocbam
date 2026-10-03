@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf9f5;
+  --foreground: #253b2d;
+  --card: #ffffff;
+  --card-foreground: #253b2d;
+  --primary: #345f41;
+  --primary-foreground: #ffffff;
+  --secondary: #ecebdf;
+  --secondary-foreground: #253b2d;
+  --muted: #f0efe7;
+  --muted-foreground: #747d70;
+  --accent: #e5eadf;
+  --accent-foreground: #253b2d;
+  --destructive: #a53c35;
+  --border: #dedfd3;
+  --input: #dedfd3;
+  --ring: #67815e;
+  --radius: 0.4rem;
+  --popover: #ffffff;
+  --popover-foreground: #253b2d;
+}
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --radius-sm: calc(var(--radius) * 0.75);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-xl: calc(var(--radius) * 2);
+  --font-sans: Arial, "Helvetica Neue", sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: #dbe5cd;
+    color: #253b2d;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 4px;
+  }
+}
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12;
+  }
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[.22em] text-muted-foreground;
+  }
+  .section-title {
+    @apply font-serif text-3xl font-normal tracking-tight sm:text-4xl;
+  }
+  .field {
+    @apply w-full rounded-md border border-input bg-card px-3 py-2 text-sm;
+  }
+  .prose-store {
+    @apply text-base leading-8 text-muted-foreground;
+    white-space: pre-line;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
