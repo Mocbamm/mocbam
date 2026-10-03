@@ -2,6 +2,8 @@
 
 A Vietnamese graduation-project shop: Next.js App Router, TypeScript, Tailwind CSS/shadcn/ui and Supabase. The public storefront and protected admin are one application. Payment-gateway selection is deferred; submitting an order does not collect money.
 
+Live demo: [mocbam.vercel.app](https://mocbam.vercel.app). See [project status](docs/PROJECT-STATUS.md) for deployed resources, completed checks and remaining setup.
+
 ## Run locally
 
 Use Node.js 24 LTS and pnpm 11.19.0.
