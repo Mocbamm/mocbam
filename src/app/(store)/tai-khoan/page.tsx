@@ -1,5 +1,6 @@
 import { safeNext } from "@/lib/http";
-import { getCurrentUser } from "@/lib/auth";
+import Link from "next/link";
+import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { isConfigured } from "@/lib/catalog";
 import { AccountOrders } from "@/components/store/orders";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ export default async function AccountPage({
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const [user, query] = await Promise.all([getCurrentUser(), searchParams]);
+  const admin = user ? await isAdmin(user) : false;
   const next = safeNext(typeof query.next === "string" ? query.next : null);
   return (
     <main className="mx-auto max-w-4xl px-5 pt-14 sm:px-8">
@@ -29,11 +31,18 @@ export default async function AccountPage({
               </h1>
               <p className="mt-4 text-xs text-[#7c866b]">{user.email}</p>
             </div>
-            <form action="/auth/logout" method="post">
-              <Button type="submit" variant="outline" size="sm">
-                Đăng xuất
-              </Button>
-            </form>
+            <div className="flex flex-wrap items-center gap-3">
+              {admin ? (
+                <Button asChild size="sm">
+                  <Link href="/admin">Quản trị cửa hàng</Link>
+                </Button>
+              ) : null}
+              <form action="/auth/logout" method="post">
+                <Button type="submit" variant="outline" size="sm">
+                  Đăng xuất
+                </Button>
+              </form>
+            </div>
           </div>
           <h2 className="mb-5 font-serif text-2xl text-[#29412d]">
             Những đơn hàng đã gửi
