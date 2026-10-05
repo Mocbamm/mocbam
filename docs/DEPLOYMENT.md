@@ -7,7 +7,7 @@ Create a Supabase Free project named `mocbam` in the Mộc Bàm organization/acc
 - Fresh database: apply migrations 001, 002, `202610050003_store_features.sql`, and `202610050004_customer_accounts_chat.sql` in order, then `supabase/seed.sql`.
 - Existing database with migration 002 applied: apply migrations 003 and 004 once, before releasing the video-feedback revision. Do not rerun the initial migrations or seed; they are not an upgrade/reset procedure.
 
-The hosted project has applied migration 002 successfully and its new settings were verified through the SDK: transfer is disabled and receiving fields are blank. The matching application revision passed production HTTP and browser verification using the owner account; stock checks and exact QA cleanup are complete. See [project status](PROJECT-STATUS.md).
+The hosted project has applied migrations 001–004. The video-feedback application is deployed on Vercel. Transfer remains disabled with receiving fields blank. See [project status](PROJECT-STATUS.md) for release acceptance and the outstanding SMTP setup.
 
 Copy only these values into local/Vercel environment configuration:
 
@@ -25,12 +25,12 @@ The replacement Supabase server key is active in Vercel Production. The previous
 
 The Google Cloud project `mocbam`, branding and Web OAuth client are configured, and Supabase's Google provider is enabled. Production Google sign-in and admin access have been verified for the permanent owner `mocbamm@gmail.com`. Client credentials belong in Supabase Authentication → Providers → Google; never place the secret in public source or browser environment variables. The configuration uses these exact URLs:
 
-| Setting                              | Value                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------------------- |
-| Google authorized JavaScript origins | `https://mocbam.vercel.app`; optionally `http://localhost:3000` for development             |
-| Google authorized redirect URI       | `https://ciyhftqiwbmbvnybygxy.supabase.co/auth/v1/callback`                                 |
-| Supabase Site URL                    | `https://mocbam.vercel.app`                                                                 |
-| Supabase allowed redirect URLs       | `https://mocbam.vercel.app/auth/callback`; optionally `http://localhost:3000/auth/callback` |
+| Setting                              | Value                                                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Google authorized JavaScript origins | `https://mocbam.vercel.app`; optionally `http://localhost:3000` for development                                                       |
+| Google authorized redirect URI       | `https://ciyhftqiwbmbvnybygxy.supabase.co/auth/v1/callback`                                                                           |
+| Supabase Site URL                    | `https://mocbam.vercel.app`                                                                                                           |
+| Supabase allowed redirect URLs       | `https://mocbam.vercel.app/auth/callback`, `https://mocbam.vercel.app/auth/confirm`; optionally `http://localhost:3000/auth/callback` |
 
 Run production sign-in checks from `https://mocbam.vercel.app`, matching `NEXT_PUBLIC_SITE_URL`. The PKCE verifier cookie and application callback must use the same domain; starting on another Vercel deployment hostname can prevent the callback exchange.
 
@@ -51,6 +51,8 @@ Only the project owner/database administrator performs this step. Shopper accoun
 The video-feedback revision adds email/password registration, profile editing, account chat storage and recovery of guest orders. Apply migration 004 first: it backfills profiles for existing Auth users and creates a service-only recovery function which derives ownership from a confirmed Auth email. Submitted profile metadata cannot claim orders.
 
 Enable Email sign-in and email confirmation in Supabase Authentication. Keep the current Google configuration. Add `https://mocbam.vercel.app/auth/confirm` to allowed redirects and use a confirmation email link based on the application's confirmation endpoint:
+
+Production currently has Email and Google enabled, email confirmation enabled, the canonical Site URL set, and both production redirects allowed. **Custom SMTP is not configured.** Supabase's default sender restricts delivery to project-team addresses; public registration needs a custom sender. Configure its SMTP host, port, username/password, sender address and sender name in Supabase before testing delivery. Supabase also requires custom SMTP to edit these templates. See [Supabase SMTP guidance](https://supabase.com/docs/guides/auth/auth-smtp).
 
 ```html
 <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"

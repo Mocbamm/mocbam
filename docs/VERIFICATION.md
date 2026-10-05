@@ -2,7 +2,7 @@
 
 Run typecheck, lint, unit/database tests and production build. Browser tests use a local server and sample catalog. External-provider verification requires the project's real credentials and tracking IDs.
 
-Production acceptance passed Google owner sign-in, product/image management, COD checkout, owned order history, admin payment recording, paid cancellation/manual-refund warnings and refund recording. Hosted migration 002 and the manual-payment revision are deployed; nine production HTTP groups and browser verification using the owner account passed. Final stock/baseline checks and exact QA cleanup are complete, preserving seeded data/settings/permanent owner access. The checks used clearly marked synthetic data and moved no real money. Transfer remains disabled with receiving fields blank; real receiving-account activation, bank/provider settlement verification and Meta setup are deferred. Revocation of the previous Supabase server key remains an owner action. See [project status](PROJECT-STATUS.md).
+The 5 October video-feedback release passed nine hosted storefront groups, account/profile/chat isolation and admin-page checks, ten commerce/discount/media/guest-order-recovery groups, and unknown-chat/staff-inquiry delivery. All exact synthetic records/uploads/accounts were removed; original catalog, orders, settings, inquiries and permanent admin access were preserved. Migrations 003 and 004 are applied. Generated confirmation links verified app sessions without sending email; real public registration delivery still needs custom SMTP. Earlier production acceptance also passed Google owner sign-in, payment recording, paid cancellation/manual-refund warnings and refund recording. Transfer activation, real settlement and Meta setup remain deferred. See [project status](PROJECT-STATUS.md) and [LATER.md](../LATER.md).
 
 Embedded PostgreSQL verifies real SQL, transactions and RLS. It serializes a single session, so the stock competition cases do not prove hosted multi-session lock contention. Run a concurrent checkout test against the configured Supabase demo before assessment.
 
@@ -16,6 +16,18 @@ Embedded PostgreSQL verifies real SQL, transactions and RLS. It serializes a sin
 6. Sign in as a shopper: view only owned orders. A different account and an invalid/missing guest token cannot read the order.
 7. Visit admin signed out/as a shopper; test its APIs directly too. All modifications and uploads must reject unauthorized requests.
 8. Update a product/post/content record, confirm storefront output, and submit/read a contact inquiry.
+
+## Video-feedback rehearsal
+
+1. Search for accented and unaccented product/blog names. Verify category tiles precede product cards; carousel controls, card image cycling, **Bỏ giỏ** and **Mua ngay** work on desktop/mobile.
+2. Filter journal dates, follow a whole article card, open each policy section, and check browser titles and cookie wording.
+3. With a real SMTP sender configured, register using name/phone/email/password, follow the delivered confirmation, and sign in again. Edit contact details; direct profile email updates and cross-account reads must fail.
+4. Save chat history in one account and reopen it. An unrelated account must see no messages. An unknown question shows hours and prefills the staff form; submit a marked inquiry and confirm it in Admin → Inquiries.
+5. Submit a marked guest order using the confirmed test account's email. The unrelated account cannot claim it; the matching verified account recovers it once. Receipt access still requires the owner session or exact guest token.
+6. Create marked global/private discounts. Check minimum spend, dates, caps, max uses and account restrictions. Quotes and orders calculate totals on the server; replays preserve the original snapshot/use count and reject changed payloads.
+7. Upload marked PNG/MP4 media. Unattached/inactive-product media stays private; publishing exposes the gallery and supports video byte-range requests. Check **Mới**/**Nổi bật** flags.
+8. Check admin customer summaries and transaction reports/CSV. Use recorded sales/payment/refund values; visitor/conversion figures need their own data source.
+9. Remove only exact fixtures and compare original row fingerprints. Temporary global coupons can be disabled, made non-public and bound to the exact temporary account through the admin API before deleting that account; the FK then cascades their removal without expanding database grants.
 
 ## Manual payment story
 

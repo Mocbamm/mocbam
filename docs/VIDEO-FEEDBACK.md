@@ -1,6 +1,6 @@
 # Dạ Thảo video requirements — implementation checklist
 
-This follows the 24 clips in order, beginning with the first video reviewed in Messenger. The functional changes are implemented in the working tree. Hosted migration, email-confirmation configuration and production acceptance remain release steps; this document does not claim the live site has been updated.
+This follows the 24 clips in order, beginning with the first video reviewed in Messenger. The functional changes are deployed at [mocbam.vercel.app](https://mocbam.vercel.app). Migrations 003 and 004 are applied. Real email registration delivery still requires custom SMTP; content and provider follow-ups are in `LATER.md`.
 
 | Video | Request                                         | Implemented behavior                                                                                                                                                                                                                                                   |
 | ----- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -29,13 +29,15 @@ This follows the 24 clips in order, beginning with the first video reviewed in M
 | 23    | Functionality before styling                    | Functional changes implemented first. Final visual review deferred in `LATER.md`.                                                                                                                                                                                      |
 | 24    | Internal analytics independent of GA            | Admin sales/payment/refund reports, date filtering, product rankings and CSV export use recorded store transactions. Visits/conversion require a separate visitor data source.                                                                                         |
 
-## Release steps
+## Release verification
 
-Local verification on 2026-10-05: 157 unit/API/database tests and 27 browser tests passed; one configured-auth browser scenario was skipped in the demo environment. ESLint, TypeScript and the production build passed. Browser acceptance used `http://localhost:3100` with Supabase disabled; hosted behavior still needs the release checks below.
+Local verification on 2026-10-05: 158 unit/API/database tests and 28 browser tests passed; one configured-auth browser scenario was skipped in the demo environment. ESLint, TypeScript and the production build passed. Local browser acceptance used `http://localhost:3100` with Supabase disabled. A release follow-up keeps journal date/sort controls disabled until handlers attach; the first-input regression also passed with delayed scripts and under 6× CPU slowdown.
 
-1. Apply `202610050003_store_features.sql`, then `202610050004_customer_accounts_chat.sql` to the existing database. Do not rerun the seed or initial migrations.
-2. Check Supabase email registration/confirmation settings and email template, as documented in `DEPLOYMENT.md`.
-3. Deploy the application revision and verify registration/confirmation, signed-in history, staff inquiry delivery, discounts and media against the hosted database.
+Vercel published source `c8a7636` on 2026-10-05. Nine hosted storefront checks passed, covering desktop/mobile navigation, search, purchase controls, carousels, journal filters, policy copy and the product gallery. Hosted account checks passed confirmation cookies, confirmed email/password login, profile editing and email immutability, private chat storage, cross-account isolation and admin customer/report/discount pages. Exact temporary-account cleanup preserved the original profile/chat/admin/order baseline.
+
+Ten hosted commerce groups passed discounts/eligibility/server totals/use limits/retries, COD receipts, verified-email guest-order recovery, gallery/new flags, unpublished media privacy and video seeking. Unknown-chat staff handoff and inquiry persistence also passed. All temporary accounts, orders, discounts, uploads, product/category and inquiry were removed; original store rows remained unchanged.
+
+Email confirmations were exercised using generated synthetic verification links, without sending email. This verifies the application route and account behavior; public email delivery remains unverified until SMTP is configured as documented in `DEPLOYMENT.md`.
 
 ## Address data
 

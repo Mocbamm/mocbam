@@ -1,13 +1,13 @@
 # Project status
 
-Last verified: 3 October 2026. Production acceptance, stock verification and exact QA cleanup are complete for COD checkout, payment recording, paid cancellation and refund recording. Revocation of the previous Supabase server key remains an owner action; real bank activation/provider verification and Meta setup are deferred.
+Last verified: 5 October 2026. Dạ Thảo's video-feedback changes are live. Hosted storefront, account, discount, media, guest-order recovery and staff-inquiry checks passed; exact temporary-data cleanup is complete. Public email registration delivery still requires custom SMTP. Real bank activation/provider verification and Meta setup remain deferred; revocation of the previous Supabase server key has not been confirmed.
 
 ## Deployment
 
 - Live storefront: [mocbam.vercel.app](https://mocbam.vercel.app).
 - Repository: [Mocbamm/mocbam](https://github.com/Mocbamm/mocbam), `main`.
-- Vercel: project `mocbam`, Hobby plan, functions in Singapore (`sin1`). Acceptance source `ec1393d` was verified Ready/Current in the [deployment UI](https://vercel.com/mocbam/mocbam/87xUxf2J6b2vZpQcM6h5oNzb93GH); [GitHub CI run 37131724976](https://github.com/Mocbamm/mocbam/actions/runs/37131724976) passed. This revision aligns the footer after manual-payment core `574dc7e`, whose deployment and CI also passed.
-- Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Initial migration/seed and manual-payment migration `202610030002_manual_payments.sql` applied. Seed catalog: 8 products, 2 posts and 6 editable content records; initial flat shipping fee is 0₫.
+- Vercel: project `mocbam`, Hobby plan, functions in Singapore (`sin1`). Video-feedback source `c8a7636` was verified Ready/Current in the [deployment UI](https://vercel.com/mocbam/mocbam/CisRKTwoTDd3Csu9vNDVNYaKELn1).
+- Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Migrations 001–004 are applied. Existing catalog: 8 products, 2 posts and 6 editable content records; shipping fee is 0₫. The two existing orders were preserved by acceptance checks.
 - GA4: account `410553554`, property `557218756`, Web stream `16000604251`, Measurement ID `G-PV2R92QXC7`, configured on production. Enhanced Measurement is off; email and URL parameters `token`, `code`, `email`, `phone` and `address` have redaction enabled. Actual event delivery was verified through Tag Assistant and GA4 Realtime.
 - Google Cloud: project `mocbam`, app branding and Web OAuth client configured; Supabase's Google provider is enabled. The verified owner `mocbamm@gmail.com` is permanently enrolled in `admin_members`.
 
@@ -15,13 +15,24 @@ The initial catalog, artwork, contact information and policies remain demonstrat
 
 ## Verified
 
+Current video-feedback release:
+
+- Local ESLint, TypeScript and production build passed, with 158 unit/API/database tests and 28 browser checks passing; one configured-auth scenario was skipped in the demo environment. The journal keeps date/sort inputs disabled until handlers are attached, preventing the first filter change from being lost on slow clients. Its regression passed with delayed scripts and under 6× CPU slowdown.
+- Nine hosted storefront groups passed on desktop and at 320px: homepage title, consent wording, category ordering, purchase controls, carousels, product/blog search, journal date filters, policy navigation/copy, product details and social link inventory. No browser errors or HTTP writes occurred during that smoke.
+- Hosted account checks passed synthetic email confirmation/session cookies, confirmed-account email login, profile editing with immutable email, private chat persistence, profile/chat isolation, cross-origin write rejection, shopper admin denial and temporary-admin customer/report/discount page reads. These generated confirmation links without email delivery; SMTP delivery remains unverified. Both temporary users and their profiles/chat/admin membership were removed; original account/admin/order fingerprints matched.
+- Ten hosted commerce groups passed: private/published PNG and MP4 access, video byte ranges, gallery/new flags, global/private coupon administration, account eligibility, server totals, public campaigns, exhausted-use protection, immutable retries, COD checkout/receipt privacy and verified-email guest-order recovery. Removed three temporary users, one product/category, two COD orders, two media objects and both discounts. Cleanup and an independent cleanup recheck passed. All original 8 products, 2 categories, 2 orders, 2 posts, 6 content rows, settings and permanent admin membership remained unchanged.
+- Unknown chat questions show the configured staff hours and preserve the question in the staff form. One marked synthetic inquiry returned HTTP 201 and persisted correctly; exact cleanup removed it and preserved the existing inquiry.
+- Email and Google providers, confirmation requirement, canonical Site URL and both production callback/confirmation redirects are configured. Custom SMTP remains off; the sender credentials and real-email acceptance are tracked in [LATER.md](../LATER.md). Facebook and Instagram remain configured; TikTok/Zalo and optional Shopee await official URLs.
+
+Earlier manual-payment acceptance (3 October 2026):
+
 - Hosted migration 002 completed successfully in the SQL editor. SDK reads confirmed bank transfer is disabled and all receiving fields are blank. This verifies migration/settings availability, not the new application's production payment flow.
 - TypeScript, lint and the production build passed for the manual-payment revision. All 88 unit/database/API tests passed, including four focused legacy HTTP retry tests. The full local browser suite passed 18 checks; one configured-auth check was skipped as expected in the read-only demo environment. Hosted authenticated checks are recorded separately below.
 - Nine local payment browser fixtures passed: COD default and unavailable-transfer copy, exact bank receipt instructions, QR hiding after payment/cancellation/refund, COD receipt messaging and zero-total orders for all methods. These use synthetic browser fixtures and do not verify actual bank settlement.
 - All nine production manual-payment HTTP verification groups passed on the deployed application. Exact cleanup removed two QA orders, two payment audit entries, one product, one category and two temporary users. The baseline 8 seeded products, 2 categories, 2 posts, 6 content rows, settings and permanent owner/admin membership remained unchanged. Bank transfer is still disabled with blank receiving details; no real money was moved.
 - Browser verification using the owner account passed the production payment flow on `ec1393d` with synthetic COD order MB-11: 99,000₫ total, shipping 0₫, quantity 1, `awaiting_payment` and cart cleared. Admin payment recording left fulfillment `pending` and set payment `paid` with one audit entry; the dated receipt and owner history showed paid. Cancelling through admin left `cancelled` + `paid` and displayed the manual-refund warning in admin and receipt. Recording the synthetic refund set `refunded`, displayed both audit notes, and updated the receipt date and owner history. No real money was moved.
 - Final helper verification confirmed MB-11 belonged to the permanent Google owner, finished `cancelled` + `refunded`, restored product stock to 3 and had exactly two matching paid/refund audit notes. Exact cleanup removed its one order, cascading order items/two audit entries, and one marked product. Seeded products/settings/category and the permanent owner/admin membership remained unchanged by hash; transfer stays disabled with blank bank details. All QA cleanup is complete.
-- The final admin UI showed 8 products, 0 orders and 0 inquiries, with permanent `mocbamm@gmail.com` admin access retained. Default shipping/terms copy was synchronized using exact-content guards that preserve owner-edited policies; the COD footer copy was verified live. Normal local development configuration was restored and localhost returned HTTP 200.
+- At the end of that earlier rehearsal, the admin UI showed 8 products, 0 orders and 0 inquiries, with permanent `mocbamm@gmail.com` admin access retained. Default shipping/terms copy was synchronized using exact-content guards that preserve owner-edited policies; the COD footer copy was verified live. Normal local development configuration was restored and localhost returned HTTP 200.
 
 The following production checks apply to the earlier storefront revision:
 
@@ -40,6 +51,7 @@ The following production checks apply to the earlier storefront revision:
 
 ## Remaining owner action and deferred work
 
+- Configure the SMTP sender, update the confirmation template and verify real public registration emails. The application confirmation/login routes passed, but the default Supabase sender does not provide unrestricted public email delivery.
 - The owner still needs to revoke the previous Supabase `SECRET default` server key. The replacement is active; revocation of the old key has not been confirmed.
 - Real receiving-bank details/transfer activation, actual bank/provider settlement verification and Meta Pixel setup/provider verification remain explicitly deferred by the project owner. Automatic payment gateways/bank confirmation are outside this implementation.
 

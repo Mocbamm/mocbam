@@ -73,6 +73,36 @@ test("journal date filter hides out-of-range posts and article opens from its ca
   );
 });
 
+test("journal waits for client handlers before accepting the first date filter", async ({
+  page,
+}) => {
+  let releaseScripts!: () => void;
+  const scriptsReady = new Promise<void>((resolve) => {
+    releaseScripts = resolve;
+  });
+  await page.route("**/_next/static/**", async (route) => {
+    if (route.request().resourceType() === "script") await scriptsReady;
+    await route.continue();
+  });
+  await page.goto("/blog", { waitUntil: "commit" });
+  const from = page.getByLabel("Từ ngày", { exact: true });
+  try {
+    await expect(from).toBeDisabled();
+    await expect(page.getByLabel("Đến ngày", { exact: true })).toBeDisabled();
+    await expect(page.getByLabel("Sắp xếp", { exact: true })).toBeDisabled();
+  } finally {
+    releaseScripts();
+  }
+  await expect(from).toBeEnabled();
+  await from.fill("2026-10-04");
+  await expect(
+    page.getByText("Chưa có bài viết trong khoảng ngày này.", { exact: false }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Xóa bộ lọc ngày" }),
+  ).toBeVisible();
+});
+
 test("policy dropdown opens only the selected policy and card buy-now reaches checkout", async ({
   page,
 }) => {

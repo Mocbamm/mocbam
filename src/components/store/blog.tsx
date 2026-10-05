@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { BlogPost } from "@/lib/types";
 import { filterPostsByDate } from "@/lib/store-discovery";
 import { dateLabel } from "./format";
 import { Input } from "@/components/ui/input";
+
+const subscribeHydration = () => () => {};
 
 export function BlogCard({
   post,
@@ -47,6 +49,13 @@ export function BlogCard({
 }
 
 export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
+  // The HTML appears before React attaches handlers. Keep controls disabled
+  // until hydration so the customer's first input cannot be lost.
+  const hydrated = useSyncExternalStore(
+    subscribeHydration,
+    () => true,
+    () => false,
+  );
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sort, setSort] = useState("newest");
@@ -69,6 +78,7 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
           <Input
             id="blog-date-from"
             type="date"
+            disabled={!hydrated}
             value={from}
             max={to || undefined}
             onChange={(event) => setFrom(event.target.value)}
@@ -84,6 +94,7 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
           <Input
             id="blog-date-to"
             type="date"
+            disabled={!hydrated}
             value={to}
             min={from || undefined}
             onChange={(event) => setTo(event.target.value)}
@@ -98,6 +109,7 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
           </label>
           <select
             id="blog-sort"
+            disabled={!hydrated}
             value={sort}
             onChange={(event) => setSort(event.target.value)}
             className="h-9 border border-[#d7ddcd] bg-transparent px-3 text-xs"
