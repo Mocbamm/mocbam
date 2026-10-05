@@ -4,8 +4,8 @@
 
 Create a Supabase Free project named `mocbam` in the Mộc Bàm organization/account, in Singapore. The schema explicitly grants access and enables RLS; no public role receives unrestricted order or admin-table access.
 
-- Fresh database: apply `supabase/migrations/202610030001_initial.sql`, then `202610030002_manual_payments.sql`, then `supabase/seed.sql`.
-- Existing database with migration 001 applied: apply migration 002 once. Do not rerun migration 001 or the seed; they are not an upgrade/reset procedure.
+- Fresh database: apply migrations 001, 002, `202610050003_store_features.sql`, and `202610050004_customer_accounts_chat.sql` in order, then `supabase/seed.sql`.
+- Existing database with migration 002 applied: apply migrations 003 and 004 once, before releasing the video-feedback revision. Do not rerun the initial migrations or seed; they are not an upgrade/reset procedure.
 
 The hosted project has applied migration 002 successfully and its new settings were verified through the SDK: transfer is disabled and receiving fields are blank. The matching application revision passed production HTTP and browser verification using the owner account; stock checks and exact QA cleanup are complete. See [project status](PROJECT-STATUS.md).
 
@@ -45,6 +45,22 @@ on conflict (user_id) do nothing;
 ```
 
 Only the project owner/database administrator performs this step. Shopper accounts and their metadata cannot grant membership.
+
+## Email accounts and chat
+
+The video-feedback revision adds email/password registration, profile editing, account chat storage and recovery of guest orders. Apply migration 004 first: it backfills profiles for existing Auth users and creates a service-only recovery function which derives ownership from a confirmed Auth email. Submitted profile metadata cannot claim orders.
+
+Enable Email sign-in and email confirmation in Supabase Authentication. Keep the current Google configuration. Add `https://mocbam.vercel.app/auth/confirm` to allowed redirects and use a confirmation email link based on the application's confirmation endpoint:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"
+  >Xác nhận email</a
+>
+```
+
+The `/auth/callback` route remains available for PKCE exchanges and Google sign-in. Check that a real confirmation email arrives, its link signs the customer in, and ordinary email/password login works after confirmation. The application API returns confirmation instructions when Supabase does not create a session immediately. Hosted provider configuration and email delivery must be verified separately from local tests.
+
+Signed-in chat history is private to the account, including against ordinary admin reads; guests retain a local browser history. Staff handoff uses the existing inquiry form and Admin → Inquiries, with replies through the customer's submitted email/phone. Configure `shop_hours` for the working-hours response. See `VIDEO-FEEDBACK.md` for the requirement mapping and `../LATER.md` for deferred content/setup.
 
 ## COD and manual bank transfer
 

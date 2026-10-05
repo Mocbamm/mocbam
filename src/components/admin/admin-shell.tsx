@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ArrowUpRight,
+  BarChart3,
   BookOpen,
   FileText,
   LayoutDashboard,
@@ -12,6 +13,8 @@ import {
   Settings,
   ShoppingBag,
   Sprout,
+  Tags,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +22,9 @@ const links = [
   { href: "/admin", title: "Tổng quan", icon: LayoutDashboard },
   { href: "/admin/products", title: "Sản phẩm", icon: Package },
   { href: "/admin/orders", title: "Đơn hàng", icon: ShoppingBag },
+  { href: "/admin/customers", title: "Khách hàng", icon: Users },
+  { href: "/admin/discounts", title: "Giảm giá", icon: Tags },
+  { href: "/admin/analytics", title: "Báo cáo", icon: BarChart3 },
   { href: "/admin/posts", title: "Bài viết", icon: BookOpen },
   { href: "/admin/content", title: "Nội dung", icon: FileText },
   { href: "/admin/inquiries", title: "Liên hệ", icon: MessageSquare },
@@ -47,7 +53,7 @@ export function AdminShell({
         </Link>
         <nav
           aria-label="Quản trị"
-          className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-visible"
+          className="flex gap-1 overflow-x-auto px-3 pb-3 lg:max-h-[calc(100dvh-230px)] lg:flex-col lg:overflow-y-auto"
         >
           {links.map(({ href, title, icon: Icon }) => (
             <Link

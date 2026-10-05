@@ -15,6 +15,7 @@ import {
   postSchema,
   productSchema,
   statusSchema,
+  discountSchema,
 } from "@/lib/validation";
 
 export async function PATCH(
@@ -42,6 +43,7 @@ export async function PATCH(
       content: contentSchema.partial(),
       inquiries: inquiryUpdateSchema,
       categories: categorySchema.partial(),
+      discounts: discountSchema,
     };
     if (!(collection in schemas))
       throw new HttpError(404, "Không tìm thấy chức năng.");

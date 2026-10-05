@@ -5,19 +5,19 @@ import {
   Menu,
   X,
   ShoppingBag,
-  Search,
   UserRound,
   ArrowUpRight,
-  Leaf,
+  ChevronDown,
 } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import type { SiteSettings } from "@/lib/types";
+import { StoreSearch } from "./search-dialog";
+import { policyHref, policyLinks } from "./policies";
 const navigation = [
   { href: "/san-pham", text: "Sản phẩm" },
   { href: "/chung-toi", text: "Chúng tôi" },
-  { href: "/blog", text: "Nhật ký Mộc" },
-  { href: "/chinh-sach", text: "Chính sách" },
+  { href: "/blog", text: "Nhật ký Mộc Bàm" },
 ];
 export function StoreHeader() {
   const pathname = usePathname();
@@ -25,9 +25,6 @@ export function StoreHeader() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <div className="bg-[#29412d] px-4 py-2 text-center text-[11px] tracking-[0.12em] text-[#f4f1df]">
-        NHỎ XINH TỪ GỖ · TỈ MỈ TỪ TÂM
-      </div>
       <header className="sticky top-0 z-40 border-b border-[#dfe2d4] bg-[#faf9f3]/95 backdrop-blur-md">
         <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-5 sm:px-8">
           <nav
@@ -43,6 +40,27 @@ export function StoreHeader() {
                 {item.text}
               </Link>
             ))}
+            <details className="relative text-[13px] text-[#62685d]">
+              <summary className="flex cursor-pointer list-none items-center gap-1 hover:text-[#406344]">
+                Chính sách <ChevronDown size={13} />
+              </summary>
+              <div className="absolute left-0 top-full mt-4 w-56 border border-[#dfe2d4] bg-[#faf9f3] p-2 shadow-lg">
+                {policyLinks.map((policy) => (
+                  <Link
+                    key={policy.id}
+                    href={policyHref(policy.id)}
+                    className="block px-3 py-2 text-xs hover:bg-[#edf0e5]"
+                    onClick={(event) =>
+                      event.currentTarget
+                        .closest("details")
+                        ?.removeAttribute("open")
+                    }
+                  >
+                    {policy.title}
+                  </Link>
+                ))}
+              </div>
+            </details>
           </nav>
           <button
             className="p-2 lg:hidden"
@@ -56,23 +74,17 @@ export function StoreHeader() {
           <Link
             href="/"
             aria-label="Mộc Bàm - Trang chủ"
-            className="absolute left-1/2 -translate-x-1/2 text-center"
+            className="min-w-0 flex-1 px-2 text-center lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:flex-none"
           >
-            <span className="block font-serif text-[29px] sm:text-[34px] leading-none tracking-[-0.06em] text-[#29412d]">
+            <span className="block whitespace-nowrap font-serif text-[25px] sm:text-[34px] leading-none tracking-[-0.06em] text-[#29412d]">
               Mộc Bàm<span className="ml-0.5 text-sm">✳</span>
             </span>
-            <span className="mt-2 block text-[8px] tracking-[0.38em] text-[#7b826e]">
+            <span className="mt-2 hidden text-[8px] tracking-[0.38em] text-[#7b826e] sm:block">
               ĐIỀU NHỎ BÉ, NIỀM VUI LỚN
             </span>
           </Link>
           <div className="flex items-center gap-3 sm:gap-5">
-            <Link
-              href="/san-pham?tim="
-              aria-label="Tìm sản phẩm"
-              className="hidden p-1 sm:block"
-            >
-              <Search size={20} strokeWidth={1.5} />
-            </Link>
+            <StoreSearch />
             <Link href="/tai-khoan" aria-label="Tài khoản" className="p-1">
               <UserRound size={20} strokeWidth={1.5} />
             </Link>
@@ -105,6 +117,23 @@ export function StoreHeader() {
                 {item.text}
               </Link>
             ))}
+            <details className="border-b border-[#e6e6dc] py-3 text-sm">
+              <summary className="flex cursor-pointer list-none items-center justify-between">
+                Chính sách <ChevronDown size={15} />
+              </summary>
+              <div className="space-y-1 pl-3 pt-3">
+                {policyLinks.map((policy) => (
+                  <Link
+                    key={policy.id}
+                    href={policyHref(policy.id)}
+                    onClick={() => setOpen(false)}
+                    className="block py-2 text-xs text-[#68775e]"
+                  >
+                    {policy.title}
+                  </Link>
+                ))}
+              </div>
+            </details>
             <div className="flex gap-5 pt-4 text-xs text-[#68775e]">
               <Link
                 href="/san-pham?danh-muc=nhan-vat"
@@ -140,11 +169,13 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
             Một chút mộc mạc, một chút đáng yêu. Mang những điều nhỏ bé cùng bạn
             mỗi ngày.
           </p>
-          <div className="mt-6 flex gap-5 text-xs">
+          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-xs">
             {[
               { text: "Facebook", url: settings?.facebook_url },
               { text: "Instagram", url: settings?.instagram_url },
               { text: "TikTok", url: settings?.tiktok_url },
+              { text: "Zalo", url: settings?.zalo_url },
+              { text: "Shopee", url: settings?.shopee_url },
             ].map((s) =>
               s.url ? (
                 <a
@@ -170,7 +201,7 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
             <Link href="/san-pham?danh-muc=nhan-vat">Dòng nhân vật</Link>
             <Link href="/san-pham?danh-muc=chuoi">Dòng chuỗi</Link>
             <Link href="/chung-toi">Câu chuyện Mộc Bàm</Link>
-            <Link href="/blog">Nhật ký Mộc</Link>
+            <Link href="/blog">Nhật ký Mộc Bàm</Link>
           </div>
         </div>
         <div>
@@ -178,9 +209,18 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
             Đồng hành
           </p>
           <div className="flex flex-col gap-3 text-sm text-[#acbaa2]">
-            <Link href="/chinh-sach#van-chuyen">Giao hàng & đổi trả</Link>
-            <Link href="/chinh-sach#bao-mat">Chính sách bảo mật</Link>
-            <Link href="/chinh-sach#huong-dan">Hướng dẫn mua hàng</Link>
+            <details>
+              <summary className="flex cursor-pointer list-none items-center gap-2">
+                Chính sách & hướng dẫn <ChevronDown size={13} />
+              </summary>
+              <div className="mt-3 flex flex-col gap-3 border-l border-[#667a5e] pl-3 text-xs">
+                {policyLinks.map((policy) => (
+                  <Link key={policy.id} href={policyHref(policy.id)}>
+                    {policy.title}
+                  </Link>
+                ))}
+              </div>
+            </details>
             <Link href="/lien-he">Liên hệ với chúng tôi</Link>
             <Link href="/tai-khoan">Đơn hàng của tôi</Link>
           </div>
@@ -208,9 +248,6 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-[#4d6048] px-6 py-5 text-[10px] tracking-wider text-[#acbaa2]">
         <span>
           © {new Date().getFullYear()} Mộc Bàm. Từ gỗ, với thương yêu.
-        </span>
-        <span className="flex items-center gap-2">
-          <Leaf size={12} /> Dự án tốt nghiệp · Thanh toán khi nhận hàng (COD)
         </span>
       </div>
     </footer>

@@ -49,6 +49,8 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
     { key: "facebook_url", label: "Facebook" },
     { key: "instagram_url", label: "Instagram" },
     { key: "tiktok_url", label: "TikTok" },
+    { key: "zalo_url", label: "Zalo" },
+    { key: "shopee_url", label: "Shopee" },
   ] as const;
   return (
     <form onSubmit={save} className="max-w-4xl space-y-6">
@@ -172,7 +174,7 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
                   id={field.key}
                   type={field.type}
                   required
-                  value={draft[field.key]}
+                  value={draft[field.key] || ""}
                   onChange={(event) => update(field.key, event.target.value)}
                 />
               </div>
@@ -189,7 +191,7 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
                   id={field.key}
                   type="url"
                   placeholder="https://..."
-                  value={draft[field.key]}
+                  value={draft[field.key] || ""}
                   onChange={(event) => update(field.key, event.target.value)}
                 />
               </div>

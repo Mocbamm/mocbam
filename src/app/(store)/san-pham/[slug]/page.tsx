@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Leaf, PackageCheck, ArrowLeft } from "lucide-react";
 import { getProduct, getProducts, getCategories } from "@/lib/catalog";
 import { ProductActions, ProductCard } from "@/components/store/products";
 import { money } from "@/components/store/format";
+import { ProductGallery } from "@/components/store/product-media";
 export async function generateMetadata({
   params,
 }: {
@@ -36,16 +36,7 @@ export default async function ProductPage({
         <ArrowLeft size={13} /> Về những điều nhỏ xinh
       </Link>
       <div className="mt-7 grid gap-10 md:grid-cols-2 md:gap-16">
-        <div className="relative aspect-square bg-[#e8ecdf]">
-          <Image
-            src={product.image_url}
-            alt={product.name}
-            fill
-            priority
-            sizes="(max-width: 768px) 95vw, 50vw"
-            className="object-cover"
-          />
-        </div>
+        <ProductGallery product={product} />
         <div className="self-center">
           <p className="mb-4 text-[10px] uppercase tracking-[0.2em] text-[#889777]">
             {category?.name || "Mộc Bàm"}

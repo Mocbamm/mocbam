@@ -1,5 +1,6 @@
 "use client";
 import Script from "next/script";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
@@ -106,13 +107,18 @@ export function Analytics({
           className="fixed bottom-5 left-5 right-5 z-50 mx-auto max-w-2xl border border-[#d9ddce] bg-[#fffdf7] p-5 shadow-xl sm:flex sm:items-center sm:gap-5"
         >
           <div className="flex-1">
-            <p className="font-semibold text-[#253d2c]">
-              Một chút hiểu nhau hơn
-            </p>
+            <p className="font-semibold text-[#253d2c]">Tùy chọn cookie</p>
             <p className="mt-1 text-sm leading-6 text-[#65705e]">
-              Cho phép Google Analytics và Meta Pixel để Mộc Bàm hiểu trải
-              nghiệm mua sắm của bạn. Bạn có thể từ chối.
+              Mộc Bàm sử dụng cookie để hiểu cách bạn sử dụng website và cải
+              thiện trải nghiệm của bạn. Bạn có thể đồng ý hoặc từ chối cookie
+              phân tích.
             </p>
+            <Link
+              href="/chinh-sach?muc=bao-mat#bao-mat"
+              className="mt-2 inline-block text-xs text-[#65705e] underline underline-offset-4"
+            >
+              Tìm hiểu về quyền riêng tư
+            </Link>
           </div>
           <div className="mt-4 flex gap-2 sm:mt-0">
             <Button

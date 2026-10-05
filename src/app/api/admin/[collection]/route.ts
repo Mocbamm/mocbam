@@ -12,7 +12,9 @@ import {
   contentSchema,
   postSchema,
   productSchema,
+  discountSchema,
 } from "@/lib/validation";
+import { getAdminDiscounts } from "@/lib/promotions";
 import {
   getAdminContent,
   getAdminInquiries,
@@ -34,6 +36,7 @@ export async function POST(
       posts: postSchema,
       content: contentSchema,
       categories: categorySchema,
+      discounts: discountSchema,
     };
     if (!(collection in schemas))
       throw new HttpError(404, "Không tìm thấy chức năng.");
@@ -64,6 +67,7 @@ export async function GET(
       posts: getAdminPosts,
       content: getAdminContent,
       inquiries: getAdminInquiries,
+      discounts: getAdminDiscounts,
     };
     if (!(collection in getters))
       throw new HttpError(404, "Không tìm thấy chức năng.");

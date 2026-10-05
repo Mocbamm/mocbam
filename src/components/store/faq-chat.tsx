@@ -1,7 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MessageCircle, X, Send, Leaf } from "lucide-react";
+import {
+  boundedHistory,
+  chatGreeting,
+  chatHistorySchema,
+  type ChatMessage,
+} from "@/lib/chat-history";
+import { ContactForm } from "./contact";
 const answers = [
   {
     question: "Mộc Bàm bán những gì?",
@@ -31,35 +38,121 @@ const answers = [
     question: "Có thể đổi trả không?",
     keywords: ["đổi", "trả", "hỏng", "lỗi"],
     answer:
-      "Nếu sản phẩm có vấn đề, hãy nhắn Mộc cùng mã đơn và ảnh sản phẩm. Chính sách ở website hiện là bản dự thảo cho dự án; shop sẽ trao đổi trực tiếp trước khi xử lý.",
+      "Nếu sản phẩm có vấn đề, hãy gửi Mộc mã đơn và thông tin sản phẩm qua trang Liên hệ. Bạn có thể xem hướng dẫn đổi trả trong mục Chính sách của cửa hàng.",
   },
 ];
-export function FaqChat() {
+export function FaqChat({
+  userId,
+  configured = false,
+  shopHours,
+  name,
+  email,
+  phone,
+}: {
+  userId?: string;
+  configured?: boolean;
+  shopHours: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<
-    { from: "shop" | "you"; text: string }[]
-  >([
-    {
-      from: "shop",
-      text: "Chào bạn, mình là trợ lý nhỏ của Mộc 🌿 Bạn muốn tìm hiểu điều gì?",
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([chatGreeting]);
+  const [loaded, setLoaded] = useState(false);
+  const [remoteReady, setRemoteReady] = useState(false);
+  const saveQueue = useRef(Promise.resolve());
+  const [handoff, setHandoff] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const storageKey = `mocbam.chat.v1.${userId || "guest"}`;
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      let cached: ChatMessage[] = [];
+      try {
+        const result = chatHistorySchema.safeParse(
+          JSON.parse(localStorage.getItem(storageKey) || "{}"),
+        );
+        if (result.success) cached = result.data.messages;
+      } catch {
+        /* Storage may be blocked. */
+      }
+      if (userId && configured) {
+        try {
+          const response = await fetch("/api/account/chat", {
+            cache: "no-store",
+          });
+          if (!response.ok) throw new Error("Cannot load history");
+          const result = chatHistorySchema.safeParse(await response.json());
+          if (!result.success) throw new Error("Invalid history");
+          const remote = result.data.messages;
+          // Keep locally queued messages only when they extend the same history.
+          const extendsRemote =
+            cached.length > remote.length &&
+            remote.every(
+              (message, index) =>
+                message.from === cached[index]?.from &&
+                message.text === cached[index]?.text,
+            );
+          if (remote.length && !extendsRemote) cached = remote;
+          if (!cancelled) setRemoteReady(true);
+        } catch {
+          if (!cancelled) setSaveError(true);
+        }
+      }
+      if (!cancelled) {
+        setMessages(cached.length ? cached : [chatGreeting]);
+        setLoaded(true);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [storageKey, userId, configured]);
+  useEffect(() => {
+    if (!loaded) return;
+    const payload = { messages: boundedHistory(messages) };
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+    } catch {
+      /* Storage may be blocked. */
+    }
+    if (!userId || !configured || !remoteReady) return;
+    // Serialize writes and start immediately so navigation does not discard a
+    // pending debounce. A failed initial read must never overwrite remote data.
+    saveQueue.current = saveQueue.current.then(async () => {
+      try {
+        const response = await fetch("/api/account/chat", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true,
+        });
+        setSaveError(!response.ok);
+      } catch {
+        setSaveError(true);
+      }
+    });
+  }, [messages, loaded, remoteReady, storageKey, userId, configured]);
   function ask(question: string) {
+    if (!loaded) return;
     const normalized = question.toLocaleLowerCase("vi");
     const answer = answers.find((a) =>
       a.keywords.some((k) => normalized.includes(k)),
     );
-    setMessages((previous) => [
-      ...previous,
-      { from: "you", text: question },
-      {
-        from: "shop",
-        text:
-          answer?.answer ||
-          "Mình chưa có câu trả lời cho điều này. Bạn có thể gửi lời nhắn ở trang Liên hệ; Mộc sẽ trao đổi thêm với bạn nhé.",
-      },
-    ]);
+    setMessages((previous) =>
+      boundedHistory([
+        ...previous,
+        { from: "you", text: question },
+        {
+          from: "shop",
+          text:
+            answer?.answer ||
+            `Mộc cần nhờ nhân viên kiểm tra thêm câu hỏi này. Bạn bấm “Gửi cho nhân viên” bên dưới và để lại email hoặc số điện thoại để được hỗ trợ. Nhân viên sẽ phản hồi trong giờ làm việc: ${shopHours || "9:00–18:00"}.`,
+        },
+      ]),
+    );
     setInput("");
   }
   return (
@@ -90,25 +183,66 @@ export function FaqChat() {
             className="flex-1 space-y-3 overflow-auto px-4 py-4"
             aria-live="polite"
           >
-            {messages.map((m, i) => (
-              <p
-                key={i}
-                className={`max-w-[92%] rounded-xl px-3 py-2.5 text-xs leading-6 ${m.from === "shop" ? "bg-[#e9edde] text-[#3f5138]" : "ml-auto bg-[#29412d] text-white"}`}
-              >
-                {m.text}
-              </p>
-            ))}
-            {messages.length === 1 ? (
-              <div className="space-y-2">
-                {answers.map((a) => (
-                  <button
-                    key={a.question}
-                    onClick={() => ask(a.question)}
-                    className="block rounded-full border border-[#cbd4be] px-3 py-1.5 text-[11px] text-[#58734a]"
+            {!handoff ? (
+              <>
+                {messages.map((m, i) => (
+                  <p
+                    key={i}
+                    className={`max-w-[92%] rounded-xl px-3 py-2.5 text-xs leading-6 ${m.from === "shop" ? "bg-[#e9edde] text-[#3f5138]" : "ml-auto bg-[#29412d] text-white"}`}
                   >
-                    {a.question}
-                  </button>
+                    {m.text}
+                  </p>
                 ))}
+                {messages.length === 1 ? (
+                  <div className="space-y-2">
+                    {answers.map((a) => (
+                      <button
+                        key={a.question}
+                        disabled={!loaded}
+                        onClick={() => ask(a.question)}
+                        className="block rounded-full border border-[#cbd4be] px-3 py-1.5 text-[11px] text-[#58734a]"
+                      >
+                        {a.question}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+            {saveError ? (
+              <p role="status" className="text-[11px] leading-5">
+                Chưa đồng bộ được lịch sử lên tài khoản. Cuộc trò chuyện vẫn
+                được lưu trên trình duyệt nếu trình duyệt cho phép.
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setHandoff(!handoff)}
+              className="text-[11px] underline underline-offset-4"
+            >
+              {handoff ? "Quay lại trò chuyện" : "Gửi cho nhân viên"}
+            </button>
+            {handoff ? (
+              <div className="border-t border-[#d7ddcd] pt-4">
+                <p className="mb-4 text-xs leading-6">
+                  Mộc sẽ trả lời qua thông tin bạn để lại. Giờ làm việc:{" "}
+                  {shopHours || "9:00–18:00"}.
+                </p>
+                <ContactForm
+                  configured={configured}
+                  idPrefix="chat-contact"
+                  initial={{
+                    name,
+                    email,
+                    phone,
+                    message: messages
+                      .filter((m) => m.from === "you")
+                      .slice(-6)
+                      .map((m) => m.text)
+                      .join("\n")
+                      .slice(0, 4000),
+                  }}
+                />
               </div>
             ) : null}
             <Link
@@ -118,33 +252,35 @@ export function FaqChat() {
               Gửi lời nhắn cho Mộc
             </Link>
           </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (input.trim()) ask(input.trim().slice(0, 500));
-            }}
-            className="flex border-t border-[#d7ddcd] p-3"
-          >
-            <label htmlFor="chat-message" className="sr-only">
-              Câu hỏi của bạn
-            </label>
-            <input
-              id="chat-message"
-              maxLength={500}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Hỏi Mộc một chút..."
-              className="min-w-0 flex-1 bg-transparent text-xs outline-none"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              aria-label="Gửi câu hỏi"
-              className="p-2 text-[#29412d] disabled:opacity-30"
+          {!handoff ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (loaded && input.trim()) ask(input.trim().slice(0, 500));
+              }}
+              className="flex border-t border-[#d7ddcd] p-3"
             >
-              <Send size={16} />
-            </button>
-          </form>
+              <label htmlFor="chat-message" className="sr-only">
+                Câu hỏi của bạn
+              </label>
+              <input
+                id="chat-message"
+                maxLength={500}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Hỏi Mộc một chút..."
+                className="min-w-0 flex-1 bg-transparent text-xs outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!loaded || !input.trim()}
+                aria-label="Gửi câu hỏi"
+                className="p-2 text-[#29412d] disabled:opacity-30"
+              >
+                <Send size={16} />
+              </button>
+            </form>
+          ) : null}
         </section>
       ) : null}
       <button

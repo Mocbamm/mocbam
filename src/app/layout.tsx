@@ -6,11 +6,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Mộc Bàm — Những điều nhỏ, thật riêng",
+    default: "Mộc Bàm",
     template: "%s | Mộc Bàm",
   },
   description:
-    "Phụ kiện lấy cảm hứng từ thiên nhiên, dành cho những điều nhỏ mang dấu ấn của bạn. Dự án cửa hàng mẫu Mộc Bàm.",
+    "Phụ kiện lấy cảm hứng từ thiên nhiên, dành cho những điều nhỏ mang dấu ấn của bạn.",
   robots:
     process.env.VERCEL_ENV === "preview"
       ? { index: false, follow: false }

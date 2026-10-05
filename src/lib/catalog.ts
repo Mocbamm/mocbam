@@ -21,13 +21,13 @@ import { createServerSupabase } from "./supabase/server";
 
 export { isConfigured };
 const productColumns =
-  "id,slug,name,category_id,price,stock,image_url,description,featured,active,created_at";
+  "id,slug,name,category_id,price,stock,image_url,image_urls,video_url,description,featured,is_new,active,created_at";
 const postColumns =
   "id,slug,title,excerpt,content,image_url,published,created_at";
 export const orderColumns =
-  "id,reference,user_id,customer_name,email,phone,address,city,note,subtotal,shipping_fee,total,status,payment_method,payment_status,paid_at,refunded_at,payment_bank_bin,payment_bank_name,payment_bank_account_number,payment_bank_account_name,created_at,items:order_items(id,product_id,name,price,quantity)";
+  "id,reference,user_id,customer_name,email,phone,address,city,note,subtotal,shipping_fee,total,discount_code,discount_amount,status,payment_method,payment_status,paid_at,refunded_at,payment_bank_bin,payment_bank_name,payment_bank_account_number,payment_bank_account_name,created_at,items:order_items(id,product_id,name,price,quantity)";
 export const settingsColumns =
-  "shipping_fee,shop_email,shop_phone,shop_address,shop_hours,facebook_url,instagram_url,tiktok_url,bank_transfer_enabled,bank_bin,bank_name,bank_account_number,bank_account_name";
+  "shipping_fee,shop_email,shop_phone,shop_address,shop_hours,facebook_url,instagram_url,tiktok_url,zalo_url,shopee_url,bank_transfer_enabled,bank_bin,bank_name,bank_account_number,bank_account_name";
 
 export async function getProducts(): Promise<Product[]> {
   if (!isConfigured())

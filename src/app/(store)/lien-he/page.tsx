@@ -55,6 +55,8 @@ export default async function ContactPage() {
                 { name: "Facebook", url: settings.facebook_url },
                 { name: "Instagram", url: settings.instagram_url },
                 { name: "TikTok", url: settings.tiktok_url },
+                { name: "Zalo", url: settings.zalo_url },
+                { name: "Shopee", url: settings.shopee_url },
               ].map((s) =>
                 s.url ? (
                   <a

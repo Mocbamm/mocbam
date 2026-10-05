@@ -12,17 +12,23 @@ import {
 import { ContactForm } from "@/components/store/contact";
 import { ProductCard } from "@/components/store/products";
 import { Button } from "@/components/ui/button";
+import { StoreCarousel } from "@/components/store/carousel";
+import { BlogCard } from "@/components/store/blog";
+import { PromotionBanner } from "@/components/store/promotions";
+import { getPublicPromotions } from "@/lib/promotions";
 export default async function HomePage() {
-  const [products, categories, posts, intro, settings] = await Promise.all([
-    getProducts(),
-    getCategories(),
-    getPosts(),
-    getSiteContent("home-intro"),
-    getSettings(),
-  ]);
-  const featured = [...products]
-    .sort((a, b) => Number(b.featured) - Number(a.featured))
-    .slice(0, 4);
+  const [products, categories, posts, intro, settings, promotions] =
+    await Promise.all([
+      getProducts(),
+      getCategories(),
+      getPosts(),
+      getSiteContent("home-intro"),
+      getSettings(),
+      getPublicPromotions(),
+    ]);
+  const featured = [...products].sort(
+    (a, b) => Number(b.featured) - Number(a.featured),
+  );
   return (
     <>
       <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-12 pt-10 sm:px-8 md:grid-cols-[1fr_1.1fr] md:pb-20 md:pt-14">
@@ -62,7 +68,7 @@ export default async function HomePage() {
               src="/images/story.svg"
               alt="Những món đồ gỗ nhỏ xinh trong không gian xanh của Mộc Bàm"
               fill
-              priority
+              preload
               sizes="(max-width: 768px) 95vw, 50vw"
               className="object-cover"
             />
@@ -99,34 +105,8 @@ export default async function HomePage() {
           ))}
         </div>
       </div>
-      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 md:py-20">
-        <div className="mb-8 flex items-end justify-between gap-6">
-          <div>
-            <p className="mb-3 text-[10px] uppercase tracking-[0.22em] text-[#889777]">
-              Mộc chọn cho bạn
-            </p>
-            <h2 className="font-serif text-4xl tracking-[-0.04em] text-[#29412d] sm:text-5xl">
-              Nhỏ xinh, đủ thương.
-            </h2>
-          </div>
-          <Link
-            href="/san-pham"
-            className="flex items-center gap-3 border-b border-[#aab79c] pb-2 text-xs"
-          >
-            Xem tất cả <ArrowUpRight size={15} />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 gap-x-5 gap-y-8 lg:grid-cols-4">
-          {featured.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              category={categories.find((c) => c.id === p.category_id)?.name}
-            />
-          ))}
-        </div>
-      </section>
-      <section className="mx-auto grid max-w-7xl gap-5 px-5 sm:px-8 md:grid-cols-2">
+      <PromotionBanner promotions={promotions} />
+      <section className="mx-auto grid max-w-7xl gap-5 px-5 pt-12 sm:px-8 md:grid-cols-2">
         {[
           {
             slug: "nhan-vat",
@@ -172,6 +152,37 @@ export default async function HomePage() {
           </Link>
         ))}
       </section>
+      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 md:py-20">
+        <div className="mb-8 flex items-end justify-between gap-6">
+          <div>
+            <p className="mb-3 text-[10px] uppercase tracking-[0.22em] text-[#889777]">
+              Mộc chọn cho bạn
+            </p>
+            <h2 className="font-serif text-4xl tracking-[-0.04em] text-[#29412d] sm:text-5xl">
+              Nhỏ xinh, đủ thương.
+            </h2>
+          </div>
+          <Link
+            href="/san-pham"
+            className="flex items-center gap-3 border-b border-[#aab79c] pb-2 text-xs"
+          >
+            Xem tất cả <ArrowUpRight size={15} />
+          </Link>
+        </div>
+        <StoreCarousel
+          label="Sản phẩm Mộc Bàm"
+          itemCount={featured.length}
+          itemClassName="w-[calc((100%_-_1.25rem)/2)] lg:w-[calc((100%_-_3.75rem)/4)]"
+        >
+          {featured.map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              category={categories.find((c) => c.id === p.category_id)?.name}
+            />
+          ))}
+        </StoreCarousel>
+      </section>
       <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-20 sm:px-8 md:grid-cols-2 md:gap-20">
         <div className="relative aspect-[1.1] overflow-hidden bg-[#ecebdc]">
           <Image
@@ -212,37 +223,22 @@ export default async function HomePage() {
                 Chuyện nhỏ bên hiên
               </p>
               <h2 className="font-serif text-4xl tracking-tight text-[#29412d]">
-                Nhật ký Mộc
+                Nhật ký Mộc Bàm
               </h2>
             </div>
             <Link href="/blog" className="flex items-center gap-3 text-xs">
               Đọc thêm <ArrowUpRight size={15} />
             </Link>
           </div>
-          <div className="grid gap-8 md:grid-cols-2">
-            {posts.slice(0, 2).map((post) => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="group">
-                <div className="relative aspect-[1.7] overflow-hidden">
-                  <Image
-                    src={post.image_url}
-                    alt={post.title}
-                    fill
-                    sizes="(max-width: 768px) 95vw, 45vw"
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                  />
-                </div>
-                <p className="mt-5 text-[9px] uppercase tracking-widest text-[#839275]">
-                  Câu chuyện & cảm hứng
-                </p>
-                <h3 className="mt-2 font-serif text-2xl text-[#29412d]">
-                  {post.title}
-                </h3>
-                <p className="mt-2 text-xs leading-6 text-[#7c866e]">
-                  {post.excerpt}
-                </p>
-              </Link>
+          <StoreCarousel
+            label="Nhật ký Mộc Bàm"
+            itemCount={posts.length}
+            itemClassName="w-full md:w-[calc((100%_-_1.25rem)/2)]"
+          >
+            {posts.map((post) => (
+              <BlogCard key={post.id} post={post} compact />
             ))}
-          </div>
+          </StoreCarousel>
         </div>
       </section>
       <section className="mx-auto grid max-w-7xl gap-12 px-5 pt-16 sm:px-8 md:grid-cols-[1fr_1.3fr] md:pt-20">

@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       p_receipt_hash: digest(token),
       p_user_id: user?.id || null,
       p_payment_method: input.payment_method,
+      p_discount_code: input.discount_code,
     });
     if (error) throw databaseError(error);
     return json({ id: data.id, reference: data.reference, token }, 201);

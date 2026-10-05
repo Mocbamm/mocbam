@@ -12,8 +12,11 @@ export type Product = {
   price: number;
   stock: number;
   image_url: string;
+  image_urls?: string[];
+  video_url?: string;
   description: string;
   featured: boolean;
+  is_new?: boolean;
   active: boolean;
   created_at: string;
 };
@@ -37,6 +40,8 @@ export type SiteSettings = {
   facebook_url: string;
   instagram_url: string;
   tiktok_url: string;
+  zalo_url?: string;
+  shopee_url?: string;
   bank_transfer_enabled: boolean;
   bank_bin: string;
   bank_name: string;
@@ -80,6 +85,8 @@ export type Order = {
   subtotal: number;
   shipping_fee: number;
   total: number;
+  discount_code?: string;
+  discount_amount?: number;
   status: OrderStatus;
   payment_method: PaymentMethod;
   payment_status: PaymentStatus;
@@ -99,5 +106,24 @@ export type Inquiry = {
   phone: string;
   message: string;
   resolved: boolean;
+  created_at: string;
+};
+
+export type Discount = {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  kind: "percentage" | "fixed";
+  value: number;
+  min_subtotal: number;
+  max_discount: number | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  active: boolean;
+  public_campaign: boolean;
+  customer_user_id: string | null;
+  max_uses: number | null;
+  used_count: number;
   created_at: string;
 };

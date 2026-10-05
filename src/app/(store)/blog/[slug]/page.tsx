@@ -1,7 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { getPost } from "@/lib/catalog";
 import { dateLabel } from "@/components/store/format";
 import { Prose } from "@/components/store/content";
@@ -12,7 +10,7 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const post = await getPost(slug);
-  return { title: post?.title || "Nhật ký Mộc" };
+  return { title: post?.title || "Nhật ký Mộc Bàm" };
 }
 export default async function PostPage({
   params,
@@ -24,12 +22,6 @@ export default async function PostPage({
   if (!post) notFound();
   return (
     <article className="mx-auto max-w-4xl px-5 pt-10 sm:px-8">
-      <Link
-        href="/blog"
-        className="inline-flex items-center gap-2 text-xs text-[#7c866b]"
-      >
-        <ArrowLeft size={13} /> Về Nhật ký Mộc
-      </Link>
       <div className="pb-9 pt-10 text-center">
         <p className="text-[10px] uppercase tracking-widest text-[#889777]">
           Chuyện nhỏ bên hiên · {dateLabel(post.created_at)}
@@ -46,7 +38,7 @@ export default async function PostPage({
           src={post.image_url}
           alt={post.title}
           fill
-          priority
+          preload
           sizes="(max-width: 768px) 95vw, 850px"
           className="object-cover"
         />

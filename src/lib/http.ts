@@ -127,6 +127,11 @@ export function safeNext(value: string | null, fallback = "/tai-khoan") {
 
 export function databaseError(error: { message: string; code?: string }) {
   const known: Record<string, [number, string]> = {
+    DISCOUNT_UNAVAILABLE: [
+      409,
+      "Mã ưu đãi không còn hiệu lực hoặc không áp dụng cho tài khoản này.",
+    ],
+    DISCOUNT_MINIMUM: [409, "Đơn hàng chưa đạt giá trị tối thiểu của ưu đãi."],
     STOCK_UNAVAILABLE: [
       409,
       "Sản phẩm không còn đủ hàng. Vui lòng cập nhật giỏ hàng.",

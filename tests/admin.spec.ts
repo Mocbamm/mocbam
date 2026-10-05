@@ -8,6 +8,9 @@ const adminPaths = [
   "/admin/content",
   "/admin/inquiries",
   "/admin/settings",
+  "/admin/customers",
+  "/admin/discounts",
+  "/admin/analytics",
 ];
 const privateApis = [
   "products",
@@ -16,6 +19,7 @@ const privateApis = [
   "content",
   "inquiries",
   "settings",
+  "discounts",
 ];
 
 test("unconfigured admin shows setup instead of management controls", async ({

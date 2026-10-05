@@ -11,6 +11,7 @@ import {
 } from "@/lib/payments";
 import { Button } from "@/components/ui/button";
 import { money, dateLabel } from "./format";
+import { readSavedOrders, saveOrderReceipt } from "@/lib/saved-orders";
 export const statusLabels: Record<OrderStatus, string> = {
   pending: "Chờ xác nhận",
   confirmed: "Đã xác nhận",
@@ -207,6 +208,12 @@ function OrderLines({ order }: { order: Order }) {
           <span>Phí giao hàng</span>
           <span>{money(order.shipping_fee)}</span>
         </p>
+        {order.discount_amount ? (
+          <p className="flex justify-between text-[#406344]">
+            <span>Ưu đãi {order.discount_code}</span>
+            <span>−{money(order.discount_amount)}</span>
+          </p>
+        ) : null}
         <p className="flex justify-between pt-2 text-base text-[#29412d]">
           <strong>Tổng đơn hàng</strong>
           <strong>{money(order.total)}</strong>
@@ -233,6 +240,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
         if (!response.ok)
           throw new Error(result.error || "Không thể xem đơn hàng.");
         setOrder(result.order);
+        saveOrderReceipt({ id, token, reference: result.order.reference });
         setTransfer(result.transfer || null);
       } catch (cause) {
         if (!controller.signal.aborted)
@@ -325,6 +333,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
           <h2 className="font-serif text-2xl text-[#29412d]">
             Hành trình của đơn
           </h2>
+          <OrderProgress status={order.status} />
           <dl className="mt-5 space-y-5 text-sm">
             <div>
               <dt className="text-[10px] uppercase tracking-widest text-[#859174]">
@@ -374,6 +383,9 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
         <PaymentDetails order={order} transfer={transfer} />
       </div>
       <div className="mt-8 text-center">
+        <Button asChild className="mb-4 mr-3">
+          <Link href="/tai-khoan">Đơn hàng của tôi</Link>
+        </Button>
         <Button asChild variant="outline">
           <Link href="/san-pham">
             Ghé Mộc thêm một chút <ArrowUpRight size={15} />
@@ -383,22 +395,46 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
     </>
   );
 }
-export function AccountOrders() {
+export function AccountOrders({ signedIn = true }: { signedIn?: boolean }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [reload, setReload] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     async function read() {
       try {
-        const response = await fetch("/api/account/orders", {
-          signal: controller.signal,
-          cache: "no-store",
-        });
-        const result = await response.json();
-        if (!response.ok)
+        const response = signedIn
+          ? await fetch("/api/account/orders", {
+              signal: controller.signal,
+              cache: "no-store",
+            })
+          : null;
+        const result = response ? await response.json() : { orders: [] };
+        if (response && !response.ok)
           throw new Error(result.error || "Chưa thể xem đơn hàng.");
-        setOrders(result.orders || []);
+        const accountOrders: Order[] = result.orders || [];
+        const known = new Set(accountOrders.map((o) => o.id));
+        const receipts = readSavedOrders().filter((o) => !known.has(o.id));
+        const recovered = await Promise.all(
+          receipts.map(async (r) => {
+            try {
+              const reply = await fetch(
+                `/api/orders/${encodeURIComponent(r.id)}?token=${encodeURIComponent(r.token)}`,
+                { signal: controller.signal, cache: "no-store" },
+              );
+              return reply.ok ? ((await reply.json()).order as Order) : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        setOrders(
+          [
+            ...accountOrders,
+            ...recovered.filter((o): o is Order => o !== null),
+          ].sort((a, b) => b.created_at.localeCompare(a.created_at)),
+        );
       } catch (cause) {
         if (!controller.signal.aborted)
           setError(cause instanceof Error ? cause.message : "Lỗi kết nối.");
@@ -408,7 +444,7 @@ export function AccountOrders() {
     }
     void read();
     return () => controller.abort();
-  }, []);
+  }, [signedIn, reload]);
   if (loading)
     return (
       <p className="py-8 text-sm text-[#7c866b]">
@@ -428,7 +464,8 @@ export function AccountOrders() {
           Bạn chưa có đơn hàng nào.
         </p>
         <p className="mt-3 text-sm text-[#7c866b]">
-          Những đơn đặt khi đăng nhập sẽ xuất hiện tại đây.
+          Đơn đặt khi đăng nhập và đơn dùng email đã xác nhận sẽ xuất hiện tại
+          đây. Đơn khách trên thiết bị này được lưu bằng liên kết riêng.
         </p>
         <Link
           href="/san-pham"
@@ -440,6 +477,18 @@ export function AccountOrders() {
     );
   return (
     <div className="space-y-4">
+      <button
+        type="button"
+        onClick={() => {
+          setLoading(true);
+          setError("");
+          setReload((v) => v + 1);
+        }}
+        className="flex items-center gap-2 text-xs underline underline-offset-4"
+      >
+        <RefreshCw size={13} />
+        Cập nhật đơn hàng
+      </button>
       {orders.map((order) => (
         <details key={order.id} className="border border-[#dde1d0] p-5">
           <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-4 text-sm">
@@ -462,6 +511,7 @@ export function AccountOrders() {
             <p className="mt-5 text-xs text-[#7c866b]">
               Giao đến: {order.address}, {order.city}
             </p>
+            <OrderProgress status={order.status} />
             <div className="mt-5">
               <PaymentDetails order={order} />
             </div>
@@ -469,5 +519,35 @@ export function AccountOrders() {
         </details>
       ))}
     </div>
+  );
+}
+export function OrderProgress({ status }: { status: OrderStatus }) {
+  const steps: OrderStatus[] = [
+    "pending",
+    "confirmed",
+    "processing",
+    "shipped",
+    "completed",
+  ];
+  if (status === "cancelled")
+    return <p className="mt-6 text-sm">Đơn hàng đã hủy.</p>;
+  return (
+    <ol
+      aria-label="Tiến trình đơn hàng"
+      className="my-6 grid gap-3 sm:grid-cols-5"
+    >
+      {steps.map((step, i) => (
+        <li
+          key={step}
+          aria-current={status === step ? "step" : undefined}
+          className={`border-t-2 pt-3 text-xs ${i <= steps.indexOf(status) ? "border-[#406344] text-[#29412d]" : "border-[#d7ddcd] text-[#7c866b]"}`}
+        >
+          <span className="mr-2">
+            {i < steps.indexOf(status) ? "✓" : i + 1}
+          </span>
+          {statusLabels[step]}
+        </li>
+      ))}
+    </ol>
   );
 }

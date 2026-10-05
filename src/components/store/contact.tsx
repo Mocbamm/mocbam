@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-export function ContactForm({ configured }: { configured: boolean }) {
+export function ContactForm({
+  configured,
+  initial,
+  idPrefix = "contact",
+}: {
+  configured: boolean;
+  initial?: { name?: string; email?: string; phone?: string; message?: string };
+  idPrefix?: string;
+}) {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -67,9 +75,10 @@ export function ContactForm({ configured }: { configured: boolean }) {
     <form onSubmit={submit}>
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <Label htmlFor="contact-name">Tên của bạn *</Label>
+          <Label htmlFor={`${idPrefix}-name`}>Tên của bạn *</Label>
           <Input
-            id="contact-name"
+            id={`${idPrefix}-name`}
+            defaultValue={initial?.name}
             name="name"
             autoComplete="name"
             required
@@ -78,9 +87,10 @@ export function ContactForm({ configured }: { configured: boolean }) {
           />
         </div>
         <div>
-          <Label htmlFor="contact-email">Email *</Label>
+          <Label htmlFor={`${idPrefix}-email`}>Email *</Label>
           <Input
-            id="contact-email"
+            id={`${idPrefix}-email`}
+            defaultValue={initial?.email}
             name="email"
             type="email"
             autoComplete="email"
@@ -90,9 +100,10 @@ export function ContactForm({ configured }: { configured: boolean }) {
           />
         </div>
         <div className="sm:col-span-2">
-          <Label htmlFor="contact-phone">Số điện thoại</Label>
+          <Label htmlFor={`${idPrefix}-phone`}>Số điện thoại</Label>
           <Input
-            id="contact-phone"
+            id={`${idPrefix}-phone`}
+            defaultValue={initial?.phone}
             name="phone"
             type="tel"
             autoComplete="tel"
@@ -101,9 +112,10 @@ export function ContactForm({ configured }: { configured: boolean }) {
           />
         </div>
         <div className="sm:col-span-2">
-          <Label htmlFor="contact-message">Lời nhắn *</Label>
+          <Label htmlFor={`${idPrefix}-message`}>Lời nhắn *</Label>
           <Textarea
-            id="contact-message"
+            id={`${idPrefix}-message`}
+            defaultValue={initial?.message}
             name="message"
             required
             maxLength={4000}

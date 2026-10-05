@@ -180,7 +180,7 @@ export const demoContent: SiteContent[] = [
     key: "shipping",
     title: "Giao hàng",
     content:
-      "Cửa hàng tiếp nhận đơn hàng trên toàn Việt Nam. Phí giao hàng được cấu hình trong trang quản trị; cấu hình ban đầu của đồ án là 0đ. Thông tin và thời gian giao hàng thực tế sẽ được xác nhận sau khi chúng mình liên hệ kiểm tra đơn.\n\nBạn có thể chọn thanh toán khi nhận hàng (COD). Chuyển khoản ngân hàng chỉ xuất hiện khi cửa hàng đã cấu hình thông tin nhận tiền. Gửi đơn không đồng nghĩa với đã thanh toán; cửa hàng xác nhận thanh toán sau khi kiểm tra tiền đã nhận.",
+      "Cửa hàng tiếp nhận đơn hàng trên toàn Việt Nam. Phí giao hàng được cấu hình trong trang quản trị. Thông tin và thời gian giao hàng thực tế sẽ được xác nhận sau khi chúng mình liên hệ kiểm tra đơn.\n\nBạn có thể chọn thanh toán khi nhận hàng (COD). Chuyển khoản ngân hàng chỉ xuất hiện khi cửa hàng đã cấu hình thông tin nhận tiền. Gửi đơn không đồng nghĩa với đã thanh toán; cửa hàng xác nhận thanh toán sau khi kiểm tra tiền đã nhận.",
   },
   {
     key: "returns",
@@ -192,13 +192,13 @@ export const demoContent: SiteContent[] = [
     key: "privacy",
     title: "Quyền riêng tư",
     content:
-      "Thông tin tên, email, số điện thoại và địa chỉ được sử dụng để tiếp nhận, xác nhận và xử lý đơn hàng hoặc yêu cầu hỗ trợ. Chúng mình không đưa thông tin nhận diện cá nhân vào sự kiện phân tích website.\n\nBạn có thể lựa chọn cho phép hoặc từ chối công cụ phân tích và quảng cáo. Liên hệ cửa hàng nếu cần kiểm tra hoặc xóa dữ liệu của mình. Đây là nội dung mẫu cho đồ án; chính sách thực tế cần được cập nhật trước khi kinh doanh.",
+      "Thông tin tên, email, số điện thoại và địa chỉ được sử dụng để tiếp nhận, xác nhận và xử lý đơn hàng hoặc yêu cầu hỗ trợ. Chúng mình không đưa thông tin nhận diện cá nhân vào sự kiện phân tích website.\n\nBạn có thể lựa chọn cho phép hoặc từ chối công cụ phân tích và quảng cáo. Liên hệ cửa hàng nếu cần kiểm tra hoặc xóa dữ liệu của mình.",
   },
   {
     key: "terms",
     title: "Điều khoản sử dụng",
     content:
-      "Website Mộc Bàm là sản phẩm đồ án tốt nghiệp. Danh mục và hình minh họa ban đầu là dữ liệu mẫu. Đơn được tiếp nhận ở trạng thái chờ thanh toán với phương thức COD hoặc chuyển khoản khi cửa hàng đã bật. Website không tự động thu tiền, xác nhận giao dịch ngân hàng hoặc hoàn tiền.\n\nGiá và tồn kho được kiểm tra lại khi gửi đơn. Cửa hàng cần xác nhận các thông tin giao hàng trước khi thực hiện đơn. Việc hủy đơn đã thanh toán không tự động hoàn tiền; vui lòng liên hệ cửa hàng để xử lý và xác nhận hoàn tiền.",
+      "Đơn được tiếp nhận ở trạng thái chờ thanh toán với phương thức COD hoặc chuyển khoản khi cửa hàng đã bật. Website không tự động thu tiền, xác nhận giao dịch ngân hàng hoặc hoàn tiền.\n\nGiá và tồn kho được kiểm tra lại khi gửi đơn. Cửa hàng cần xác nhận các thông tin giao hàng trước khi thực hiện đơn. Việc hủy đơn đã thanh toán không tự động hoàn tiền; vui lòng liên hệ cửa hàng để xử lý và xác nhận hoàn tiền.",
   },
 ];
 
@@ -211,6 +211,8 @@ export const demoSettings: SiteSettings = {
   facebook_url: "",
   instagram_url: "",
   tiktok_url: "",
+  zalo_url: "",
+  shopee_url: "",
   bank_transfer_enabled: false,
   bank_bin: "",
   bank_name: "",

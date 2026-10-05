@@ -29,9 +29,12 @@ const blank: ProductDraft = {
   price: 0,
   stock: 0,
   image_url: "",
+  image_urls: [],
+  video_url: "",
   description: "",
   active: true,
   featured: false,
+  is_new: false,
 };
 export function ProductManager({ products }: { products: Product[] }) {
   const router = useRouter();
@@ -57,9 +60,12 @@ export function ProductManager({ products }: { products: Product[] }) {
             price: product.price,
             stock: product.stock,
             image_url: product.image_url,
+            image_urls: product.image_urls || [],
+            video_url: product.video_url || "",
             description: product.description,
             active: product.active,
             featured: product.featured,
+            is_new: product.is_new || false,
           },
     );
   }
@@ -90,6 +96,58 @@ export function ProductManager({ products }: { products: Product[] }) {
       reportError(error);
     } finally {
       setSaving(false);
+    }
+  }
+  async function uploadMedia(files: FileList | null, kind: "images" | "video") {
+    if (!files?.length) return;
+    const selected = Array.from(files);
+    if (
+      kind === "images" &&
+      (draft.image_urls?.length || 0) + selected.length > 8
+    ) {
+      toast.error("Mỗi sản phẩm có tối đa 8 ảnh bổ sung.");
+      return;
+    }
+    const allowed =
+      kind === "video"
+        ? ["video/mp4", "video/webm"]
+        : ["image/jpeg", "image/png", "image/webp"];
+    const limit = kind === "video" ? 20_000_000 : 4_000_000;
+    if (
+      selected.some(
+        (file) =>
+          !allowed.includes(file.type) || file.size > limit || file.size === 0,
+      )
+    ) {
+      toast.error(
+        kind === "video"
+          ? "Chọn video MP4 hoặc WebM, tối đa 20 MB."
+          : "Chọn ảnh JPG, PNG hoặc WebP, tối đa 4 MB mỗi ảnh.",
+      );
+      return;
+    }
+    setUploading(true);
+    try {
+      for (const file of selected) {
+        const body = new FormData();
+        body.append("file", file);
+        const { url } = await adminRequest("/api/admin/upload", "POST", body);
+        setDraft((previous) =>
+          kind === "video"
+            ? { ...previous, video_url: url }
+            : {
+                ...previous,
+                image_urls: [...(previous.image_urls || []), url],
+              },
+        );
+      }
+      toast.success(
+        kind === "video" ? "Đã tải video lên." : "Đã thêm ảnh bổ sung.",
+      );
+    } catch (error) {
+      reportError(error);
+    } finally {
+      setUploading(false);
     }
   }
   return (
@@ -127,7 +185,10 @@ export function ProductManager({ products }: { products: Product[] }) {
               <X className="size-4" />
             </Button>
           </div>
-          <fieldset disabled={saving} className="grid gap-5 md:grid-cols-2">
+          <fieldset
+            disabled={saving || uploading}
+            className="grid gap-5 md:grid-cols-2"
+          >
             <div className="space-y-2">
               <Label htmlFor="product-name">Tên sản phẩm</Label>
               <Input
@@ -205,6 +266,96 @@ export function ProductManager({ products }: { products: Product[] }) {
                 onUploadingChange={setUploading}
               />
             </div>
+            <div className="space-y-3 md:col-span-2">
+              <Label htmlFor="product-gallery-upload">Ảnh bổ sung</Label>
+              <p className="text-xs text-[#788273]">
+                Tối đa 8 ảnh JPG, PNG hoặc WebP, 4 MB mỗi ảnh. Khách hàng có thể
+                xem các góc khác của sản phẩm.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {(draft.image_urls || []).map((url, index) => (
+                  <div key={`${url}-${index}`} className="relative">
+                    <Image
+                      src={url}
+                      alt={`Ảnh bổ sung ${index + 1}`}
+                      width={88}
+                      height={88}
+                      unoptimized
+                      className="size-22 rounded-xl border border-[#dfe5d8] object-cover"
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      aria-label={`Xóa ảnh bổ sung ${index + 1}`}
+                      className="absolute -top-2 -right-2 size-6 rounded-full"
+                      onClick={() =>
+                        update(
+                          "image_urls",
+                          (draft.image_urls || []).filter(
+                            (_, i) => i !== index,
+                          ),
+                        )
+                      }
+                    >
+                      <X className="size-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Input
+                id="product-gallery-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                disabled={
+                  saving || uploading || (draft.image_urls?.length || 0) >= 8
+                }
+                onChange={(event) => {
+                  void uploadMedia(event.target.files, "images");
+                  event.target.value = "";
+                }}
+              />
+            </div>
+            <div className="space-y-3 md:col-span-2">
+              <Label htmlFor="product-video-upload">Video sản phẩm</Label>
+              <p className="text-xs text-[#788273]">
+                Một video MP4 hoặc WebM, tối đa 20 MB. Video có nút phát và
+                không tự phát âm thanh.
+              </p>
+              {draft.video_url && (
+                <div className="space-y-2">
+                  <video
+                    src={draft.video_url}
+                    controls
+                    preload="metadata"
+                    className="max-h-60 max-w-full rounded-xl"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => update("video_url", "")}
+                  >
+                    Xóa video
+                  </Button>
+                </div>
+              )}
+              <Input
+                id="product-video-upload"
+                type="file"
+                accept="video/mp4,video/webm"
+                onChange={(event) => {
+                  void uploadMedia(event.target.files, "video");
+                  event.target.value = "";
+                }}
+              />
+              {uploading && (
+                <p role="status" className="text-sm text-[#426533]">
+                  Đang tải tệp lên…
+                </p>
+              )}
+            </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="product-description">Mô tả</Label>
               <Textarea
@@ -225,6 +376,11 @@ export function ProductManager({ products }: { products: Product[] }) {
                 label="Sản phẩm nổi bật"
                 checked={draft.featured}
                 onChange={(checked) => update("featured", checked)}
+              />
+              <CheckField
+                label="Sản phẩm mới"
+                checked={draft.is_new || false}
+                onChange={(checked) => update("is_new", checked)}
               />
             </div>
           </fieldset>
@@ -288,6 +444,7 @@ export function ProductManager({ products }: { products: Product[] }) {
                             (category) => category.id === product.category_id,
                           )?.name || "Danh mục khác"}
                           {product.featured ? " · Nổi bật" : ""}
+                          {product.is_new ? " · Mới" : ""}
                         </p>
                       </div>
                     </div>

@@ -1,0 +1,97 @@
+"use client";
+import { useState } from "react";
+import provinces from "@/lib/data/vietnam-addresses.json";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+export function AddressFields() {
+  const [province, setProvince] = useState(""),
+    [manual, setManual] = useState(false);
+  const selected = provinces.find((p) => p.name === province);
+  const style =
+    "mt-2 h-10 w-full border border-[#d7ddcd] bg-transparent px-3 text-sm";
+  return (
+    <>
+      <div className="sm:col-span-2">
+        <Label htmlFor="checkout-address">Số nhà, tên đường *</Label>
+        <Input
+          id="checkout-address"
+          name="address"
+          autoComplete="street-address"
+          required
+          maxLength={398}
+          placeholder="Số nhà, tên đường"
+          className="mt-2"
+        />
+      </div>
+      <div>
+        <Label htmlFor="checkout-city">Tỉnh / thành phố *</Label>
+        {manual ? (
+          <Input
+            id="checkout-city"
+            name="city"
+            autoComplete="address-level1"
+            required
+            maxLength={100}
+            className="mt-2"
+          />
+        ) : (
+          <select
+            id="checkout-city"
+            name="city"
+            value={province}
+            onChange={(e) => setProvince(e.target.value)}
+            autoComplete="address-level1"
+            required
+            className={style}
+          >
+            <option value="">Chọn tỉnh / thành phố</option>
+            {provinces.map((p) => (
+              <option key={p.code} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+      <div>
+        <Label htmlFor="checkout-ward">Phường / xã *</Label>
+        {manual ? (
+          <Input
+            id="checkout-ward"
+            name="ward"
+            autoComplete="address-level2"
+            required
+            maxLength={100}
+            className="mt-2"
+          />
+        ) : (
+          <select
+            key={province}
+            id="checkout-ward"
+            name="ward"
+            autoComplete="address-level2"
+            required
+            disabled={!selected}
+            className={style}
+          >
+            <option value="">Chọn phường / xã</option>
+            {selected?.wards.map((w) => (
+              <option key={w.code} value={w.name}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+      <div className="sm:col-span-2">
+        <button
+          type="button"
+          onClick={() => setManual((v) => !v)}
+          className="text-xs underline underline-offset-4"
+        >
+          {manual ? "Chọn từ danh sách địa chỉ" : "Nhập địa chỉ thủ công"}
+        </button>
+      </div>
+    </>
+  );
+}

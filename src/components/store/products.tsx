@@ -17,6 +17,7 @@ import { trackStoreEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { money } from "./format";
+import { productImages } from "./product-media";
 
 export function ProductCard({
   product,
@@ -26,32 +27,60 @@ export function ProductCard({
   category?: string;
 }) {
   const { add } = useCart();
+  const router = useRouter();
+  const images = productImages(product);
+  const [imageIndex, setImageIndex] = useState(0);
+  const image = (
+    <Image
+      src={images[imageIndex] || product.image_url}
+      alt={`${product.name}${images.length > 1 ? ` — ảnh ${imageIndex + 1}` : ""}`}
+      fill
+      sizes="(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 24vw"
+      className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+    />
+  );
   return (
     <article className="group">
-      <Link
-        href={`/san-pham/${product.slug}`}
-        className="relative block aspect-square overflow-hidden bg-[#eceee3]"
-      >
-        <Image
-          src={product.image_url}
-          alt={product.name}
-          fill
-          sizes="(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 24vw"
-          className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-        />
+      <div className="relative aspect-square overflow-hidden bg-[#eceee3]">
+        {images.length > 1 ? (
+          <button
+            type="button"
+            onClick={() =>
+              setImageIndex((index) => (index + 1) % images.length)
+            }
+            aria-label={`Xem ảnh tiếp theo của ${product.name}`}
+            className="relative block h-full w-full"
+          >
+            {image}
+          </button>
+        ) : (
+          <Link
+            href={`/san-pham/${product.slug}`}
+            aria-label={`Xem chi tiết ${product.name}`}
+            className="relative block h-full w-full"
+          >
+            {image}
+          </Link>
+        )}
         {product.stock < 1 ? (
-          <span className="absolute left-3 top-3 bg-[#faf9f3]/90 px-3 py-1 text-[10px] uppercase tracking-widest">
+          <span className="pointer-events-none absolute left-3 top-3 bg-[#faf9f3]/90 px-3 py-1 text-[10px] uppercase tracking-widest">
             Tạm hết hàng
           </span>
-        ) : product.featured ? (
-          <span className="absolute left-3 top-3 bg-[#faf9f3]/90 px-3 py-1 text-[10px] uppercase tracking-widest">
-            Mộc yêu thích
-          </span>
-        ) : null}
-        <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-[#29412d] transition-transform group-hover:rotate-45">
-          <ArrowUpRight size={18} />
-        </span>
-      </Link>
+        ) : (
+          <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
+            {product.featured ? (
+              <span className="bg-[#faf9f3]/90 px-3 py-1 text-[10px] uppercase tracking-widest">
+                Nổi bật
+              </span>
+            ) : null}
+            {product.is_new ? (
+              <span className="bg-[#29412d]/90 px-3 py-1 text-[10px] uppercase tracking-widest text-white">
+                Mới
+              </span>
+            ) : null}
+          </div>
+        )}
+      </div>
       <div className="pt-4">
         <p className="mb-1 text-[9px] uppercase tracking-[0.18em] text-[#848b79]">
           {category || "Gỗ & những điều nhỏ xinh"}
@@ -62,16 +91,32 @@ export function ProductCard({
         >
           {product.name}
         </Link>
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <p className="text-sm text-[#65705c]">{money(product.price)}</p>
+        <p className="mt-2 text-sm text-[#65705c]">{money(product.price)}</p>
+        {images.length > 1 ? (
+          <p aria-live="polite" className="mt-2 text-[10px] text-[#848b79]">
+            Ảnh {imageIndex + 1}/{images.length} · Bấm ảnh để xem thêm
+          </p>
+        ) : null}
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
             disabled={product.stock < 1}
             onClick={() => add(product)}
             aria-label={`Thêm ${product.name} vào giỏ hàng`}
-            className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#29412d] disabled:opacity-40"
+            className="flex min-h-9 items-center justify-center gap-1.5 border border-[#c5d0b9] px-2 py-2 text-[10px] uppercase tracking-wider text-[#29412d] disabled:opacity-40"
           >
             <Plus size={14} /> Bỏ giỏ
+          </button>
+          <button
+            type="button"
+            disabled={product.stock < 1}
+            onClick={() => {
+              if (add(product)) router.push("/thanh-toan");
+            }}
+            aria-label={`Mua ngay ${product.name}`}
+            className="min-h-9 bg-[#29412d] px-2 py-2 text-[10px] uppercase tracking-wider text-white disabled:opacity-40"
+          >
+            Mua ngay
           </button>
         </div>
       </div>

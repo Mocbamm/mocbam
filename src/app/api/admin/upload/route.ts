@@ -8,17 +8,17 @@ import {
   json,
   readBody,
 } from "@/lib/http";
-import { imageExtension } from "@/lib/validation";
+import { imageExtension, videoExtension } from "@/lib/validation";
 
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const { supabase } = await requireAdmin();
     if (!request.headers.get("content-type")?.startsWith("multipart/form-data"))
-      throw new HttpError(415, "Vui lòng gửi tệp hình ảnh.");
-    if (Number(request.headers.get("content-length") || 0) > 4_300_000)
-      throw new HttpError(413, "Ảnh phải nhỏ hơn 4 MB.");
-    const bytesOfRequest = await readBody(request, 4_300_000);
+      throw new HttpError(415, "Vui lòng gửi tệp hình ảnh hoặc video.");
+    if (Number(request.headers.get("content-length") || 0) > 20_300_000)
+      throw new HttpError(413, "Video tối đa 20 MB, ảnh tối đa 4 MB.");
+    const bytesOfRequest = await readBody(request, 20_300_000);
     const form = await new Response(bytesOfRequest, {
       headers: { "content-type": request.headers.get("content-type")! },
     }).formData();
@@ -26,17 +26,23 @@ export async function POST(request: Request) {
       form.getAll("file").length !== 1 ||
       [...form.keys()].some((key) => key !== "file")
     )
-      throw new HttpError(400, "Chỉ gửi một tệp hình ảnh.");
+      throw new HttpError(400, "Chỉ gửi một tệp mỗi lần.");
     const file = form.get("file");
-    if (!(file instanceof File) || file.size === 0 || file.size > 4_000_000)
+    if (!(file instanceof File) || file.size === 0 || file.size > 20_000_000)
       throw new HttpError(
         400,
-        "Chọn một ảnh JPEG, PNG hoặc WebP nhỏ hơn 4 MB.",
+        "Chọn ảnh JPEG, PNG, WebP hoặc video MP4, WebM hợp lệ.",
       );
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const extension = imageExtension(bytes, file.type);
+    const imageFormat = imageExtension(bytes, file.type);
+    if (imageFormat && file.size > 4_000_000)
+      throw new HttpError(413, "Ảnh phải nhỏ hơn 4 MB.");
+    const extension = imageFormat || videoExtension(bytes, file.type);
     if (!extension)
-      throw new HttpError(400, "Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP hợp lệ.");
+      throw new HttpError(
+        400,
+        "Chỉ chấp nhận ảnh JPEG, PNG, WebP hoặc video MP4, WebM hợp lệ.",
+      );
     const path = `${randomUUID()}.${extension}`;
     const { error } = await supabase.storage
       .from("products")

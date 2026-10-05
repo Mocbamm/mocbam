@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { money } from "./format";
+import { AddressFields } from "./address-fields";
+import { saveOrderReceipt } from "@/lib/saved-orders";
 
 function EmptyCart() {
   return (
@@ -165,11 +167,17 @@ export function CheckoutScreen({
   configured,
   bankTransferAvailable,
   initialEmail = "",
+  initialName = "",
+  initialPhone = "",
+  signedIn = false,
 }: {
   shippingFee: number;
   configured: boolean;
   bankTransferAvailable: boolean;
   initialEmail?: string;
+  initialName?: string;
+  initialPhone?: string;
+  signedIn?: boolean;
 }) {
   const { items, subtotal, ready, clear } = useCart();
   const router = useRouter();
@@ -178,6 +186,21 @@ export function CheckoutScreen({
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">(
     "cod",
   );
+  const [discountCode, setDiscountCode] = useState("");
+  const [discount, setDiscount] = useState<{
+    code: string;
+    title: string;
+    discount_amount: number;
+    subtotal: number;
+  } | null>(null);
+  const [discountError, setDiscountError] = useState("");
+  const [quoting, setQuoting] = useState(false);
+  const effectiveDiscount =
+    discount &&
+    discount.subtotal === subtotal &&
+    discount.code === discountCode.trim().toUpperCase()
+      ? discount
+      : null;
   const idempotency = useRef("");
   const submittedDraft = useRef("");
   const started = useRef(false);
@@ -214,12 +237,13 @@ export function CheckoutScreen({
   if (!items.length) return <EmptyCart />;
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || !configured) return;
+    if (busy || quoting || !configured) return;
     setBusy(true);
     setError("");
     const form = new FormData(event.currentTarget);
     const draft = {
       payment_method: paymentMethod,
+      discount_code: effectiveDiscount?.code || "",
       items: items.map(({ product, quantity }) => ({
         product_id: product.id,
         quantity,
@@ -231,6 +255,12 @@ export function CheckoutScreen({
         ]),
       ),
     };
+    draft.customer.address = [
+      draft.customer.address,
+      String(form.get("ward") || "").trim(),
+    ]
+      .filter(Boolean)
+      .join(", ");
     const fingerprint = JSON.stringify(draft);
     if (!idempotency.current || submittedDraft.current !== fingerprint) {
       idempotency.current = crypto.randomUUID();
@@ -258,6 +288,11 @@ export function CheckoutScreen({
       trackStoreEvent("order_submitted", {
         currency: "VND",
         num_items: items.reduce((s, i) => s + i.quantity, 0),
+      });
+      saveOrderReceipt({
+        id: result.id,
+        token: result.token,
+        reference: result.reference,
       });
       clear();
       router.push(
@@ -287,6 +322,16 @@ export function CheckoutScreen({
             khi cấu hình Supabase.
           </div>
         ) : null}
+        {!signedIn ? (
+          <p className="mb-6 text-xs leading-6 text-[#7c866b]">
+            Bạn đang đặt hàng với tư cách khách.{" "}
+            <Link href="/tai-khoan?next=/thanh-toan" className="underline">
+              Đăng nhập
+            </Link>{" "}
+            để lưu đơn trong tài khoản. Bạn vẫn có thể theo dõi bằng liên kết
+            riêng sau khi đặt.
+          </p>
+        ) : null}
         <h2 className="mb-6 font-serif text-2xl text-[#29412d]">
           Gửi đến đâu, bạn nhỉ?
         </h2>
@@ -296,6 +341,7 @@ export function CheckoutScreen({
             <Input
               id="checkout-name"
               name="name"
+              defaultValue={initialName}
               autoComplete="name"
               required
               maxLength={100}
@@ -307,12 +353,12 @@ export function CheckoutScreen({
             <Input
               id="checkout-phone"
               name="phone"
+              defaultValue={initialPhone}
               type="tel"
               autoComplete="tel"
               required
               minLength={7}
               maxLength={30}
-              pattern="[+0-9().\s\-]{7,30}"
               className="mt-2"
             />
           </div>
@@ -329,29 +375,7 @@ export function CheckoutScreen({
               className="mt-2"
             />
           </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="checkout-address">Địa chỉ nhận hàng *</Label>
-            <Input
-              id="checkout-address"
-              name="address"
-              autoComplete="street-address"
-              required
-              maxLength={500}
-              placeholder="Số nhà, tên đường, phường/xã, quận/huyện"
-              className="mt-2"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Label htmlFor="checkout-city">Tỉnh / thành phố *</Label>
-            <Input
-              id="checkout-city"
-              name="city"
-              autoComplete="address-level1"
-              required
-              maxLength={100}
-              className="mt-2"
-            />
-          </div>
+          <AddressFields />
           <div className="sm:col-span-2">
             <Label htmlFor="checkout-note">Lời nhắn cho Mộc</Label>
             <Textarea
@@ -453,6 +477,80 @@ export function CheckoutScreen({
             </div>
           ))}
         </div>
+        <div className="mt-7 border-t border-[#d1d9c2] pt-5">
+          <Label htmlFor="checkout-discount">Mã ưu đãi</Label>
+          <div className="mt-2 flex gap-2">
+            <Input
+              id="checkout-discount"
+              value={discountCode}
+              maxLength={40}
+              onChange={(e) => {
+                setDiscountCode(e.target.value);
+                setDiscount(null);
+                setDiscountError("");
+              }}
+              placeholder="Nhập mã ưu đãi"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!configured || quoting || !discountCode.trim()}
+              onClick={async () => {
+                setQuoting(true);
+                setDiscountError("");
+                setDiscount(null);
+                try {
+                  const r = await fetch("/api/discounts/quote", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      code: discountCode,
+                      items: items.map(({ product, quantity }) => ({
+                        product_id: product.id,
+                        quantity,
+                      })),
+                    }),
+                  });
+                  const d = await r.json();
+                  if (!r.ok) throw new Error(d.error);
+                  setDiscountCode(d.code);
+                  setDiscount(d);
+                } catch (cause) {
+                  setDiscountError(
+                    cause instanceof Error
+                      ? cause.message
+                      : "Chưa thể kiểm tra ưu đãi.",
+                  );
+                } finally {
+                  setQuoting(false);
+                }
+              }}
+            >
+              {quoting ? "Đang kiểm tra..." : "Áp dụng"}
+            </Button>
+          </div>
+          {discountError ? (
+            <p role="alert" className="mt-2 text-xs text-red-700">
+              {discountError}
+            </p>
+          ) : null}
+          {effectiveDiscount ? (
+            <p role="status" className="mt-2 text-xs text-[#406344]">
+              {effectiveDiscount.title} · Giảm{" "}
+              {money(effectiveDiscount.discount_amount)}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setDiscount(null);
+                  setDiscountCode("");
+                }}
+                className="ml-2 underline"
+              >
+                Bỏ mã
+              </button>
+            </p>
+          ) : null}
+        </div>
         <div className="mt-7 space-y-3 border-t border-[#d1d9c2] pt-5 text-xs text-[#778167]">
           <p className="flex justify-between">
             <span>Tạm tính</span>
@@ -462,9 +560,21 @@ export function CheckoutScreen({
             <span>Phí giao hàng</span>
             <span>{money(shippingFee)}</span>
           </p>
+          {effectiveDiscount ? (
+            <p className="flex justify-between">
+              <span>Ưu đãi ({effectiveDiscount.code})</span>
+              <span>−{money(effectiveDiscount.discount_amount)}</span>
+            </p>
+          ) : null}
           <p className="flex justify-between border-t border-[#d1d9c2] pt-5 text-base font-medium text-[#29412d]">
             <span>Tổng dự kiến</span>
-            <span>{money(subtotal + shippingFee)}</span>
+            <span>
+              {money(
+                subtotal +
+                  shippingFee -
+                  (effectiveDiscount?.discount_amount || 0),
+              )}
+            </span>
           </p>
         </div>
         {error ? (
@@ -477,7 +587,7 @@ export function CheckoutScreen({
         ) : null}
         <Button
           type="submit"
-          disabled={busy || !configured}
+          disabled={busy || quoting || !configured}
           className="mt-6 h-12 w-full"
         >
           {busy ? "Đang gửi đơn..." : "Gửi đơn hàng"}

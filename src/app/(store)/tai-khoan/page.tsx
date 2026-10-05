@@ -5,6 +5,8 @@ import { isConfigured } from "@/lib/catalog";
 import { AccountOrders } from "@/components/store/orders";
 import { Button } from "@/components/ui/button";
 import { Leaf } from "lucide-react";
+import { AccountForm, ProfileForm } from "@/components/store/account-form";
+import { getCustomerProfile } from "@/lib/customer-profile";
 export const metadata = {
   title: "Tài khoản",
   robots: { index: false, follow: false },
@@ -16,6 +18,7 @@ export default async function AccountPage({
 }) {
   const [user, query] = await Promise.all([getCurrentUser(), searchParams]);
   const admin = user ? await isAdmin(user) : false;
+  const profile = user ? await getCustomerProfile() : null;
   const next = safeNext(typeof query.next === "string" ? query.next : null);
   return (
     <main className="mx-auto max-w-4xl px-5 pt-14 sm:px-8">
@@ -44,6 +47,7 @@ export default async function AccountPage({
               </form>
             </div>
           </div>
+          {profile ? <ProfileForm profile={profile} /> : null}
           <h2 className="mb-5 font-serif text-2xl text-[#29412d]">
             Những đơn hàng đã gửi
           </h2>
@@ -56,8 +60,8 @@ export default async function AccountPage({
               role="alert"
               className="mb-6 border border-[#d9ca9d] bg-[#f3eddb] p-4 text-xs leading-6 text-[#847044]"
             >
-              Chưa thể đăng nhập bằng Google. Vui lòng kiểm tra cấu hình kết nối
-              hoặc thử lại sau.
+              Chưa thể xác nhận đăng nhập. Vui lòng thử lại hoặc mở lại liên kết
+              xác nhận email.
             </p>
           ) : null}
           <Leaf
@@ -72,8 +76,8 @@ export default async function AccountPage({
             Một góc nhỏ dành riêng.
           </h1>
           <p className="mt-5 text-sm leading-7 text-[#7c866b]">
-            Đăng nhập bằng Google để lưu đơn hàng trong tài khoản và xem lại
-            hành trình những điều bạn chọn.
+            Đăng nhập bằng Google hoặc email để lưu đơn hàng và theo dõi hành
+            trình những điều bạn chọn.
           </p>
           {isConfigured() ? (
             <Button asChild className="mt-7 h-12">
@@ -90,12 +94,21 @@ export default async function AccountPage({
               OAuth. Bạn đang xem bản trình diễn.
             </p>
           )}
+          <AccountForm configured={isConfigured()} next={next} />
           <p className="mt-5 text-[10px] leading-6 text-[#8b947d]">
             Bạn vẫn có thể chọn sản phẩm và đặt hàng với tư cách khách khi cửa
             hàng đã được kết nối.
           </p>
         </section>
       )}
+      {!user ? (
+        <section className="mt-10">
+          <h2 className="mb-5 font-serif text-2xl">
+            Đơn hàng trên thiết bị này
+          </h2>
+          <AccountOrders signedIn={false} />
+        </section>
+      ) : null}
     </main>
   );
 }

@@ -30,6 +30,22 @@ const social = z.union([
   z.literal(""),
   z.url().refine((v) => new URL(v).protocol === "https:"),
 ]);
+const video = z.union([
+  z.literal(""),
+  z
+    .string()
+    .max(500)
+    .regex(/^\/api\/media\/[a-f0-9-]{36}\.(mp4|webm)$/),
+]);
+export const discountCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .max(40)
+  .regex(
+    /^[A-Z0-9_-]*$/,
+    "Mã ưu đãi chỉ gồm chữ, số, dấu gạch ngang và gạch dưới.",
+  );
 
 export const productSchema = z
   .object({
@@ -39,8 +55,11 @@ export const productSchema = z
     price: money,
     stock: z.number().int().min(0).max(100_000),
     image_url: image,
+    image_urls: z.array(image).max(8).optional(),
+    video_url: video.optional(),
     description: short(10_000),
     featured: z.boolean(),
+    is_new: z.boolean().optional(),
     active: z.boolean(),
   })
   .strict();
@@ -74,6 +93,8 @@ export const settingsSchema = z
     facebook_url: social,
     instagram_url: social,
     tiktok_url: social,
+    zalo_url: social.optional(),
+    shopee_url: social.optional(),
     bank_transfer_enabled: z.boolean().optional(),
     bank_bin: z
       .union([z.literal(""), z.string().regex(/^[0-9]{6}$/)])
@@ -164,6 +185,7 @@ export const orderSchema = z
       .strict(),
     idempotency_key: z.uuid(),
     payment_method: z.enum(["cod", "bank_transfer"]).default("cod"),
+    discount_code: discountCodeSchema.default(""),
   })
   .strict();
 
@@ -181,6 +203,7 @@ export function canonicalOrderPayload(
     customer: input.customer,
     user_id: userId,
     ...(includePaymentMethod ? { payment_method: input.payment_method } : {}),
+    ...(input.discount_code ? { discount_code: input.discount_code } : {}),
   });
 }
 
@@ -206,5 +229,69 @@ export function imageExtension(
     new TextDecoder().decode(bytes.slice(8, 12)) === "WEBP"
   )
     return "webp";
+  return null;
+}
+
+export const discountSchema = z
+  .object({
+    code: discountCodeSchema.min(1),
+    title: short(160),
+    description: optionalText(1_000),
+    kind: z.enum(["percentage", "fixed"]),
+    value: z.number().int().min(1).max(100_000_000),
+    min_subtotal: money,
+    max_discount: money.nullable(),
+    starts_at: z.iso.datetime({ offset: true }).nullable(),
+    ends_at: z.iso.datetime({ offset: true }).nullable(),
+    active: z.boolean(),
+    public_campaign: z.boolean(),
+    customer_user_id: z.uuid().nullable(),
+    max_uses: z.number().int().min(1).max(1_000_000).nullable(),
+  })
+  .strict()
+  .superRefine((discount, context) => {
+    if (discount.kind === "percentage" && discount.value > 100)
+      context.addIssue({
+        code: "custom",
+        path: ["value"],
+        message: "Phần trăm giảm giá tối đa là 100%.",
+      });
+    if (
+      discount.starts_at &&
+      discount.ends_at &&
+      new Date(discount.ends_at) <= new Date(discount.starts_at)
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["ends_at"],
+        message: "Ngày kết thúc phải sau ngày bắt đầu.",
+      });
+    if (discount.public_campaign && discount.customer_user_id)
+      context.addIssue({
+        code: "custom",
+        path: ["public_campaign"],
+        message: "Ưu đãi riêng cho khách hàng không được hiển thị công khai.",
+      });
+  });
+
+export function videoExtension(
+  bytes: Uint8Array,
+  mime: string,
+): "mp4" | "webm" | null {
+  if (
+    mime === "video/mp4" &&
+    bytes.length >= 12 &&
+    new TextDecoder().decode(bytes.slice(4, 8)) === "ftyp" &&
+    ["isom", "iso2", "mp41", "mp42", "avc1", "M4V "].includes(
+      new TextDecoder().decode(bytes.slice(8, 12)),
+    )
+  )
+    return "mp4";
+  if (
+    mime === "video/webm" &&
+    [0x1a, 0x45, 0xdf, 0xa3].every((value, index) => bytes[index] === value) &&
+    new TextDecoder().decode(bytes.slice(0, 4096)).includes("webm")
+  )
+    return "webm";
   return null;
 }

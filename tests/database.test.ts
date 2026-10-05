@@ -170,6 +170,15 @@ beforeAll(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    await readFile(
+      new URL(
+        "../supabase/migrations/202610050003_store_features.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
   legacyPaymentSnapshot = (
     await db.query<Record<string, unknown>>(
       "select payment_method,payment_status,paid_at,refunded_at,payment_bank_bin,payment_bank_name,payment_bank_account_number,payment_bank_account_name from public.orders where id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'",
