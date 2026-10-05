@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Xác nhận email của bạn | Mộc Bàm</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f6f5ef;
+      color: #29412d;
+      font-family: Arial, Helvetica, sans-serif;
+    "
+  >
+    <div style="display: none; max-height: 0; overflow: hidden; opacity: 0">
+      Xác nhận email để hoàn tất tài khoản Mộc Bàm của bạn.
+    </div>
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background-color: #f6f5ef"
+    >
+      <tr>
+        <td align="center" style="padding: 40px 16px">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            style="max-width: 560px"
+          >
+            <tr>
+              <td
+                style="
+                  padding: 0 0 24px;
+                  font-family: Georgia, &quot;Times New Roman&quot;, serif;
+                  font-size: 30px;
+                  letter-spacing: -1px;
+                  text-align: center;
+                "
+              >
+                Mộc Bàm<span style="color: #8b9b79">.</span>
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="
+                  background-color: #ffffff;
+                  border: 1px solid #dde1d0;
+                  border-top: 4px solid #29412d;
+                  padding: 36px 28px;
+                "
+              >
+                <p
+                  style="
+                    margin: 0 0 14px;
+                    font-size: 11px;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    color: #77866a;
+                  "
+                >
+                  Xác nhận tài khoản
+                </p>
+                <h1
+                  style="
+                    margin: 0 0 20px;
+                    font-family: Georgia, &quot;Times New Roman&quot;, serif;
+                    font-size: 32px;
+                    line-height: 1.2;
+                    font-weight: normal;
+                  "
+                >
+                  Chỉ còn một bước nhỏ.
+                </h1>
+                <p
+                  style="
+                    margin: 0 0 28px;
+                    font-size: 15px;
+                    line-height: 1.7;
+                    color: #596650;
+                  "
+                >
+                  Bạn vừa đăng ký tài khoản tại Mộc Bàm. Nhấn nút bên dưới để
+                  xác nhận email và hoàn tất đăng ký.
+                </p>
+                <table role="presentation" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td
+                      bgcolor="#29412d"
+                      style="border-radius: 4px; text-align: center"
+                    >
+                      <a
+                        href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email"
+                        style="
+                          display: inline-block;
+                          padding: 16px 28px;
+                          border: 1px solid #29412d;
+                          border-radius: 4px;
+                          color: #ffffff;
+                          text-decoration: none;
+                          font-size: 15px;
+                          font-weight: bold;
+                        "
+                        >Xác nhận email</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+                <p
+                  style="
+                    margin: 26px 0 0;
+                    font-size: 13px;
+                    line-height: 1.7;
+                    color: #77866a;
+                  "
+                >
+                  Liên kết chỉ dùng một lần. Nếu liên kết hết hạn, bạn có thể
+                  yêu cầu gửi lại tại trang Tài khoản.
+                </p>
+                <div
+                  style="
+                    margin-top: 26px;
+                    padding-top: 22px;
+                    border-top: 1px solid #e7eadf;
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 12px;
+                      line-height: 1.7;
+                      color: #77866a;
+                    "
+                  >
+                    Nếu nút không mở được, sao chép liên kết này vào trình
+                    duyệt:
+                  </p>
+                  <p
+                    style="
+                      margin: 10px 0 0;
+                      font-size: 12px;
+                      line-height: 1.7;
+                      word-break: break-all;
+                      overflow-wrap: anywhere;
+                    "
+                  >
+                    <a
+                      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email"
+                      style="color: #49623d"
+                      >{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash
+                      }}&amp;type=email</a
+                    >
+                  </p>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="
+                  padding: 24px 16px;
+                  text-align: center;
+                  font-size: 12px;
+                  line-height: 1.8;
+                  color: #77866a;
+                "
+              >
+                Bạn không đăng ký tài khoản này? Hãy bỏ qua email.<br />Mộc Bàm
+                không bao giờ yêu cầu bạn gửi mật khẩu qua email.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -40,6 +40,14 @@ export async function POST(request: Request) {
           emailRedirectTo: `${requestOrigin(request)}/auth/callback`,
         },
       });
+      if (
+        error &&
+        ((error.status ?? 0) >= 500 || error.code === "email_address_not_authorized")
+      )
+        throw new HttpError(
+          503,
+          "Chưa thể gửi email xác nhận lúc này. Vui lòng thử lại sau hoặc đăng nhập bằng Google.",
+        );
       if (error)
         throw new HttpError(
           error.status === 429 ? 429 : 400,

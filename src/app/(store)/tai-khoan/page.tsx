@@ -14,7 +14,7 @@ export const metadata = {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; confirmed?: string }>;
 }) {
   const [user, query] = await Promise.all([getCurrentUser(), searchParams]);
   const admin = user ? await isAdmin(user) : false;
@@ -24,6 +24,14 @@ export default async function AccountPage({
     <main className="mx-auto max-w-4xl px-5 pt-14 sm:px-8">
       {user ? (
         <>
+          {query.confirmed === "1" ? (
+            <p
+              role="status"
+              className="mb-8 border border-[#d1d9c2] bg-[#edf0e5] px-5 py-4 text-sm leading-6 text-[#49623d]"
+            >
+              Email đã được xác nhận. Chào bạn đến với Mộc Bàm.
+            </p>
+          ) : null}
           <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
             <div>
               <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-[#889777]">
@@ -60,8 +68,9 @@ export default async function AccountPage({
               role="alert"
               className="mb-6 border border-[#d9ca9d] bg-[#f3eddb] p-4 text-xs leading-6 text-[#847044]"
             >
-              Chưa thể xác nhận đăng nhập. Vui lòng thử lại hoặc mở lại liên kết
-              xác nhận email.
+              {query.error === "confirmation"
+                ? "Liên kết xác nhận đã hết hạn hoặc đã được sử dụng. Nhập email bên dưới rồi chọn gửi lại liên kết."
+                : "Chưa thể xác nhận đăng nhập. Vui lòng thử lại."}
             </p>
           ) : null}
           <Leaf

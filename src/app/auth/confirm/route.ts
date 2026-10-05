@@ -11,11 +11,15 @@ export async function GET(request: Request) {
       token_hash: token,
       type: "email",
     });
-    if (!error)
-      return NextResponse.redirect(
-        new URL(safeNext(url.searchParams.get("next")), origin),
-        303,
+    if (!error) {
+      const destination = new URL(
+        safeNext(url.searchParams.get("next")),
+        origin,
       );
+      if (destination.pathname === "/tai-khoan")
+        destination.searchParams.set("confirmed", "1");
+      return NextResponse.redirect(destination, 303);
+    }
   }
   return NextResponse.redirect(
     new URL("/tai-khoan?error=confirmation", origin),

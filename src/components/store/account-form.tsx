@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { MailCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+const subscribeToHydration = () => () => {};
 export function AccountForm({
   next,
   configured,
@@ -11,11 +13,56 @@ export function AccountForm({
   next: string;
   configured: boolean;
 }) {
+  const hydrated = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [email, setEmail] = useState("");
+  const [confirmationEmail, setConfirmationEmail] = useState("");
+  const [cooldown, setCooldown] = useState(0);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
     [error, setError] = useState("");
   const router = useRouter();
+  useEffect(() => {
+    if (!cooldown) return;
+    const timer = setTimeout(
+      () => setCooldown((value) => Math.max(0, value - 1)),
+      1000,
+    );
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+  async function resend() {
+    if (busy || cooldown || !configured || !email.trim()) return;
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/auth/resend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const result = await response.json();
+      if (response.status === 429) setCooldown(60);
+      if (!response.ok) throw new Error(result.error);
+      setConfirmationEmail(email.trim());
+      setMessage(
+        "Nếu email này đang chờ xác nhận, Mộc đã gửi một liên kết mới. Hãy dùng email mới nhất.",
+      );
+      setCooldown(60);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Chưa thể kết nối. Vui lòng thử lại.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy || !configured) return;
@@ -31,11 +78,10 @@ export function AccountForm({
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      if (result.confirmation)
-        setMessage(
-          "Hãy kiểm tra email và mở liên kết xác nhận tài khoản. Sau đó bạn có thể đăng nhập.",
-        );
-      else {
+      if (result.confirmation) {
+        setConfirmationEmail(email.trim());
+        setCooldown(60);
+      } else {
         router.push(result.next);
         router.refresh();
       }
@@ -49,6 +95,71 @@ export function AccountForm({
       setBusy(false);
     }
   }
+  if (confirmationEmail)
+    return (
+      <section
+        className="mt-8 border-t border-[#d1d9c2] pt-7 text-left"
+        aria-label="Xác nhận email"
+      >
+        <div className="border border-[#d1d9c2] bg-[#fafbf6] p-6">
+          <MailCheck
+            size={32}
+            strokeWidth={1.3}
+            className="mb-5 text-[#49623d]"
+            aria-hidden="true"
+          />
+          <h2 className="font-serif text-2xl text-[#29412d]">
+            Kiểm tra hộp thư nhé.
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-[#596650]">
+            Mở email xác nhận được gửi đến{" "}
+            <strong className="break-all font-medium text-[#29412d]">
+              {confirmationEmail}
+            </strong>{" "}
+            để hoàn tất tài khoản.
+          </p>
+          <p className="mt-3 text-xs leading-6 text-[#77866a]">
+            Chưa thấy email? Kiểm tra thư rác hoặc mục Quảng cáo. Liên kết chỉ
+            dùng một lần; hãy mở email mới nhất.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-5 w-full"
+            disabled={busy || cooldown > 0}
+            onClick={resend}
+          >
+            {busy
+              ? "Đang gửi..."
+              : cooldown
+                ? `Gửi lại sau ${cooldown} giây`
+                : "Gửi lại email xác nhận"}
+          </Button>
+          {message ? (
+            <p role="status" className="mt-4 text-xs leading-6">
+              {message}
+            </p>
+          ) : null}
+          {error ? (
+            <p role="alert" className="mt-4 text-xs leading-6 text-red-700">
+              {error}
+            </p>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className="mt-5 text-xs underline underline-offset-4"
+          onClick={() => {
+            setConfirmationEmail("");
+            setMode("login");
+            setError("");
+            setMessage("");
+          }}
+        >
+          Đổi email hoặc quay lại đăng nhập
+        </button>
+      </section>
+    );
   return (
     <div className="mt-8 border-t border-[#d1d9c2] pt-7 text-left">
       <div className="mb-5 flex gap-3" aria-label="Chọn đăng nhập hoặc đăng ký">
@@ -56,6 +167,7 @@ export function AccountForm({
           <button
             key={value}
             type="button"
+            disabled={!hydrated}
             onClick={() => {
               setMode(value);
               setError("");
@@ -105,6 +217,9 @@ export function AccountForm({
             autoComplete="email"
             required
             maxLength={254}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={!hydrated}
           />
         </div>
         <div>
@@ -134,13 +249,29 @@ export function AccountForm({
             {message}
           </p>
         ) : null}
-        <Button disabled={busy || !configured} className="w-full" type="submit">
+        <Button
+          disabled={!hydrated || busy || !configured}
+          className="w-full"
+          type="submit"
+        >
           {busy
             ? "Đang xử lý..."
             : mode === "login"
               ? "Đăng nhập bằng email"
               : "Tạo tài khoản"}
         </Button>
+        {mode === "login" ? (
+          <button
+            type="button"
+            className="w-full text-center text-xs leading-6 underline underline-offset-4 disabled:opacity-50"
+            disabled={busy || !configured || !email.trim() || cooldown > 0}
+            onClick={resend}
+          >
+            {cooldown
+              ? `Gửi lại sau ${cooldown} giây`
+              : "Chưa xác nhận email? Gửi lại liên kết"}
+          </button>
+        ) : null}
       </form>
     </div>
   );
