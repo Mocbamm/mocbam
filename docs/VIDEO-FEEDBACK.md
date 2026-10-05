@@ -1,6 +1,6 @@
 # Dạ Thảo video requirements — implementation checklist
 
-This follows the 24 clips in order, beginning with the first video reviewed in Messenger. The functional changes are deployed at [mocbam.vercel.app](https://mocbam.vercel.app). Migrations 003 and 004 are applied. Real email registration delivery still requires custom SMTP; content and provider follow-ups are in `LATER.md`.
+This follows the 24 clips in order, beginning with the first video reviewed in Messenger. The functional changes are deployed at [mocbam.vercel.app](https://mocbam.vercel.app). Migrations 003 and 004 are applied. Real email registration delivery is now verified through custom Gmail SMTP; content and provider follow-ups are in `LATER.md`.
 
 | Video | Request                                         | Implemented behavior                                                                                                                                                                                                                                                   |
 | ----- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -37,7 +37,7 @@ Vercel published source `c8a7636` on 2026-10-05. Nine hosted storefront checks p
 
 Ten hosted commerce groups passed discounts/eligibility/server totals/use limits/retries, COD receipts, verified-email guest-order recovery, gallery/new flags, unpublished media privacy and video seeking. Unknown-chat staff handoff and inquiry persistence also passed. All temporary accounts, orders, discounts, uploads, product/category and inquiry were removed; original store rows remained unchanged.
 
-Email confirmations were exercised using generated synthetic verification links, without sending email. This verifies the application route and account behavior; public email delivery remains unverified until SMTP is configured as documented in `DEPLOYMENT.md`.
+Email confirmations were exercised using generated synthetic verification links, without sending email. This verifies the application route and account behavior; real inbox delivery, confirmation and email/password login were subsequently verified after configuring custom Gmail SMTP on 5 October 2026, as documented in `DEPLOYMENT.md`.
 
 ## Address data
 

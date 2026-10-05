@@ -11,5 +11,5 @@ Previously deferred setup:
 
 Release setup still waiting for credentials:
 
-- [ ] Configure a custom SMTP sender in **Supabase → Authentication → Emails → SMTP Settings**, then verify real registration emails and update the confirmation template. Google login and confirmed-account login work; public email registration delivery is not ready yet.
+- [x] Configure custom SMTP and the branded confirmation template. Gmail SMTP through `mocbamm@gmail.com` is enabled; real inbox delivery, confirmation, email/password login and used-link rejection passed on 5 October 2026. The temporary test account/profile were removed.
 - [ ] Revoke the previous Supabase `SECRET default` key after confirming the replacement is used everywhere. The replacement is active on Vercel; old-key revocation has not been confirmed.

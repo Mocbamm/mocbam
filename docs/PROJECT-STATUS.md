@@ -1,6 +1,6 @@
 # Project status
 
-Last verified: 5 October 2026. Dạ Thảo's video-feedback changes are live. Hosted storefront, account, discount, media, guest-order recovery and staff-inquiry checks passed; exact temporary-data cleanup is complete. Public email registration delivery still requires custom SMTP. Real bank activation/provider verification and Meta setup remain deferred; revocation of the previous Supabase server key has not been confirmed.
+Last verified: 5 October 2026. Dạ Thảo's video-feedback changes are live. Hosted storefront, account, discount, media, guest-order recovery and staff-inquiry checks passed; exact temporary-data cleanup is complete. Public email registration delivery is verified through custom Gmail SMTP. Real bank activation/provider verification and Meta setup remain deferred; revocation of the previous Supabase server key has not been confirmed.
 
 ## Deployment
 
@@ -19,10 +19,10 @@ Current video-feedback release:
 
 - Local ESLint, TypeScript and production build passed, with 158 unit/API/database tests and 28 browser checks passing; one configured-auth scenario was skipped in the demo environment. The journal keeps date/sort inputs disabled until handlers are attached, preventing the first filter change from being lost on slow clients. Its regression passed with delayed scripts and under 6× CPU slowdown.
 - Nine hosted storefront groups passed on desktop and at 320px: homepage title, consent wording, category ordering, purchase controls, carousels, product/blog search, journal date filters, policy navigation/copy, product details and social link inventory. No browser errors or HTTP writes occurred during that smoke.
-- Hosted account checks passed synthetic email confirmation/session cookies, confirmed-account email login, profile editing with immutable email, private chat persistence, profile/chat isolation, cross-origin write rejection, shopper admin denial and temporary-admin customer/report/discount page reads. These generated confirmation links without email delivery; SMTP delivery remains unverified. Both temporary users and their profiles/chat/admin membership were removed; original account/admin/order fingerprints matched.
+- Hosted account checks passed synthetic email confirmation/session cookies, confirmed-account email login, profile editing with immutable email, private chat persistence, profile/chat isolation, cross-origin write rejection, shopper admin denial and temporary-admin customer/report/discount page reads. These initial checks generated confirmation links without email delivery; real SMTP delivery was subsequently verified on 5 October 2026. Both temporary users and their profiles/chat/admin membership were removed; original account/admin/order fingerprints matched.
 - Ten hosted commerce groups passed: private/published PNG and MP4 access, video byte ranges, gallery/new flags, global/private coupon administration, account eligibility, server totals, public campaigns, exhausted-use protection, immutable retries, COD checkout/receipt privacy and verified-email guest-order recovery. Removed three temporary users, one product/category, two COD orders, two media objects and both discounts. Cleanup and an independent cleanup recheck passed. All original 8 products, 2 categories, 2 orders, 2 posts, 6 content rows, settings and permanent admin membership remained unchanged.
 - Unknown chat questions show the configured staff hours and preserve the question in the staff form. One marked synthetic inquiry returned HTTP 201 and persisted correctly; exact cleanup removed it and preserved the existing inquiry.
-- Email and Google providers, confirmation requirement, canonical Site URL and both production callback/confirmation redirects are configured. Custom SMTP remains off; the sender credentials and real-email acceptance are tracked in [LATER.md](../LATER.md). Facebook and Instagram remain configured; TikTok/Zalo and optional Shopee await official URLs.
+- Email and Google providers, confirmation requirement, canonical Site URL and both production callback/confirmation redirects are configured. Custom Gmail SMTP is enabled for `mocbamm@gmail.com` with the branded Vietnamese template. Real inbox delivery, confirmation/session creation, subsequent email/password login and used-link rejection passed; the temporary test user/profile were removed. App confirmation/resend improvements from source `531cccd` are live. Local verification passed 31 account/confirmation tests, TypeScript, targeted ESLint, production build and mocked browser acceptance. Facebook and Instagram remain configured; TikTok/Zalo and optional Shopee await official URLs.
 
 Earlier manual-payment acceptance (3 October 2026):
 
@@ -51,7 +51,6 @@ The following production checks apply to the earlier storefront revision:
 
 ## Remaining owner action and deferred work
 
-- Configure the SMTP sender, update the confirmation template and verify real public registration emails. The application confirmation/login routes passed, but the default Supabase sender does not provide unrestricted public email delivery.
 - The owner still needs to revoke the previous Supabase `SECRET default` server key. The replacement is active; revocation of the old key has not been confirmed.
 - Real receiving-bank details/transfer activation, actual bank/provider settlement verification and Meta Pixel setup/provider verification remain explicitly deferred by the project owner. Automatic payment gateways/bank confirmation are outside this implementation.
 

@@ -7,7 +7,7 @@ Create a Supabase Free project named `mocbam` in the Mộc Bàm organization/acc
 - Fresh database: apply migrations 001, 002, `202610050003_store_features.sql`, and `202610050004_customer_accounts_chat.sql` in order, then `supabase/seed.sql`.
 - Existing database with migration 002 applied: apply migrations 003 and 004 once, before releasing the video-feedback revision. Do not rerun the initial migrations or seed; they are not an upgrade/reset procedure.
 
-The hosted project has applied migrations 001–004. The video-feedback application is deployed on Vercel. Transfer remains disabled with receiving fields blank. See [project status](PROJECT-STATUS.md) for release acceptance and the outstanding SMTP setup.
+The hosted project has applied migrations 001–004. The video-feedback application is deployed on Vercel. Transfer remains disabled with receiving fields blank. See [project status](PROJECT-STATUS.md) for release acceptance and verified SMTP setup.
 
 Copy only these values into local/Vercel environment configuration:
 
@@ -52,7 +52,7 @@ The video-feedback revision adds email/password registration, profile editing, a
 
 Enable Email sign-in and email confirmation in Supabase Authentication. Keep the current Google configuration. Add `https://mocbam.vercel.app/auth/confirm` to allowed redirects and use a confirmation email link based on the application's confirmation endpoint:
 
-Production currently has Email and Google enabled, email confirmation enabled, the canonical Site URL set, and both production redirects allowed. **Custom SMTP is not configured.** Supabase's default sender restricts delivery to project-team addresses; public registration needs a custom sender. Configure its SMTP host, port, username/password, sender address and sender name in Supabase before testing delivery. Supabase also requires custom SMTP to edit these templates. See [Supabase SMTP guidance](https://supabase.com/docs/guides/auth/auth-smtp).
+Production currently has Email and Google enabled, email confirmation enabled, the canonical Site URL set, and both production redirects allowed. **Custom Gmail SMTP is enabled**, using `smtp.gmail.com:465`, sender/username `mocbamm@gmail.com`, sender name Mộc Bàm and a 60-second per-user interval. The app password is stored only in Supabase. The branded Vietnamese confirmation template is saved; real inbox delivery, confirmation, subsequent email/password login and used-link rejection passed on 5 October 2026. See [template/setup details](../supabase/templates/README.md). See [Supabase SMTP guidance](https://supabase.com/docs/guides/auth/auth-smtp).
 
 ```html
 <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"
