@@ -511,8 +511,9 @@ export function AnalyticsManager({
                 </label>
               </div>
               <p className="mt-1 text-xs leading-6 text-[#6b7867]">
-                Theo số lượng trong đơn chưa hủy/hoàn tiền. Doanh thu sau ưu
-                đãi, không gồm vận chuyển. Lợi nhuận dựa trên giá vốn lúc đặt.
+                Số lượng và doanh thu chỉ tính đơn chưa hủy/hoàn tiền. Lợi nhuận
+                trừ giá vốn lúc đặt, gồm chi phí hàng hoàn không nhập kho; sản
+                phẩm chỉ có hàng hoàn có thể có số lượng 0 và lợi nhuận âm.
               </p>
               {report.products.length === 0 ? (
                 <p className="mt-5 text-sm text-[#6b7867]">

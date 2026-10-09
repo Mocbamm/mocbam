@@ -451,4 +451,126 @@ describe("immutable sale costs", () => {
     });
     expect(reportCsv(report)).toContain("Chưa đủ giá vốn");
   });
+  it("deducts damaged-return costs once from product profit without inflating sold quantities or revenue", () => {
+    const sale = reportOrder({
+      items: lines,
+      subtotal: 120000,
+      discount_amount: 10000,
+      status: "completed",
+      payment_status: "paid",
+    });
+    const damaged = {
+      ...sale,
+      id: "damaged",
+      status: "returned" as const,
+      payment_status: "refunded" as const,
+      return_restocked: false,
+    };
+    const report = buildStoreReport([sale, damaged], range);
+    expect(report).toMatchObject({
+      net_sales: 110000,
+      cogs: 90000,
+      gross_profit: 20000,
+    });
+    expect(report.products.find((product) => product.id === "a")).toMatchObject(
+      {
+        quantity: 2,
+        line_value: 100000,
+        net_value: 90000,
+        cost: 80000,
+        gross_profit: 10000,
+      },
+    );
+    expect(report.products.find((product) => product.id === "b")).toMatchObject(
+      { quantity: 1, net_value: 20000, cost: 10000, gross_profit: 10000 },
+    );
+    expect(
+      report.products.reduce(
+        (sum, product) => sum + (product.gross_profit ?? 0),
+        0,
+      ),
+    ).toBe(report.gross_profit);
+  });
+  it("includes loss-only products and excludes saleable restocked returns", () => {
+    const returned = reportOrder({
+      items: lines,
+      subtotal: 120000,
+      discount_amount: 10000,
+      status: "returned",
+      payment_status: "refunded",
+      return_restocked: false,
+    });
+    const damaged = buildStoreReport([returned], range);
+    expect(
+      damaged.products.find((product) => product.id === "a"),
+    ).toMatchObject({
+      quantity: 0,
+      line_value: 0,
+      net_value: 0,
+      cost: 40000,
+      cost_complete: true,
+      gross_profit: -40000,
+    });
+    expect(
+      damaged.products.find((product) => product.id === "b"),
+    ).toMatchObject({ quantity: 0, net_value: 0, gross_profit: -5000 });
+    expect(
+      buildStoreReport([{ ...returned, return_restocked: true }], range)
+        .products,
+    ).toEqual([]);
+    const sale = {
+      ...returned,
+      id: "sale",
+      status: "completed" as const,
+      payment_status: "paid" as const,
+    };
+    expect(
+      buildStoreReport(
+        [sale, { ...returned, return_restocked: true }],
+        range,
+      ).products.find((product) => product.id === "a"),
+    ).toMatchObject({ quantity: 2, cost: 40000, gross_profit: 50000 });
+  });
+  it("marks only affected product profits unknown when a damaged return has missing costs", () => {
+    const sale = reportOrder({
+      items: lines,
+      subtotal: 120000,
+      discount_amount: 10000,
+    });
+    const damaged = {
+      ...sale,
+      id: "damaged",
+      status: "returned" as const,
+      payment_status: "refunded" as const,
+      return_restocked: false,
+      items: [{ ...lines[0], unit_cost: null }, lines[1]],
+    };
+    const report = buildStoreReport([sale, damaged], range);
+    expect(report).toMatchObject({
+      cogs: null,
+      gross_profit: null,
+      missing_cost_order_count: 1,
+    });
+    expect(report.products.find((product) => product.id === "a")).toMatchObject(
+      {
+        quantity: 2,
+        net_value: 90000,
+        cost_complete: false,
+        gross_profit: null,
+      },
+    );
+    expect(report.products.find((product) => product.id === "b")).toMatchObject(
+      { quantity: 1, cost_complete: true, cost: 10000, gross_profit: 10000 },
+    );
+    expect(
+      buildStoreReport([damaged], range).products.find(
+        (product) => product.id === "a",
+      ),
+    ).toMatchObject({
+      quantity: 0,
+      net_value: 0,
+      cost_complete: false,
+      gross_profit: null,
+    });
+  });
 });

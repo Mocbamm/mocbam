@@ -168,6 +168,22 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
       net_complete: boolean;
     }
   >();
+  function productFor(item: NonNullable<ReportOrder["items"]>[number]) {
+    const existing = products.get(item.product_id);
+    if (existing) return existing;
+    const product = {
+      id: item.product_id,
+      name: item.name,
+      quantity: 0,
+      line_value: 0,
+      net_value: 0,
+      cost: 0,
+      cost_complete: true,
+      net_complete: true,
+    };
+    products.set(item.product_id, product);
+    return product;
+  }
   const payments = new Map<
     PaymentMethod,
     {
@@ -213,6 +229,14 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
       order.status !== "cancelled" &&
       (order.status !== "returned" || order.return_restocked === false);
     if (carriesCost) {
+      // Costs remain with the product when a refunded/returned item cannot
+      // be resold. Sales quantities and revenue are added separately below.
+      for (const item of order.items ?? []) {
+        const product = productFor(item);
+        if (item.unit_cost === null || item.unit_cost === undefined)
+          product.cost_complete = false;
+        else product.cost += Number(item.unit_cost) * item.quantity;
+      }
       costOrders++;
       const cost = snapshotCost(order);
       if (cost === null) {
@@ -250,16 +274,7 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
     shippingCharged += Number(order.shipping_fee ?? 0);
     const lines = order.items ?? [];
     for (const item of lines) {
-      const product = products.get(item.product_id) ?? {
-        id: item.product_id,
-        name: item.name,
-        quantity: 0,
-        line_value: 0,
-        net_value: 0,
-        cost: 0,
-        cost_complete: true,
-        net_complete: true,
-      };
+      const product = productFor(item);
       product.quantity += item.quantity;
       const lineValue = Number(item.price) * item.quantity;
       const allocatedDiscount =
@@ -267,10 +282,6 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
       if (allocatedDiscount === null) product.net_complete = false;
       product.line_value += lineValue;
       product.net_value += lineValue - (allocatedDiscount ?? 0);
-      if (item.unit_cost === null || item.unit_cost === undefined)
-        product.cost_complete = false;
-      else product.cost += Number(item.unit_cost) * item.quantity;
-      products.set(item.product_id, product);
     }
   }
   // Cash follows payment/refund dates, independently of the order creation period.
