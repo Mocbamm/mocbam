@@ -55,6 +55,68 @@ function draft(fields: Partial<Discount> = {}) {
 }
 
 describe("discount validation and preview integrity", () => {
+  it("validates product/private targets and preserves legacy single-recipient vouchers", () => {
+    expect(
+      discountSchema.safeParse(draft({ scope: "product", product_ids: [] }))
+        .success,
+    ).toBe(false);
+    expect(
+      discountSchema.safeParse(
+        draft({ scope: "product", product_ids: [promotion.id] }),
+      ).success,
+    ).toBe(true);
+    expect(
+      discountSchema.safeParse(
+        draft({
+          scope: "private",
+          public_campaign: false,
+          customer_user_ids: [],
+        }),
+      ).success,
+    ).toBe(false);
+    expect(
+      discountSchema.safeParse(
+        draft({
+          scope: "private",
+          public_campaign: false,
+          customer_user_ids: [promotion.id],
+        }),
+      ).success,
+    ).toBe(true);
+    expect(
+      discountSchema.parse(
+        draft({ public_campaign: false, customer_user_id: promotion.id }),
+      ).scope,
+    ).toBe("private");
+    expect(
+      discountSchema.safeParse(
+        draft({ scope: "shop", customer_user_ids: [promotion.id] }),
+      ).success,
+    ).toBe(false);
+    expect(
+      discountIsAvailable(
+        {
+          ...promotion,
+          scope: "private",
+          public_campaign: false,
+          customer_user_ids: [promotion.id],
+        },
+        promotion.id,
+      ),
+    ).toBe(true);
+    expect(
+      discountIsAvailable(
+        {
+          ...promotion,
+          scope: "private",
+          public_campaign: false,
+          customer_user_ids: [promotion.id],
+        },
+        null,
+      ),
+    ).toBe(false);
+  });
+
   it("normalizes codes and rejects public personalized campaigns, reversed windows and percentages over 100", () => {
     expect(discountCodeSchema.parse(" moc10 ")).toBe("MOC10");
     expect(discountSchema.safeParse(draft()).success).toBe(true);

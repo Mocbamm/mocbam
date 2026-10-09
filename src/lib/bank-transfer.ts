@@ -9,7 +9,7 @@ export async function bankTransferInstructions(
   if (
     order.payment_method !== "bank_transfer" ||
     order.payment_status !== "awaiting_payment" ||
-    order.status === "cancelled" ||
+    ["cancelled", "returned"].includes(order.status) ||
     order.total <= 0
   )
     return null;

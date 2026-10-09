@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { matchesSearch } from "@/lib/store-discovery";
+import { ContentEditor, MediaField } from "./media-editor";
 import { Label } from "@/components/ui/label";
 import type { BlogPost } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -13,7 +15,6 @@ import {
   adminRequest,
   CheckField,
   EmptyState,
-  ImageField,
   panelClass,
   reportError,
 } from "./admin-common";
@@ -24,6 +25,7 @@ const blank: PostDraft = {
   excerpt: "",
   content: "",
   image_url: "",
+  video_url: "",
   published: false,
 };
 export function PostManager({ posts }: { posts: BlogPost[] }) {
@@ -32,6 +34,17 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
   const [draft, setDraft] = useState<PostDraft>(blank);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const filtered = posts.filter(
+    (post) =>
+      (!search.trim() ||
+        matchesSearch(
+          `${post.title} ${post.excerpt} ${post.content}`,
+          search,
+        )) &&
+      (status === "all" || post.published === (status === "published")),
+  );
   function open(post: BlogPost | "new") {
     setEditing(post);
     setDraft(
@@ -43,6 +56,7 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
             excerpt: post.excerpt,
             content: post.content,
             image_url: post.image_url,
+            video_url: post.video_url || "",
             published: post.published,
           },
     );
@@ -73,7 +87,31 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
   }
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-48 flex-1">
+          <Label htmlFor="post-search">Tìm bài viết</Label>
+          <Input
+            className="mt-2"
+            id="post-search"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Tiêu đề hoặc nội dung..."
+          />
+        </div>
+        <div>
+          <Label htmlFor="post-status">Trạng thái</Label>
+          <select
+            id="post-status"
+            className="mt-2 block h-9 rounded-md border border-[#d7ddcd] px-3 text-sm"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
+            <option value="all">Tất cả</option>
+            <option value="published">Đã xuất bản</option>
+            <option value="draft">Bản nháp</option>
+          </select>
+        </div>
         <Button onClick={() => open("new")} disabled={saving || uploading}>
           <Plus className="size-4" />
           Viết bài mới
@@ -96,7 +134,10 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
               <X className="size-4" />
             </Button>
           </div>
-          <fieldset disabled={saving} className="grid gap-5 md:grid-cols-2">
+          <fieldset
+            disabled={saving || uploading}
+            className="grid gap-5 md:grid-cols-2"
+          >
             <div className="space-y-2">
               <Label htmlFor="post-title">Tiêu đề</Label>
               <Input
@@ -128,26 +169,36 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
               />
             </div>
             <div className="md:col-span-2">
-              <ImageField
+              <MediaField
+                id="post-cover"
+                label="Ảnh bìa (không bắt buộc)"
+                kind="image"
                 value={draft.image_url}
                 onChange={(url) => update("image_url", url)}
                 disabled={saving}
                 onUploadingChange={setUploading}
               />
             </div>
+            <div className="md:col-span-2">
+              <MediaField
+                id="post-video"
+                label="Video đầu bài (không bắt buộc)"
+                kind="video"
+                value={draft.video_url || ""}
+                onChange={(url) => update("video_url", url)}
+                disabled={saving}
+                onUploadingChange={setUploading}
+              />
+            </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="post-content">Nội dung bài viết</Label>
-              <Textarea
+              <ContentEditor
                 id="post-content"
-                rows={12}
-                required
                 value={draft.content}
-                onChange={(event) => update("content", event.target.value)}
+                onChange={(value) => update("content", value)}
+                disabled={saving || uploading}
+                onUploadingChange={setUploading}
               />
-              <p className="text-xs text-[#788273]">
-                Văn bản thuần, cách các đoạn bằng một dòng trống. Mã HTML sẽ
-                được hiển thị như chữ.
-              </p>
             </div>
             <CheckField
               label="Xuất bản trên cửa hàng"
@@ -170,13 +221,18 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
           </div>
         </form>
       )}
-      {posts.length === 0 ? (
+      <p className="text-xs text-[#788273]" aria-live="polite">
+        {filtered.length} bài viết
+      </p>
+      {filtered.length === 0 ? (
         <EmptyState>
-          Chưa có bài viết. Bắt đầu với một câu chuyện nhỏ của Mộc Bàm.
+          {posts.length
+            ? "Không có bài viết phù hợp. Thử từ khóa hoặc trạng thái khác."
+            : "Chưa có bài viết. Bắt đầu với một câu chuyện nhỏ của Mộc Bàm."}
         </EmptyState>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {posts.map((post) => (
+          {filtered.map((post) => (
             <article key={post.id} className={panelClass}>
               <div className="flex items-center justify-between gap-3">
                 <span

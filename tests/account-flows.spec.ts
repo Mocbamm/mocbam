@@ -22,52 +22,27 @@ test("checkout selects province and wards and provides manual fallback", async (
   await expect(city).toHaveValue("Địa chỉ ngoài danh sách");
 });
 
-test("unknown chat question offers staffed contact and survives reopening and reload", async ({
+test("chat requires an account and gives guests a direct contact alternative", async ({
   page,
+  request,
 }) => {
   await page.goto("/");
   await page
     .getByRole("button", { name: "Trò chuyện với Mộc", exact: true })
     .click();
-  await page
-    .getByLabel("Câu hỏi của bạn")
-    .fill("Bạn có làm theo hình vẽ của tôi không?");
-  await page.getByRole("button", { name: "Gửi câu hỏi", exact: true }).click();
   await expect(
-    page.getByText("Mộc cần nhờ nhân viên kiểm tra thêm", { exact: false }),
+    page.getByRole("region", { name: "Trò chuyện với Mộc Bàm" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Gửi cho nhân viên", exact: true })
-    .click();
-  await expect(page.locator("#chat-contact-message")).toHaveValue(
-    "Bạn có làm theo hình vẽ của tôi không?",
-  );
   await expect(
-    page.getByText("Giờ làm việc:", { exact: false }).last(),
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Đóng trò chuyện", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Trò chuyện với Mộc", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Quay lại trò chuyện", exact: true })
-    .click();
+    page.getByRole("link", { name: "Đăng nhập để trò chuyện" }),
+  ).toHaveAttribute("href", "/tai-khoan");
+  await expect(page.getByLabel("Câu hỏi của bạn")).toHaveCount(0);
   await expect(
-    page
-      .getByRole("paragraph")
-      .filter({ hasText: /^Bạn có làm theo hình vẽ của tôi không\?$/ }),
-  ).toBeVisible();
-  await page.reload();
-  await page
-    .getByRole("button", { name: "Trò chuyện với Mộc", exact: true })
-    .click();
-  await expect(
-    page
-      .getByRole("paragraph")
-      .filter({ hasText: /^Bạn có làm theo hình vẽ của tôi không\?$/ }),
-  ).toBeVisible();
+    page.getByRole("link", { name: "gửi lời nhắn qua trang Liên hệ" }),
+  ).toHaveAttribute("href", "/lien-he");
+  const response = await request.get("/api/account/support");
+  expect(response.status()).toBe(401);
+  expect(await response.json()).not.toHaveProperty("messages");
 });
 
 test("registration requests name and phone alongside email and password", async ({

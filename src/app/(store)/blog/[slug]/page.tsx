@@ -33,16 +33,27 @@ export default async function PostPage({
           {post.excerpt}
         </p>
       </div>
-      <div className="relative aspect-[1.7] bg-[#e8ecdf]">
-        <Image
-          src={post.image_url}
-          alt={post.title}
-          fill
-          preload
-          sizes="(max-width: 768px) 95vw, 850px"
-          className="object-cover"
+      {post.video_url ? (
+        <video
+          src={post.video_url}
+          poster={post.image_url || undefined}
+          controls
+          preload="metadata"
+          aria-label={`Video: ${post.title}`}
+          className="w-full bg-[#e8ecdf]"
         />
-      </div>
+      ) : post.image_url ? (
+        <div className="relative aspect-[1.7] bg-[#e8ecdf]">
+          <Image
+            src={post.image_url}
+            alt={post.title}
+            fill
+            preload
+            sizes="(max-width: 768px) 95vw, 850px"
+            className="object-cover"
+          />
+        </div>
+      ) : null}
       <div className="mx-auto max-w-2xl pt-10">
         <Prose content={post.content} />
       </div>

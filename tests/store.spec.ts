@@ -66,20 +66,22 @@ test("mobile home has no horizontal overflow and sample images load", async ({
     .toBe(true);
 });
 
-test("curated chat opens and gives shopping help", async ({ page }) => {
+test("staff chat opens and can be closed without blocking browsing", async ({
+  page,
+}) => {
   await page.goto("/");
   await page
     .getByRole("button", { name: "Trò chuyện với Mộc", exact: true })
     .click();
-  await expect(
-    page.getByRole("region", { name: "Trợ lý Mộc Bàm" }),
-  ).toBeVisible();
+  const region = page.getByRole("region", { name: "Trò chuyện với Mộc Bàm" });
+  await expect(region).toBeVisible();
   await page
-    .getByRole("button", { name: "Đặt hàng như thế nào?", exact: true })
+    .getByRole("button", { name: "Đóng trò chuyện", exact: true })
     .click();
+  await expect(region).toHaveCount(0);
   await expect(
-    page.getByText("Chọn điều bạn thích", { exact: false }),
-  ).toBeVisible();
+    page.getByRole("button", { name: "Trò chuyện với Mộc", exact: true }),
+  ).toHaveAttribute("aria-expanded", "false");
 });
 
 test("malformed receipt cannot expose customer data", async ({

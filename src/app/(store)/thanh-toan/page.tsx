@@ -20,6 +20,7 @@ export default async function CheckoutPage() {
       </h1>
       <CheckoutScreen
         shippingFee={settings.shipping_fee}
+        shippingZones={settings.shipping_zones}
         configured={isConfigured()}
         bankTransferAvailable={isBankTransferAvailable(settings)}
         initialEmail={user?.email || ""}

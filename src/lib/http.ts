@@ -143,6 +143,22 @@ export function databaseError(error: { message: string; code?: string }) {
     ],
     ORDER_NOT_FOUND: [404, "Không tìm thấy đơn hàng."],
     ORDER_FINAL: [409, "Không thể thay đổi đơn hàng đã hoàn tất hoặc đã huỷ."],
+    RETURN_NOT_ALLOWED: [
+      409,
+      "Chỉ nhận hoàn hàng cho đơn đang giao hoặc đã hoàn tất.",
+    ],
+    RETURN_REQUIRED: [
+      409,
+      "Đơn đang giao cần nhận hoàn hàng thực tế trước khi hoàn lại tồn kho.",
+    ],
+    VARIANT_IN_USE: [
+      409,
+      "Phân loại đã có đơn hàng không thể xóa. Hãy tắt Đang bán để giữ lịch sử và nhận hoàn hàng.",
+    ],
+    VARIANT_MODE_LOCKED: [
+      409,
+      "Sản phẩm đã có đơn không thể đổi giữa tồn kho chung và phân loại. Hãy tạo bản sao sản phẩm.",
+    ],
     BANK_TRANSFER_UNAVAILABLE: [
       409,
       "Chuyển khoản chưa được mở. Vui lòng chọn thanh toán khi nhận hàng.",

@@ -54,9 +54,27 @@ export async function getAdminCustomers() {
 
 export async function getAdminReportOrders() {
   const { supabase } = await requireAdmin();
-  return allRows<ReportOrder>(
+  const orders = await allRows<ReportOrder>(
     supabase,
     "orders",
-    "id,created_at,status,total,payment_status,paid_at,refunded_at,items:order_items(id,product_id,name,price,quantity)",
+    "id,created_at,status,subtotal,shipping_fee,discount_amount,total,payment_method,payment_status,paid_at,refunded_at,return_restocked,returned_at,items:order_items(id,product_id,name,price,quantity,line_discount)",
   );
+  const costs = new Map<string, number | null>();
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await supabase.rpc("get_admin_order_item_costs", {
+      p_offset: offset,
+      p_limit: 500,
+    });
+    if (error) throw databaseError(error);
+    const rows = (data || []) as { id: string; unit_cost: number | null }[];
+    rows.forEach((row) => costs.set(row.id, row.unit_cost));
+    if (rows.length < 500) break;
+  }
+  return orders.map((order) => ({
+    ...order,
+    items: order.items?.map((item) => ({
+      ...item,
+      unit_cost: costs.get(item.id) ?? null,
+    })),
+  }));
 }

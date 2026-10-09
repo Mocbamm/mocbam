@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { ArrowUpRight, Tag } from "lucide-react";
-import type { Discount } from "@/lib/types";
+import type { Discount, Product } from "@/lib/types";
 import { money } from "./format";
 
-export function PromotionBanner({ promotions }: { promotions: Discount[] }) {
+export function PromotionBanner({
+  promotions,
+  products = [],
+}: {
+  promotions: Discount[];
+  products?: Pick<Product, "id" | "slug" | "name">[];
+}) {
   if (!promotions.length) return null;
   return (
     <section
@@ -44,6 +50,31 @@ export function PromotionBanner({ promotions }: { promotions: Discount[] }) {
                   </span>
                 ) : null}
               </p>
+              {promotion.scope === "product" ? (
+                <div className="mt-3 text-xs leading-6 text-[#68795a]">
+                  <p>Chỉ giảm giá các sản phẩm trong chương trình:</p>
+                  <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                    {products
+                      .filter((product) =>
+                        promotion.product_ids?.includes(product.id),
+                      )
+                      .map((product) => (
+                        <li key={product.id}>
+                          <Link
+                            href={`/san-pham/${product.slug}`}
+                            className="underline underline-offset-4"
+                          >
+                            {product.name}
+                          </Link>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-[#68795a]">
+                  Áp dụng cho toàn bộ sản phẩm.
+                </p>
+              )}
               <p className="mt-2 text-xs leading-6 text-[#68795a]">
                 {promotion.min_subtotal > 0
                   ? `Áp dụng cho đơn từ ${money(promotion.min_subtotal)}. `

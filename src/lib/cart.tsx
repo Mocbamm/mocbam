@@ -8,16 +8,22 @@ import {
 import type { Product } from "@/lib/types";
 import { trackCartQuantityChange } from "@/lib/analytics";
 import { toast } from "sonner";
+import { cartItemKey, productOption } from "./product-options";
 const STORAGE_KEY = "mocbam.cart.v1";
 const MAX_QUANTITY = 10;
-type StoredItem = { product_id: string; quantity: number };
-export type CartItem = { product: Product; quantity: number };
+type StoredItem = { product_id: string; variant_id?: string; quantity: number };
+export type CartItem = {
+  key: string;
+  product: Product;
+  variant_id?: string;
+  quantity: number;
+};
 type CartContextValue = {
   items: CartItem[];
   count: number;
   subtotal: number;
   ready: boolean;
-  add: (product: Product, quantity?: number) => boolean;
+  add: (product: Product, quantity?: number, variantId?: string) => boolean;
   update: (id: string, quantity: number) => void;
   remove: (id: string) => void;
   clear: () => void;
@@ -64,15 +70,18 @@ export function validateStoredCart(
       typeof item !== "object" ||
       typeof item.product_id !== "string" ||
       !Number.isInteger(item.quantity) ||
-      seen.has(item.product_id)
+      (item.variant_id !== undefined && typeof item.variant_id !== "string") ||
+      seen.has(cartItemKey(item.product_id, item.variant_id))
     )
       return [];
-    const product = catalog.get(item.product_id);
+    const base = catalog.get(item.product_id);
+    const product = base ? productOption(base, item.variant_id) : null;
     if (!product || product.stock < 1 || item.quantity < 1) return [];
-    seen.add(item.product_id);
+    seen.add(cartItemKey(item.product_id, item.variant_id));
     return [
       {
         product_id: product.id,
+        ...(item.variant_id ? { variant_id: item.variant_id } : {}),
         quantity: Math.min(item.quantity, MAX_QUANTITY, product.stock),
       },
     ];
@@ -104,7 +113,17 @@ export function CartProvider({
         const product = products.find(
           (p) => p.id === item.product_id && p.active,
         );
-        return product ? [{ product, quantity: item.quantity }] : [];
+        const option = product ? productOption(product, item.variant_id) : null;
+        return option
+          ? [
+              {
+                key: cartItemKey(option.id, item.variant_id),
+                product: option,
+                variant_id: item.variant_id,
+                quantity: item.quantity,
+              },
+            ]
+          : [];
       }),
     [stored, products],
   );
@@ -115,10 +134,9 @@ export function CartProvider({
       return [];
     }
   }
-  function add(product: Product, quantity = 1) {
-    const catalogProduct = products.find(
-      (p) => p.id === product.id && p.active,
-    );
+  function add(product: Product, quantity = 1, variantId?: string) {
+    const base = products.find((p) => p.id === product.id && p.active);
+    const catalogProduct = base ? productOption(base, variantId) : null;
     if (
       !catalogProduct ||
       catalogProduct.stock < 1 ||
@@ -129,7 +147,10 @@ export function CartProvider({
       return false;
     }
     const current = currentCart();
-    const found = current.find((i) => i.product_id === product.id);
+    const key = cartItemKey(product.id, variantId);
+    const found = current.find(
+      (i) => cartItemKey(i.product_id, i.variant_id) === key,
+    );
     const maximum = Math.min(MAX_QUANTITY, catalogProduct.stock);
     if ((found?.quantity || 0) + quantity > maximum) {
       toast.error(`Bạn có thể chọn tối đa ${maximum} sản phẩm này.`);
@@ -142,11 +163,18 @@ export function CartProvider({
     persist(
       found
         ? current.map((i) =>
-            i.product_id === product.id
+            cartItemKey(i.product_id, i.variant_id) === key
               ? { ...i, quantity: i.quantity + quantity }
               : i,
           )
-        : [...current, { product_id: product.id, quantity }],
+        : [
+            ...current,
+            {
+              product_id: product.id,
+              ...(variantId ? { variant_id: variantId } : {}),
+              quantity,
+            },
+          ],
     );
     trackCartQuantityChange(
       catalogProduct,
@@ -157,11 +185,15 @@ export function CartProvider({
     return true;
   }
   function update(id: string, quantity: number) {
-    const product = products.find((p) => p.id === id && p.active);
-    if (!product || !Number.isInteger(quantity)) return;
+    if (!Number.isInteger(quantity)) return;
     const current = currentCart();
-    const item = current.find((i) => i.product_id === id);
+    const item = current.find(
+      (i) => cartItemKey(i.product_id, i.variant_id) === id,
+    );
     if (!item) return;
+    const base = products.find((p) => p.id === item.product_id && p.active);
+    const product = base ? productOption(base, item.variant_id) : null;
+    if (!product) return;
     const nextQuantity = Math.max(
       0,
       Math.min(quantity, MAX_QUANTITY, product.stock),
@@ -170,9 +202,11 @@ export function CartProvider({
     if (!delta) return;
     persist(
       nextQuantity === 0
-        ? current.filter((i) => i.product_id !== id)
+        ? current.filter((i) => cartItemKey(i.product_id, i.variant_id) !== id)
         : current.map((i) =>
-            i.product_id === id ? { ...i, quantity: nextQuantity } : i,
+            cartItemKey(i.product_id, i.variant_id) === id
+              ? { ...i, quantity: nextQuantity }
+              : i,
           ),
     );
     trackCartQuantityChange(product, item.quantity, nextQuantity);

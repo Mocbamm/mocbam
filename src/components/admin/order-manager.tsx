@@ -1,12 +1,18 @@
 "use client";
 import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Order, OrderStatus } from "@/lib/types";
+import type {
+  Order,
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+} from "@/lib/types";
 import { formatDate, formatPrice } from "@/lib/utils";
 import {
   paymentMethodLabels,
@@ -48,12 +54,25 @@ function PaymentBadge({ status }: { status: Order["payment_status"] }) {
   );
 }
 
-export function OrderManager({ orders }: { orders: Order[] }) {
+export function OrderManager({
+  orders,
+  customerScope,
+}: {
+  orders: Order[];
+  customerScope?: string;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
+  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | "all">(
+    "all",
+  );
+  const [methodFilter, setMethodFilter] = useState<PaymentMethod | "all">(
+    "all",
+  );
   const [expanded, setExpanded] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, OrderStatus>>({});
+  const [restock, setRestock] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [paymentSaving, setPaymentSaving] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -70,6 +89,8 @@ export function OrderManager({ orders }: { orders: Order[] }) {
   const visible = orders.filter(
     (order) =>
       (filter === "all" || order.status === filter) &&
+      (paymentFilter === "all" || order.payment_status === paymentFilter) &&
+      (methodFilter === "all" || order.payment_method === methodFilter) &&
       `${order.reference} ${order.customer_name} ${order.email} ${order.phone}`
         .toLocaleLowerCase("vi")
         .includes(query.toLocaleLowerCase("vi")),
@@ -148,7 +169,7 @@ export function OrderManager({ orders }: { orders: Order[] }) {
     if (
       status === "completed" &&
       !window.confirm(
-        `Đánh dấu đơn ${order.reference} đã hoàn tất? Trạng thái xử lý không thể thay đổi sau khi hoàn tất. Việc này không xác nhận thanh toán.`,
+        `Đánh dấu đơn ${order.reference} đã hoàn tất? Sau khi hoàn tất, bạn chỉ có thể ghi nhận hoàn hàng. Việc này không xác nhận thanh toán.`,
       )
     )
       return;
@@ -159,9 +180,21 @@ export function OrderManager({ orders }: { orders: Order[] }) {
       )
     )
       return;
+    if (
+      status === "returned" &&
+      !window.confirm(
+        `Bạn đã nhận lại toàn bộ hàng của đơn ${order.reference}, kể cả hàng lỗi / hỏng? ${restock[order.id] ? "Hàng còn bán được: tồn kho sẽ được cộng lại một lần." : "Hàng lỗi / hỏng: không cộng lại tồn kho."} Nếu đã nhận tiền, cần ghi nhận hoàn tiền riêng sau khi trả tiền thực tế cho khách.`,
+      )
+    )
+      return;
     setSaving(order.id);
     try {
-      await adminRequest(`/api/admin/orders/${order.id}`, "PATCH", { status });
+      await adminRequest(`/api/admin/orders/${order.id}`, "PATCH", {
+        status,
+        ...(status === "returned"
+          ? { restock: restock[order.id] || false }
+          : {}),
+      });
       setDrafts((previous) => {
         const next = { ...previous };
         delete next[order.id];
@@ -178,6 +211,16 @@ export function OrderManager({ orders }: { orders: Order[] }) {
   }
   return (
     <div className="space-y-5">
+      {customerScope && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#edf3e7] p-4 text-sm">
+          <p>
+            Đơn hàng của <strong>{customerScope}</strong>
+          </p>
+          <Link href="/admin/orders" className="underline underline-offset-4">
+            Xem tất cả đơn hàng
+          </Link>
+        </div>
+      )}
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute top-3 left-3 size-4 text-[#7c8774]" />
@@ -205,6 +248,41 @@ export function OrderManager({ orders }: { orders: Order[] }) {
           ))}
         </select>
       </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <select
+          aria-label="Lọc thanh toán"
+          className={fieldClass}
+          value={paymentFilter}
+          onChange={(event) =>
+            setPaymentFilter(event.target.value as PaymentStatus | "all")
+          }
+        >
+          <option value="all">Tất cả thanh toán</option>
+          {Object.entries(paymentStatusLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Lọc phương thức thanh toán"
+          className={fieldClass}
+          value={methodFilter}
+          onChange={(event) =>
+            setMethodFilter(event.target.value as PaymentMethod | "all")
+          }
+        >
+          <option value="all">Tất cả phương thức</option>
+          {Object.entries(paymentMethodLabels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="text-sm text-[#6b7867]" aria-live="polite">
+        {visible.length} đơn hàng
+      </p>
       {visible.length === 0 ? (
         <EmptyState>Chưa có đơn hàng phù hợp.</EmptyState>
       ) : (
@@ -254,22 +332,52 @@ export function OrderManager({ orders }: { orders: Order[] }) {
                   className={`${fieldClass} max-w-[180px]`}
                   disabled={
                     order.status === "cancelled" ||
-                    order.status === "completed" ||
+                    order.status === "returned" ||
                     busy
                   }
                   aria-label={`Trạng thái đơn ${order.reference}`}
                 >
-                  {Object.entries(orderLabels).map(([status, label]) => (
-                    <option key={status} value={status}>
-                      {label}
-                    </option>
-                  ))}
+                  {Object.entries(orderLabels)
+                    .filter(([status]) => {
+                      if (order.status === "completed")
+                        return ["completed", "returned"].includes(status);
+                      if (order.status === "shipped")
+                        return ["shipped", "completed", "returned"].includes(
+                          status,
+                        );
+                      return (
+                        status !== "returned" || order.status === "returned"
+                      );
+                    })
+                    .map(([status, label]) => (
+                      <option key={status} value={status}>
+                        {label}
+                      </option>
+                    ))}
                 </select>
+                {(drafts[order.id] || order.status) === "returned" &&
+                  order.status !== "returned" && (
+                    <label className="flex max-w-48 items-start gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={restock[order.id] || false}
+                        disabled={busy}
+                        onChange={(event) =>
+                          setRestock((previous) => ({
+                            ...previous,
+                            [order.id]: event.target.checked,
+                          }))
+                        }
+                        className="mt-0.5 accent-[#294836]"
+                      />
+                      Hàng còn bán được: cộng lại tồn kho
+                    </label>
+                  )}
                 <Button
                   size="sm"
                   disabled={
                     order.status === "cancelled" ||
-                    order.status === "completed" ||
+                    order.status === "returned" ||
                     busy ||
                     (drafts[order.id] || order.status) === order.status
                   }
@@ -318,6 +426,7 @@ export function OrderManager({ orders }: { orders: Order[] }) {
                         <tr key={item.id}>
                           <td className="py-2">
                             {item.name}
+                            {item.variant_name ? ` — ${item.variant_name}` : ""}
                             <span className="mt-1 block text-xs text-[#788273]">
                               {formatPrice(item.price)}
                             </span>
@@ -340,11 +449,29 @@ export function OrderManager({ orders }: { orders: Order[] }) {
                     <dt>Phí giao hàng</dt>
                     <dd>{formatPrice(order.shipping_fee)}</dd>
                   </div>
+                  {Boolean(order.discount_amount) && (
+                    <div className="flex justify-between">
+                      <dt>Ưu đãi {order.discount_code}</dt>
+                      <dd>−{formatPrice(order.discount_amount || 0)}</dd>
+                    </div>
+                  )}
                   <div className="flex justify-between font-semibold">
                     <dt>Tổng cộng</dt>
                     <dd>{formatPrice(order.total)}</dd>
                   </div>
                 </dl>
+                {order.status === "returned" && (
+                  <p className="rounded-lg border border-[#dfe5d8] bg-white p-3 text-sm">
+                    Đã nhận hoàn hàng
+                    {order.returned_at
+                      ? ` · ${paymentDate(order.returned_at)}`
+                      : ""}
+                    .{" "}
+                    {order.return_restocked
+                      ? "Đã cộng lại hàng còn bán được vào tồn kho."
+                      : "Không cộng lại tồn kho (hàng lỗi / hỏng)."}
+                  </p>
+                )}
                 <section className="border-t border-[#dfe5d8] pt-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h3 className="font-semibold">Thanh toán</h3>
@@ -393,18 +520,19 @@ export function OrderManager({ orders }: { orders: Order[] }) {
                       Hoàn tiền: {paymentDate(order.refunded_at)}
                     </p>
                   )}
-                  {order.status === "cancelled" &&
+                  {(order.status === "cancelled" ||
+                    order.status === "returned") &&
                     order.payment_status === "paid" && (
                       <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-                        Cần hoàn tiền: đơn đã hủy nhưng đã nhận tiền. Thực hiện
-                        hoàn trả cho khách bên ngoài website, rồi ghi nhận khoản
-                        hoàn tiền bên dưới.
+                        Cần hoàn tiền: đơn đã hủy / nhận hoàn hàng nhưng đã nhận
+                        tiền. Thực hiện hoàn trả cho khách bên ngoài website,
+                        rồi ghi nhận khoản hoàn tiền bên dưới.
                       </p>
                     )}
                   {((order.payment_status === "awaiting_payment" &&
-                    order.status !== "cancelled") ||
+                    !["cancelled", "returned"].includes(order.status)) ||
                     (order.payment_status === "paid" &&
-                      order.status === "cancelled")) && (
+                      ["cancelled", "returned"].includes(order.status))) && (
                     <form
                       className="mt-4 space-y-3"
                       onSubmit={(event) => {
@@ -448,11 +576,12 @@ export function OrderManager({ orders }: { orders: Order[] }) {
                       </Button>
                     </form>
                   )}
-                  {order.status === "cancelled" &&
+                  {(order.status === "cancelled" ||
+                    order.status === "returned") &&
                     order.payment_status === "awaiting_payment" && (
                       <p className="mt-4 text-sm text-[#6b7867]">
-                        Đơn đã hủy chưa nhận tiền; không thể ghi nhận thanh
-                        toán.
+                        Đơn đã hủy / hoàn hàng chưa nhận tiền; không thể ghi
+                        nhận thanh toán.
                       </p>
                     )}
                   <div className="mt-5 border-t border-[#dfe5d8] pt-4">

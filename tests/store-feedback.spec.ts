@@ -108,7 +108,9 @@ test("policy dropdown opens only the selected policy and card buy-now reaches ch
 }) => {
   await page.goto("/");
   const navigation = page.getByRole("navigation", { name: "Điều hướng chính" });
-  await navigation.locator("summary").click();
+  await navigation
+    .getByRole("button", { name: "Chính sách", exact: true })
+    .click();
   await navigation
     .getByRole("link", { name: "Đổi trả & chăm sóc", exact: true })
     .click();
@@ -120,6 +122,12 @@ test("policy dropdown opens only the selected policy and card buy-now reaches ch
     page.getByRole("heading", { name: "Giao hàng", exact: true }),
   ).toHaveCount(0);
   await expect(page.getByText("đồ án", { exact: false })).toHaveCount(0);
+  await expect(
+    page.getByRole("navigation", { name: "Mục lục chính sách" }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("link", { name: "Xem tất cả chính sách" }),
+  ).toHaveCount(0);
   await page.goto("/san-pham");
   await page
     .getByRole("button", { name: "Mua ngay Mèo Mộc", exact: true })
@@ -128,6 +136,37 @@ test("policy dropdown opens only the selected policy and card buy-now reaches ch
   await expect(
     page.getByText("Mèo Mộc", { exact: true }).first(),
   ).toBeVisible();
+});
+
+test("home navigation and hover policy dropdown remain accessible", async ({
+  page,
+}) => {
+  await page.goto("/blog");
+  const navigation = page.getByRole("navigation", { name: "Điều hướng chính" });
+  await navigation
+    .getByRole("link", { name: "Trang chủ", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(
+    page.getByRole("link", { name: "Mộc Bàm - Trang chủ" }),
+  ).toContainText("MỘC BÀM");
+  const trigger = navigation.getByRole("button", {
+    name: "Chính sách",
+    exact: true,
+  });
+  await trigger.hover();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await navigation
+    .getByRole("link", { name: "Giao hàng", exact: true })
+    .hover();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await page.getByRole("heading", { level: 1 }).hover();
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
 });
 
 test("mobile search remains reachable and its dialog closes with Escape", async ({

@@ -9,6 +9,12 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
   download: vi.fn(),
   filter: vi.fn(),
+  post: null as null | {
+    image_url: string;
+    video_url: string;
+    content: string;
+  },
+  content: null as null | { content: string },
 }));
 vi.mock("@/lib/auth", () => ({
   getCurrentUser: vi.fn(async () => null),
@@ -27,13 +33,20 @@ vi.mock("@/lib/supabase/admin", () => ({
       const query = {
         select: () => query,
         eq: () => query,
+        like: () => query,
         or: (filter: string) => {
           mocks.filter(filter);
           return query;
         },
         limit: async () => ({
           data:
-            table === "products" && mocks.published ? [{ id: "product" }] : [],
+            table === "products" && mocks.published
+              ? [{ id: "product" }]
+              : table === "posts" && mocks.post
+                ? [mocks.post]
+                : table === "site_content" && mocks.content
+                  ? [mocks.content]
+                  : [],
           error: null,
         }),
       };
@@ -60,6 +73,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.admin = false;
   mocks.published = false;
+  mocks.post = null;
+  mocks.content = null;
   mocks.upload.mockResolvedValue({ error: null });
   mocks.download.mockResolvedValue({
     data: new Blob(["0123456789"], { type: "video/mp4" }),
@@ -68,6 +83,37 @@ beforeEach(() => {
 });
 
 describe("product media privacy and seeking", () => {
+  it("allows published post videos and body media, plus saved site content media", async () => {
+    const url = `/api/media/${path}`;
+    for (const post of [
+      { image_url: "", video_url: url, content: "Texte" },
+      {
+        image_url: "",
+        video_url: "",
+        content: `Texte\n\n@[Fabrication](${url})`,
+      },
+    ]) {
+      mocks.post = post;
+      expect(
+        (await media(new Request(`http://localhost:3000${url}`), params))
+          .status,
+      ).toBe(200);
+    }
+    mocks.post = null;
+    for (const content of [url, `@[Fabrication](${url})`]) {
+      mocks.content = { content };
+      expect(
+        (await media(new Request(`http://localhost:3000${url}`), params))
+          .status,
+      ).toBe(200);
+    }
+    mocks.content = {
+      content: `A plain mention ${url} is not a published media block.`,
+    };
+    expect(
+      (await media(new Request(`http://localhost:3000${url}`), params)).status,
+    ).toBe(404);
+  });
   it("hides an unattached file without reading storage and checks all published product media fields", async () => {
     const response = await media(
       new Request(`http://localhost:3000/api/media/${path}`),

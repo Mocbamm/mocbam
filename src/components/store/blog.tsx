@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import type { BlogPost } from "@/lib/types";
-import { filterPostsByDate } from "@/lib/store-discovery";
+import { filterPostsByDate, matchesSearch } from "@/lib/store-discovery";
+import { Play } from "lucide-react";
 import { dateLabel } from "./format";
 import { Input } from "@/components/ui/input";
 
@@ -23,13 +24,32 @@ export function BlogCard({
       <div
         className={`relative overflow-hidden bg-[#e8ecdf] ${compact ? "aspect-[1.7]" : "aspect-[1.5]"}`}
       >
-        <Image
-          src={post.image_url}
-          alt={post.title}
-          fill
-          sizes="(max-width: 768px) 95vw, 45vw"
-          className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-        />
+        {post.image_url ? (
+          <Image
+            src={post.image_url}
+            alt={post.title}
+            fill
+            sizes="(max-width: 768px) 95vw, 45vw"
+            className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+          />
+        ) : post.video_url ? (
+          <video
+            src={post.video_url}
+            muted
+            preload="metadata"
+            aria-label={post.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center font-serif text-3xl text-[#879775]">
+            MỘC BÀM
+          </span>
+        )}
+        {post.video_url ? (
+          <span className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-[#29412d]/85 px-3 py-1 text-xs text-white">
+            <Play size={12} fill="currentColor" /> Video
+          </span>
+        ) : null}
       </div>
       <p className="mt-5 text-[10px] text-[#8b947d]">
         {dateLabel(post.created_at)}
@@ -59,15 +79,38 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sort, setSort] = useState("newest");
+  const [query, setQuery] = useState("");
   const invalidRange = Boolean(from && to && from > to);
-  const filtered = filterPostsByDate(posts, from, to).sort((a, b) =>
-    sort === "oldest"
-      ? a.created_at.localeCompare(b.created_at)
-      : b.created_at.localeCompare(a.created_at),
-  );
+  const filtered = filterPostsByDate(posts, from, to)
+    .filter(
+      (post) =>
+        !query.trim() ||
+        matchesSearch(`${post.title} ${post.excerpt} ${post.content}`, query),
+    )
+    .sort((a, b) =>
+      sort === "oldest"
+        ? a.created_at.localeCompare(b.created_at)
+        : b.created_at.localeCompare(a.created_at),
+    );
   return (
     <>
       <div className="mt-10 flex flex-wrap items-end gap-4 border-y border-[#dde1d0] py-5">
+        <div className="min-w-48 flex-1">
+          <label
+            htmlFor="blog-search"
+            className="mb-2 block text-xs text-[#66715c]"
+          >
+            Tìm bài viết
+          </label>
+          <Input
+            id="blog-search"
+            type="search"
+            disabled={!hydrated}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Một câu chuyện bạn muốn tìm..."
+          />
+        </div>
         <div>
           <label
             htmlFor="blog-date-from"
@@ -147,9 +190,11 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
         </div>
       ) : (
         <p className="mt-12 text-sm text-[#7c866b]">
-          {posts.length
-            ? "Chưa có bài viết trong khoảng ngày này. Bạn thử chọn khoảng ngày khác nhé."
-            : "Mộc đang viết những câu chuyện đầu tiên. Ghé lại sau nhé."}
+          {query
+            ? "Chưa tìm thấy bài viết phù hợp. Bạn thử từ khóa khác nhé."
+            : posts.length
+              ? "Chưa có bài viết trong khoảng ngày này. Bạn thử chọn khoảng ngày khác nhé."
+              : "Mộc đang viết những câu chuyện đầu tiên. Ghé lại sau nhé."}
         </p>
       )}
     </>

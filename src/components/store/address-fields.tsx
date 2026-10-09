@@ -3,10 +3,15 @@ import { useState } from "react";
 import provinces from "@/lib/data/vietnam-addresses.json";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-export function AddressFields() {
+export function AddressFields({
+  onChange,
+}: {
+  onChange?: (destination: { province: string; ward: string }) => void;
+}) {
   const [province, setProvince] = useState(""),
     [manual, setManual] = useState(false);
   const selected = provinces.find((p) => p.name === province);
+  const [ward, setWard] = useState("");
   const style =
     "mt-2 h-10 w-full border border-[#d7ddcd] bg-transparent px-3 text-sm";
   return (
@@ -32,6 +37,10 @@ export function AddressFields() {
             autoComplete="address-level1"
             required
             maxLength={100}
+            onChange={(event) => {
+              setProvince(event.target.value);
+              onChange?.({ province: event.target.value, ward });
+            }}
             className="mt-2"
           />
         ) : (
@@ -39,7 +48,11 @@ export function AddressFields() {
             id="checkout-city"
             name="city"
             value={province}
-            onChange={(e) => setProvince(e.target.value)}
+            onChange={(e) => {
+              setProvince(e.target.value);
+              setWard("");
+              onChange?.({ province: e.target.value, ward: "" });
+            }}
             autoComplete="address-level1"
             required
             className={style}
@@ -62,6 +75,10 @@ export function AddressFields() {
             autoComplete="address-level2"
             required
             maxLength={100}
+            onChange={(event) => {
+              setWard(event.target.value);
+              onChange?.({ province, ward: event.target.value });
+            }}
             className="mt-2"
           />
         ) : (
@@ -69,6 +86,11 @@ export function AddressFields() {
             key={province}
             id="checkout-ward"
             name="ward"
+            value={ward}
+            onChange={(event) => {
+              setWard(event.target.value);
+              onChange?.({ province, ward: event.target.value });
+            }}
             autoComplete="address-level2"
             required
             disabled={!selected}
@@ -86,7 +108,12 @@ export function AddressFields() {
       <div className="sm:col-span-2">
         <button
           type="button"
-          onClick={() => setManual((v) => !v)}
+          onClick={() => {
+            setManual((v) => !v);
+            setProvince("");
+            setWard("");
+            onChange?.({ province: "", ward: "" });
+          }}
           className="text-xs underline underline-offset-4"
         >
           {manual ? "Chọn từ danh sách địa chỉ" : "Nhập địa chỉ thủ công"}

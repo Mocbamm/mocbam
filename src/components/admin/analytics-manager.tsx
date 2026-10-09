@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Download, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   buildStoreReport,
   reportCsv,
-  reportDateRange,
+  reportPeriodRange,
   type ReportOrder,
   type ReportRange,
+  type ReportPeriod,
 } from "@/lib/store-reports";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -18,6 +20,40 @@ import {
   orderLabels,
   panelClass,
 } from "./admin-common";
+
+const periods: { value: ReportPeriod; label: string }[] = [
+  { value: "today", label: "Hôm nay" },
+  { value: "yesterday", label: "Hôm qua" },
+  { value: "week", label: "Tuần này" },
+  { value: "month", label: "Tháng này" },
+  { value: "year", label: "Năm nay" },
+];
+const paymentLabels = {
+  cod: "Tiền mặt / COD",
+  bank_transfer: "Chuyển khoản",
+  unconfigured: "Chưa xác định",
+};
+
+export function ReportModules({ traffic = false }: { traffic?: boolean }) {
+  return (
+    <nav aria-label="Loại báo cáo" className="mb-6 flex flex-wrap gap-2">
+      <Link
+        href="/admin/analytics"
+        aria-current={!traffic ? "page" : undefined}
+        className={`rounded-xl px-4 py-3 text-sm font-medium ${!traffic ? "bg-[#294836] text-white" : "border border-[#dce3d7] bg-white"}`}
+      >
+        Báo cáo tài chính
+      </Link>
+      <Link
+        href="/admin/analytics/traffic"
+        aria-current={traffic ? "page" : undefined}
+        className={`rounded-xl px-4 py-3 text-sm font-medium ${traffic ? "bg-[#294836] text-white" : "border border-[#dce3d7] bg-white"}`}
+      >
+        Lưu lượng website
+      </Link>
+    </nav>
+  );
+}
 
 export function AnalyticsManager({
   orders,
@@ -28,62 +64,144 @@ export function AnalyticsManager({
 }) {
   const router = useRouter();
   const [range, setRange] = useState(initialRange);
+  const [live, setLive] = useState(false);
+  const [productRank, setProductRank] = useState<"quantity" | "profit">(
+    "quantity",
+  );
+  const [pending, startTransition] = useTransition();
+  const [chart, setChart] = useState<"revenue" | "orders">("revenue");
   const invalidRange = Boolean(range.from && range.to && range.from > range.to);
   const report = useMemo(
     () => buildStoreReport(orders, range),
     [orders, range],
   );
-  const maxCount = Math.max(1, ...report.daily.map((row) => row.order_count));
+  useEffect(() => {
+    if (!live) return;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible")
+        startTransition(() => router.refresh());
+    }, 30_000);
+    return () => window.clearInterval(interval);
+  }, [live, router]);
+  const rankedProducts = useMemo(
+    () =>
+      [...report.products].sort((a, b) =>
+        productRank === "profit"
+          ? (b.gross_profit ?? -Infinity) - (a.gross_profit ?? -Infinity) ||
+            b.quantity - a.quantity
+          : b.quantity - a.quantity,
+      ),
+    [report.products, productRank],
+  );
+  const maxValue = Math.max(
+    1,
+    ...report.daily.map((row) =>
+      chart === "orders"
+        ? row.order_count
+        : Math.max(row.gross_sales, row.net_sales),
+    ),
+  );
   function exportReport() {
     const url = URL.createObjectURL(
       new Blob([reportCsv(report)], { type: "text/csv;charset=utf-8" }),
     );
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `moc-bam-bao-cao-${range.from || "bat-dau"}-${range.to || "hien-tai"}.csv`;
+    anchor.download = `moc-bam-tai-chinh-${range.from || "bat-dau"}-${range.to || "hien-tai"}.csv`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
   }
+  const costValue = (value: number | null) =>
+    value === null ? "Chưa đủ giá vốn" : formatPrice(value);
   const metrics = [
+    {
+      label: "Tổng giá trị sản phẩm (GMV)",
+      value: formatPrice(report.gross_sales),
+      note: "Trước giảm giá, hủy và hoàn; không gồm vận chuyển",
+    },
+    {
+      label: "Doanh thu sản phẩm thuần",
+      value: formatPrice(report.net_sales),
+      note: "GMV trừ giảm giá, đơn hủy/trả hàng và sản phẩm hoàn tiền",
+    },
+    {
+      label: "Giá vốn sản phẩm",
+      value: costValue(report.cogs),
+      note: `${report.cost_order_count - report.missing_cost_order_count}/${report.cost_order_count} đơn có đủ giá vốn lúc đặt; gồm hàng hoàn không nhập kho`,
+    },
+    {
+      label: "Lợi nhuận gộp dự kiến",
+      value: costValue(report.gross_profit),
+      note: "Doanh thu sản phẩm thuần trừ giá vốn; gồm đơn chưa hoàn tất",
+    },
+    {
+      label: "Phí giao hàng trên đơn còn hiệu lực",
+      value: formatPrice(report.shipping_charged),
+      note: "Tách khỏi doanh thu sản phẩm; chưa trừ phí trả đơn vị vận chuyển",
+    },
+    {
+      label: "Chi phí hàng hoàn không nhập kho",
+      value: costValue(report.damaged_return_cost),
+      note: "Đã nằm trong giá vốn; không trừ lần thứ hai",
+    },
+    {
+      label: "Tỷ lệ hủy / hoàn tất đã thanh toán",
+      value: `${report.order_count ? ((report.cancelled_order_count / report.order_count) * 100).toFixed(1) : 0}% / ${report.order_count ? ((report.successful_order_count / report.order_count) * 100).toFixed(1) : 0}%`,
+      note: "Trên tổng số đơn đặt trong kỳ",
+    },
     {
       label: "Đơn được đặt",
       value: report.order_count,
-      note: `${report.cancelled_order_count} đã hủy · ${report.completed_order_count} hoàn tất`,
+      note: `${report.cancelled_order_count} hủy · ${report.returned_order_count} trả hàng · ${report.completed_order_count} hoàn tất`,
     },
     {
-      label: "Giá trị đơn chưa hủy",
-      value: formatPrice(report.order_value),
-      note: `${report.active_order_count} đơn · gồm phí giao hàng`,
+      label: "AOV đơn hoàn tất",
+      value: formatPrice(report.completed_average_order_value),
+      note: "Đơn hoàn tất đã thanh toán; không gồm phí giao hàng",
     },
     {
-      label: "Giá trị đơn trung bình",
-      value: formatPrice(report.average_order_value),
-      note: "Tính trên đơn chưa hủy",
+      label: "Giảm giá đã áp dụng",
+      value: formatPrice(report.discounts),
+      note: "Tổng giảm giá trên đơn chưa hủy/trả hàng",
+    },
+    {
+      label: "Giá trị sản phẩm đã hủy",
+      value: formatPrice(report.cancelled_sales),
+      note: "Giá trị sản phẩm trước giảm giá trong đơn hủy",
+    },
+    {
+      label: "Giá trị sản phẩm trả hàng",
+      value: formatPrice(report.returned_sales),
+      note: "Trước giảm giá; không tính trùng vào doanh thu thuần",
+    },
+    {
+      label: "Giá trị sản phẩm đã hoàn tiền khác",
+      value: formatPrice(report.refunded_sales),
+      note: "Sau giảm giá; đơn trong kỳ đã hoàn tiền",
     },
     {
       label: "Chờ ghi nhận thanh toán",
       value: formatPrice(report.awaiting_payment_value),
-      note: "Đơn chưa hủy trong kỳ",
+      note: "Đơn chưa hủy/trả hàng trong kỳ; gồm phí giao hàng",
     },
     {
       label: "Tiền đã xác nhận trong kỳ",
       value: formatPrice(report.collected),
-      note: "Theo ngày xác nhận thanh toán",
+      note: "Theo ngày xác nhận thanh toán; gồm phí giao hàng",
     },
     {
       label: "Tiền đã hoàn trong kỳ",
       value: formatPrice(report.refunded),
-      note: "Theo ngày ghi nhận hoàn tiền",
+      note: "Theo ngày ghi nhận hoàn tiền; gồm phí giao hàng",
     },
     {
       label: "Thu ròng trong kỳ",
       value: formatPrice(report.net_collected),
-      note: "Tiền xác nhận trừ tiền hoàn",
+      note: "Tiền xác nhận trừ tiền hoàn; không phải lợi nhuận",
     },
   ];
-
   return (
     <div className="space-y-6">
       <div className={panelClass}>
@@ -112,28 +230,34 @@ export function AnalyticsManager({
               className={`${fieldClass} mt-1`}
             />
           </label>
-          <Button variant="outline" onClick={() => router.refresh()}>
-            <RefreshCw className="size-4" />
-            Cập nhật
+          <Button
+            variant="outline"
+            disabled={pending}
+            onClick={() => startTransition(() => router.refresh())}
+          >
+            <RefreshCw className={`size-4 ${pending ? "animate-spin" : ""}`} />
+            {pending ? "Đang cập nhật…" : "Cập nhật"}
           </Button>
           <Button
             variant="outline"
             onClick={exportReport}
-            disabled={invalidRange || report.daily.length === 0}
+            disabled={invalidRange}
           >
             <Download className="size-4" />
             Xuất CSV
           </Button>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {[7, 30, 90].map((days) => (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {periods.map((period) => (
             <Button
-              key={days}
+              key={period.value}
               size="sm"
               variant="outline"
-              onClick={() => setRange(reportDateRange(new Date(), days))}
+              onClick={() =>
+                setRange(reportPeriodRange(new Date(), period.value))
+              }
             >
-              {days} ngày
+              {period.label}
             </Button>
           ))}
           <Button
@@ -143,11 +267,19 @@ export function AnalyticsManager({
           >
             Tất cả
           </Button>
+          <label className="ml-auto flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={live}
+              onChange={(event) => setLive(event.target.checked)}
+            />
+            Tự cập nhật mỗi 30 giây
+          </label>
         </div>
         <p className="mt-4 text-xs leading-6 text-[#6b7867]">
-          Ngày theo múi giờ Việt Nam. Số đơn và giá trị đơn tính theo ngày đặt.
-          Các khoản thu/hoàn tính theo ngày ghi nhận thanh toán, kể cả đơn đặt
-          trước kỳ hoặc đã hủy.
+          Ngày theo múi giờ Việt Nam. Doanh thu tính theo ngày đặt đơn và trạng
+          thái hiện tại. Dòng tiền tính theo ngày ghi nhận thu/hoàn, kể cả đơn
+          đặt trước kỳ. CSV vẫn xuất được khi kỳ chưa có dữ liệu.
         </p>
       </div>
       {invalidRange ? (
@@ -175,36 +307,60 @@ export function AnalyticsManager({
           {report.daily.length === 0 ? (
             <EmptyState>
               Chưa có đơn hàng hoặc ghi nhận thanh toán trong khoảng ngày này.
+              Các chỉ số bằng 0 và vẫn có thể xuất báo cáo.
             </EmptyState>
           ) : (
             <div className={panelClass}>
-              <h2 className="font-semibold">Đơn hàng theo ngày</h2>
-              <p className="mt-1 text-xs text-[#6b7867]">
-                Bao gồm đơn đã hủy. Chọn xem bảng để đọc giá trị và thanh toán
-                từng ngày.
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-semibold">Biểu đồ theo ngày</h2>
+                <label className="text-xs">
+                  Chỉ số
+                  <select
+                    className={`${fieldClass} ml-2 w-auto`}
+                    value={chart}
+                    onChange={(event) =>
+                      setChart(event.target.value as typeof chart)
+                    }
+                  >
+                    <option value="revenue">Doanh thu</option>
+                    <option value="orders">Số đơn</option>
+                  </select>
+                </label>
+              </div>
+              <p className="mt-2 text-xs text-[#6b7867]">
+                {chart === "revenue"
+                  ? "Màu nhạt: GMV · Màu đậm: doanh thu sản phẩm thuần"
+                  : "Tất cả đơn đặt trong ngày, gồm đơn đã hủy"}
               </p>
               <div className="mt-6 overflow-x-auto pb-2">
                 <div
                   role="img"
-                  aria-label={`${report.order_count} đơn trong ${report.daily.length} ngày có hoạt động. Bảng dữ liệu chi tiết ở bên dưới.`}
-                  className="flex h-44 min-w-max items-end gap-2 border-b border-[#dfe5d8]"
+                  aria-label={`Biểu đồ ${chart === "revenue" ? "doanh thu" : "số đơn"} theo ngày; bảng dữ liệu ở bên dưới.`}
+                  className="flex h-48 min-w-max items-end gap-2 border-b border-[#dfe5d8]"
                 >
                   {report.daily.map((row) => (
                     <div
                       key={row.date}
-                      title={`${row.date}: ${row.order_count} đơn`}
-                      className="flex h-full w-10 shrink-0 flex-col items-center justify-end gap-1"
+                      title={`${row.date}: ${row.order_count} đơn; GMV ${formatPrice(row.gross_sales)}; thuần ${formatPrice(row.net_sales)}`}
+                      className="flex h-full w-12 shrink-0 flex-col justify-end gap-2"
                     >
-                      <span className="text-[10px] text-[#6b7867]">
-                        {row.order_count}
-                      </span>
-                      <div
-                        className="w-6 rounded-t bg-[#426533]"
-                        style={{
-                          height: `${Math.max(row.order_count ? 3 : 0, (row.order_count / maxCount) * 110)}px`,
-                        }}
-                      />
-                      <span className="mb-2 text-[9px] text-[#6b7867]">
+                      <div className="flex h-36 items-end justify-center gap-1">
+                        {chart === "revenue" && (
+                          <div
+                            className="w-4 rounded-t bg-[#c8d5bc]"
+                            style={{
+                              height: `${(row.gross_sales / maxValue) * 140}px`,
+                            }}
+                          />
+                        )}
+                        <div
+                          className="w-4 rounded-t bg-[#426533]"
+                          style={{
+                            height: `${((chart === "orders" ? row.order_count : row.net_sales) / maxValue) * 140}px`,
+                          }}
+                        />
+                      </div>
+                      <span className="mb-2 text-center text-[10px] text-[#6b7867]">
                         {row.date.slice(5)}
                       </span>
                     </div>
@@ -218,17 +374,20 @@ export function AnalyticsManager({
                 <div className="mt-3 overflow-x-auto">
                   <table className="w-full whitespace-nowrap text-left text-xs">
                     <caption className="sr-only">
-                      Đơn hàng và dòng tiền theo ngày Việt Nam
+                      Doanh thu, đơn hàng và dòng tiền theo ngày Việt Nam
                     </caption>
                     <thead className="border-b border-[#edf0e7] text-[#6b7867]">
                       <tr>
                         {[
                           "Ngày",
                           "Số đơn",
-                          "Giá trị chưa hủy",
+                          "GMV",
+                          "Doanh thu thuần",
                           "Tiền xác nhận",
                           "Tiền hoàn",
                           "Thu ròng",
+                          "Giá vốn",
+                          "Lợi nhuận gộp dự kiến",
                         ].map((title) => (
                           <th
                             key={title}
@@ -244,19 +403,26 @@ export function AnalyticsManager({
                       {report.daily.map((row) => (
                         <tr
                           key={row.date}
-                          className="border-b border-[#edf0e7] last:border-0"
+                          className="border-b border-[#edf0e7]"
                         >
                           <th scope="row" className="py-3 pr-4 font-medium">
                             {row.date}
                           </th>
                           <td className="pr-4">{row.order_count}</td>
+                          {[
+                            row.gross_sales,
+                            row.net_sales,
+                            row.collected,
+                            row.refunded,
+                            row.collected - row.refunded,
+                          ].map((value, index) => (
+                            <td key={index} className="pr-4">
+                              {formatPrice(value)}
+                            </td>
+                          ))}
+                          <td className="pr-4">{costValue(row.cogs)}</td>
                           <td className="pr-4">
-                            {formatPrice(row.order_value)}
-                          </td>
-                          <td className="pr-4">{formatPrice(row.collected)}</td>
-                          <td className="pr-4">{formatPrice(row.refunded)}</td>
-                          <td className="pr-4">
-                            {formatPrice(row.collected - row.refunded)}
+                            {costValue(row.gross_profit)}
                           </td>
                         </tr>
                       ))}
@@ -266,6 +432,50 @@ export function AnalyticsManager({
               </details>
             </div>
           )}
+          <div className={panelClass}>
+            <h2 className="font-semibold">Phương thức thanh toán</h2>
+            {report.payment_breakdown.length === 0 ? (
+              <p className="mt-4 text-sm text-[#6b7867]">
+                Chưa có giao dịch trong kỳ.
+              </p>
+            ) : (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full whitespace-nowrap text-left text-sm">
+                  <thead className="text-xs text-[#6b7867]">
+                    <tr>
+                      {[
+                        "Phương thức",
+                        "Số đơn",
+                        "Đã xác nhận",
+                        "Đã hoàn",
+                        "Chờ thanh toán",
+                      ].map((label) => (
+                        <th key={label} className="py-3 pr-5 font-medium">
+                          {label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.payment_breakdown.map((row) => (
+                      <tr
+                        key={row.method}
+                        className="border-t border-[#edf0e7]"
+                      >
+                        <th className="py-3 pr-5 font-medium">
+                          {paymentLabels[row.method]}
+                        </th>
+                        <td className="pr-5">{row.order_count}</td>
+                        <td className="pr-5">{formatPrice(row.collected)}</td>
+                        <td className="pr-5">{formatPrice(row.refunded)}</td>
+                        <td>{formatPrice(row.awaiting)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
           <div className="grid gap-5 lg:grid-cols-2">
             <div className={panelClass}>
               <h2 className="font-semibold">Trạng thái đơn trong kỳ</h2>
@@ -284,10 +494,25 @@ export function AnalyticsManager({
               </dl>
             </div>
             <div className={panelClass}>
-              <h2 className="font-semibold">Sản phẩm được đặt nhiều</h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-semibold">Sản phẩm bán chạy</h2>
+                <label className="text-xs">
+                  Xếp theo{" "}
+                  <select
+                    className={`${fieldClass} w-auto`}
+                    value={productRank}
+                    onChange={(event) =>
+                      setProductRank(event.target.value as typeof productRank)
+                    }
+                  >
+                    <option value="quantity">Số lượng</option>
+                    <option value="profit">Lợi nhuận gộp</option>
+                  </select>
+                </label>
+              </div>
               <p className="mt-1 text-xs leading-6 text-[#6b7867]">
-                Theo số lượng trong đơn chưa hủy. Giá trị sản phẩm trước giảm
-                giá, chưa gồm phí giao hàng.
+                Theo số lượng trong đơn chưa hủy/hoàn tiền. Doanh thu sau ưu
+                đãi, không gồm vận chuyển. Lợi nhuận dựa trên giá vốn lúc đặt.
               </p>
               {report.products.length === 0 ? (
                 <p className="mt-5 text-sm text-[#6b7867]">
@@ -295,7 +520,7 @@ export function AnalyticsManager({
                 </p>
               ) : (
                 <ol className="mt-4 space-y-3">
-                  {report.products.slice(0, 10).map((product, index) => (
+                  {rankedProducts.slice(0, 10).map((product, index) => (
                     <li
                       key={product.id}
                       className="flex items-start justify-between gap-3 border-b border-[#edf0e7] pb-3 text-sm last:border-0"
@@ -309,7 +534,13 @@ export function AnalyticsManager({
                           {product.quantity} sản phẩm
                         </span>
                         <span className="mt-1 block text-xs text-[#6b7867]">
-                          {formatPrice(product.line_value)}
+                          Doanh thu:{" "}
+                          {product.net_value === null
+                            ? "Thiếu phân bổ ưu đãi"
+                            : formatPrice(product.net_value)}
+                        </span>
+                        <span className="mt-1 block text-xs text-[#6b7867]">
+                          Lợi nhuận gộp: {costValue(product.gross_profit)}
                         </span>
                       </span>
                     </li>
@@ -318,11 +549,19 @@ export function AnalyticsManager({
               )}
             </div>
           </div>
-          <p className="text-xs leading-6 text-[#6b7867]">
-            Báo cáo lấy trực tiếp từ đơn hàng và xác nhận thanh toán trong cửa
-            hàng. Số tiền chỉ phản ánh các khoản đã được quản trị viên ghi nhận;
-            chưa có dữ liệu lượt truy cập hay tỷ lệ chuyển đổi.
-          </p>
+          <div className={`${panelClass} border-dashed`}>
+            <h2 className="font-semibold">Giá vốn và lợi nhuận</h2>
+            <p className="mt-2 text-sm leading-6 text-[#6b7867]">
+              Giá vốn được lưu theo từng sản phẩm khi đặt đơn, không đổi khi sửa
+              giá vốn trong danh mục. Đơn cũ hoặc sản phẩm chưa nhập giá vốn
+              được ghi là chưa đủ dữ liệu, không coi là 0. Hàng trả lại còn bán
+              được chỉ hoàn giá vốn khi được nhập lại kho; hàng hỏng vẫn tính
+              chi phí. Lợi nhuận gộp dự kiến gồm đơn chưa hoàn tất và chưa trừ
+              chi phí vận hành, giao hàng thực tế hoặc quảng cáo. Thu ròng phản
+              ánh tiền đã thu trừ tiền hoàn; chưa thể tính lợi nhuận ròng hoặc
+              ROAS khi thiếu các chi phí này.
+            </p>
+          </div>
         </>
       )}
     </div>

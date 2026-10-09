@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Product, Category } from "@/lib/types";
 import { useCart } from "@/lib/cart";
+import { productOption } from "@/lib/product-options";
 import { trackStoreEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,7 +92,10 @@ export function ProductCard({
         >
           {product.name}
         </Link>
-        <p className="mt-2 text-sm text-[#65705c]">{money(product.price)}</p>
+        <p className="mt-2 text-sm text-[#65705c]">
+          {product.variants?.length ? "Từ " : ""}
+          {money(product.price)}
+        </p>
         {images.length > 1 ? (
           <p aria-live="polite" className="mt-2 text-[10px] text-[#848b79]">
             Ảnh {imageIndex + 1}/{images.length} · Bấm ảnh để xem thêm
@@ -101,17 +105,24 @@ export function ProductCard({
           <button
             type="button"
             disabled={product.stock < 1}
-            onClick={() => add(product)}
+            onClick={() =>
+              product.variants?.length
+                ? router.push(`/san-pham/${product.slug}`)
+                : add(product)
+            }
             aria-label={`Thêm ${product.name} vào giỏ hàng`}
             className="flex min-h-9 items-center justify-center gap-1.5 border border-[#c5d0b9] px-2 py-2 text-[10px] uppercase tracking-wider text-[#29412d] disabled:opacity-40"
           >
-            <Plus size={14} /> Bỏ giỏ
+            <Plus size={14} />{" "}
+            {product.variants?.length ? "Chọn mẫu" : "Bỏ giỏ"}
           </button>
           <button
             type="button"
             disabled={product.stock < 1}
             onClick={() => {
-              if (add(product)) router.push("/thanh-toan");
+              if (product.variants?.length)
+                router.push(`/san-pham/${product.slug}`);
+              else if (add(product)) router.push("/thanh-toan");
             }}
             aria-label={`Mua ngay ${product.name}`}
             className="min-h-9 bg-[#29412d] px-2 py-2 text-[10px] uppercase tracking-wider text-white disabled:opacity-40"
@@ -284,6 +295,12 @@ export function Catalog({
 }
 export function ProductActions({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
+  const [variantId, setVariantId] = useState(
+    product.variants?.find((variant) => variant.active && variant.stock > 0)
+      ?.id || "",
+  );
+  const option = productOption(product, variantId || undefined);
+  const availableStock = option?.stock || 0;
   const { add } = useCart();
   const router = useRouter();
   const viewed = useRef("");
@@ -313,6 +330,55 @@ export function ProductActions({ product }: { product: Product }) {
   }, [product]);
   return (
     <div>
+      {product.variants?.length ? (
+        <div className="mt-6 space-y-3">
+          <label
+            htmlFor={`variant-${product.id}`}
+            className="block text-xs text-[#6c765e]"
+          >
+            Chọn màu / phân loại
+          </label>
+          <select
+            id={`variant-${product.id}`}
+            value={variantId}
+            onChange={(event) => {
+              setVariantId(event.target.value);
+              setQuantity(1);
+            }}
+            className="w-full rounded-lg border border-[#d8ddce] bg-white px-3 py-3 text-sm"
+          >
+            <option value="" disabled>
+              Chọn phân loại
+            </option>
+            {product.variants
+              .filter((variant) => variant.active)
+              .map((variant) => (
+                <option
+                  key={variant.id}
+                  value={variant.id}
+                  disabled={variant.stock < 1}
+                >
+                  {variant.name} · {money(variant.price)}
+                  {variant.stock < 1 ? " · Hết hàng" : ""}
+                </option>
+              ))}
+          </select>
+          {option && (
+            <div className="flex items-center gap-3">
+              {option.image_url !== product.image_url && (
+                <Image
+                  src={option.image_url}
+                  alt={option.name}
+                  width={64}
+                  height={64}
+                  className="size-16 rounded-lg object-cover"
+                />
+              )}
+              <p className="text-lg text-[#617654]">{money(option.price)}</p>
+            </div>
+          )}
+        </div>
+      ) : null}
       <div className="mt-6 flex items-center gap-4">
         <span className="text-xs text-[#6c765e]">Số lượng</span>
         <div className="flex items-center border border-[#d8ddce]">
@@ -330,31 +396,34 @@ export function ProductActions({ product }: { product: Product }) {
             type="button"
             aria-label="Tăng số lượng"
             onClick={() =>
-              setQuantity((q) => Math.min(10, product.stock, q + 1))
+              setQuantity((q) => Math.min(10, availableStock, q + 1))
             }
-            disabled={quantity >= Math.min(10, product.stock)}
+            disabled={quantity >= Math.min(10, availableStock)}
             className="p-3 disabled:opacity-30"
           >
             <Plus size={14} />
           </button>
         </div>
         <span className="text-[11px] text-[#87917c]">
-          {product.stock > 0 ? `Còn ${product.stock} sản phẩm` : "Tạm hết hàng"}
+          {availableStock > 0
+            ? `Còn ${availableStock} sản phẩm`
+            : "Tạm hết hàng"}
         </span>
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <Button
-          disabled={product.stock < 1}
-          onClick={() => add(product, quantity)}
+          disabled={availableStock < 1}
+          onClick={() => add(product, quantity, variantId || undefined)}
           variant="outline"
           className="h-12"
         >
           <ShoppingBag size={16} /> Bỏ vào giỏ
         </Button>
         <Button
-          disabled={product.stock < 1}
+          disabled={availableStock < 1}
           onClick={() => {
-            if (add(product, quantity)) router.push("/thanh-toan");
+            if (add(product, quantity, variantId || undefined))
+              router.push("/thanh-toan");
           }}
           className="h-12"
         >

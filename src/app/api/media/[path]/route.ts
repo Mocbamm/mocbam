@@ -1,6 +1,7 @@
 import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { apiError, databaseError, HttpError } from "@/lib/http";
 import { createServiceSupabase } from "@/lib/supabase/admin";
+import { contentBlocks, parseContentMedia } from "@/lib/content-media";
 
 export async function GET(
   request: Request,
@@ -12,23 +13,47 @@ export async function GET(
       throw new HttpError(404, "Không tìm thấy tệp.");
     const db = createServiceSupabase();
     const url = `/api/media/${path}`;
-    const [products, posts] = await Promise.all([
+    const [products, posts, content] = await Promise.all([
       db
         .from("products")
         .select("id")
-        .or(`image_url.eq.${url},video_url.eq.${url},image_urls.cs.{${url}}`)
+        .or(
+          `image_url.eq.${url},video_url.eq.${url},image_urls.cs.{${url}},variants.cs.[{"image_url":"${url}","active":true}]`,
+        )
         .eq("active", true)
         .limit(1),
       db
         .from("posts")
-        .select("id")
-        .eq("image_url", url)
+        .select("id,image_url,video_url,content")
+        .or(`image_url.eq.${url},video_url.eq.${url},content.like.%${url}%`)
         .eq("published", true)
-        .limit(1),
+        .limit(100),
+      db
+        .from("site_content")
+        .select("key,content")
+        .like("content", `%${url}%`)
+        .limit(100),
     ]);
     if (products.error) throw databaseError(products.error);
     if (posts.error) throw databaseError(posts.error);
-    const published = Boolean(products.data?.length || posts.data?.length);
+    if (content.error) throw databaseError(content.error);
+    const containsMedia = (text: string) =>
+      contentBlocks(text).some(
+        (block) => parseContentMedia(block)?.url === url,
+      );
+    const published = Boolean(
+      products.data?.length ||
+        posts.data?.some(
+          (post) =>
+            post.image_url === url ||
+            post.video_url === url ||
+            containsMedia(post.content || ""),
+        ) ||
+        content.data?.some(
+          (entry) =>
+            entry.content === url || containsMedia(entry.content || ""),
+        ),
+    );
     if (!published && !(await isAdmin(await getCurrentUser())))
       throw new HttpError(404, "Không tìm thấy ảnh.");
     const { data, error } = await db.storage.from("products").download(path);

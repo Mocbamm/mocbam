@@ -36,12 +36,13 @@ async function order(
   user: string | null = owner,
   key = randomUUID(),
   hash = digest(`${code}:${user}`),
+  items = [{ product_id: demoProducts[0].id, quantity: 1 }],
 ) {
   return asRole("service_role", null, async (tx) => {
     const { rows } = await tx.query<{ receipt: { id: string } }>(
       "select public.create_order($1::jsonb,$2::jsonb,$3::uuid,$4,$5,$6::uuid,'cod',$7) as receipt",
       [
-        JSON.stringify([{ product_id: demoProducts[0].id, quantity: 1 }]),
+        JSON.stringify(items),
         JSON.stringify(customer),
         key,
         hash,
@@ -111,6 +112,9 @@ beforeAll(async () => {
     "202610030001_initial.sql",
     "202610030002_manual_payments.sql",
     "202610050003_store_features.sql",
+    "202610090005_returned_status.sql",
+    "202610090006_product_variants_returns.sql",
+    "202610090007_promotion_scope.sql",
   ])
     await db.exec(
       await readFile(
@@ -137,6 +141,53 @@ beforeEach(async () => {
 afterAll(async () => db?.close());
 
 describe("transactional discount application", () => {
+  it("discounts only selected products in a mixed basket and rejects unrelated carts atomically", async () => {
+    await discount(
+      `scope='product',product_ids=array['${demoProducts[1].id}']::uuid[],value=100`,
+    );
+    const originalStock = await inventory();
+    await expect(order()).rejects.toThrow("DISCOUNT_UNAVAILABLE");
+    expect(await inventory()).toBe(originalStock);
+    const receipt = await order(
+      "MOC10",
+      owner,
+      randomUUID(),
+      digest("mixed-products"),
+      [
+        { product_id: demoProducts[0].id, quantity: 1 },
+        { product_id: demoProducts[1].id, quantity: 1 },
+      ],
+    );
+    const snapshot = await readOrder(receipt.id);
+    expect(snapshot.discount_amount).toBe(demoProducts[1].price);
+    expect(snapshot.total).toBe(demoProducts[0].price + 30000);
+  });
+  it("permits every selected private recipient and never a guest or an unselected account", async () => {
+    await discount(
+      `scope='private',public_campaign=false,customer_user_ids=array['${owner}','${other}']::uuid[]`,
+    );
+    await expect(order("MOC10", null)).rejects.toThrow("DISCOUNT_UNAVAILABLE");
+    await expect(order("MOC10", admin)).rejects.toThrow("DISCOUNT_UNAVAILABLE");
+    expect(
+      (await readOrder((await order("MOC10", owner)).id)).discount_amount,
+    ).toBe(18900);
+    expect(
+      (await readOrder((await order("MOC10", other)).id)).discount_amount,
+    ).toBe(18900);
+  });
+  it("rejects expired voucher creation and nonexistent scope targets in the database", async () => {
+    await expect(
+      db.exec(
+        "insert into public.discounts(code,title,kind,value,ends_at) values ('OLD','Old','fixed',100,now()-interval '1 hour')",
+      ),
+    ).rejects.toThrow("DISCOUNT_EXPIRED");
+    await expect(
+      db.exec(
+        "insert into public.discounts(code,title,kind,value,scope,product_ids) values ('UNKNOWN','Unknown','fixed',100,'product',array['dddddddd-dddd-4ddd-8ddd-dddddddddddd']::uuid[])",
+      ),
+    ).rejects.toThrow("INVALID_REQUEST");
+  });
+
   it("calculates discounts from database prices and keeps shipping outside the reduction", async () => {
     await discount();
     const receipt = await order("moc10");
@@ -195,7 +246,9 @@ describe("transactional discount application", () => {
     );
   });
   it("restricts a private code to its intended authenticated customer", async () => {
-    await discount(`public_campaign=false,customer_user_id='${owner}'`);
+    await discount(
+      `public_campaign=false,scope='private',customer_user_id='${owner}'`,
+    );
     await expect(order("MOC10", null)).rejects.toThrow("DISCOUNT_UNAVAILABLE");
     await expect(order("MOC10", other)).rejects.toThrow("DISCOUNT_UNAVAILABLE");
     expect((await readOrder((await order()).id)).discount_amount).toBe(18900);
@@ -283,8 +336,8 @@ describe("discount and media access controls", () => {
       ).rows,
     ).toHaveLength(1);
     for (const fields of [
-      `public_campaign=false,customer_user_id='${owner}'`,
-      "customer_user_id=null,public_campaign=true,ends_at=now()-interval '1 second'",
+      `public_campaign=false,scope='private',customer_user_id='${owner}'`,
+      "scope='shop',customer_user_id=null,public_campaign=true,ends_at=now()-interval '1 second'",
       "ends_at=null,max_uses=1,used_count=1",
     ]) {
       await db.exec(`update public.discounts set ${fields}`);

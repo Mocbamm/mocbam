@@ -127,7 +127,7 @@ export function consolidateCustomers(
     customer.email ||= normalizedCustomerEmail(order.email);
     customer.phone ||= order.phone.trim();
     customer.order_count++;
-    if (order.status !== "cancelled") {
+    if (!["cancelled", "returned"].includes(order.status)) {
       customer.active_order_count++;
       customer.order_value += Number(order.total);
     }

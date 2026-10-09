@@ -44,7 +44,10 @@ export default async function ProductPage({
           <h1 className="font-serif text-4xl leading-tight tracking-[-0.04em] text-[#29412d] sm:text-5xl">
             {product.name}
           </h1>
-          <p className="mt-5 text-xl text-[#617654]">{money(product.price)}</p>
+          <p className="mt-5 text-xl text-[#617654]">
+            {product.variants?.length ? "Từ " : ""}
+            {money(product.price)}
+          </p>
           <p className="mt-7 whitespace-pre-line text-sm leading-8 text-[#727d64]">
             {product.description}
           </p>

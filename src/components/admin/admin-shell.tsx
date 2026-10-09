@@ -24,7 +24,12 @@ const links = [
   { href: "/admin/orders", title: "Đơn hàng", icon: ShoppingBag },
   { href: "/admin/customers", title: "Khách hàng", icon: Users },
   { href: "/admin/discounts", title: "Giảm giá", icon: Tags },
-  { href: "/admin/analytics", title: "Báo cáo", icon: BarChart3 },
+  { href: "/admin/analytics", title: "Báo cáo tài chính", icon: BarChart3 },
+  {
+    href: "/admin/analytics/traffic",
+    title: "Lưu lượng website",
+    icon: BarChart3,
+  },
   { href: "/admin/posts", title: "Bài viết", icon: BookOpen },
   { href: "/admin/content", title: "Nội dung", icon: FileText },
   { href: "/admin/inquiries", title: "Liên hệ", icon: MessageSquare },
@@ -61,7 +66,7 @@ export function AdminShell({
               href={href}
               className={cn(
                 "flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors hover:bg-white/60",
-                (href === "/admin"
+                (href === "/admin" || href === "/admin/analytics"
                   ? pathname === href
                   : pathname.startsWith(href)) &&
                   "bg-[#294836] text-white hover:bg-[#294836]",

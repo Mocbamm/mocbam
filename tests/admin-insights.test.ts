@@ -5,6 +5,7 @@ import { getAdminCustomers, getAdminReportOrders } from "@/lib/admin-insights";
 const mocks = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
   from: vi.fn(),
+  rpc: vi.fn(),
   select: vi.fn(),
   order: vi.fn(),
   range: vi.fn(),
@@ -22,7 +23,10 @@ beforeEach(() => {
   mocks.select.mockReturnValue(chain);
   mocks.order.mockReturnValue(chain);
   mocks.range.mockResolvedValue({ data: [], error: null });
-  mocks.requireAdmin.mockResolvedValue({ supabase: { from: mocks.from } });
+  mocks.rpc.mockResolvedValue({ data: [], error: null });
+  mocks.requireAdmin.mockResolvedValue({
+    supabase: { from: mocks.from, rpc: mocks.rpc },
+  });
 });
 
 describe("private customer and report data reads", () => {
@@ -82,5 +86,25 @@ describe("private customer and report data reads", () => {
         error: { code: "INVALID_REQUEST", message: "INVALID_REQUEST" },
       });
     await expect(getAdminReportOrders()).rejects.toMatchObject({ status: 400 });
+  });
+  it("merges administrator-only cost snapshots without requesting costs in customer-visible selects", async () => {
+    mocks.range.mockResolvedValue({
+      data: [{ id: "order", items: [{ id: "known" }, { id: "legacy" }] }],
+      error: null,
+    });
+    mocks.rpc.mockResolvedValue({
+      data: [{ id: "known", unit_cost: 45000 }],
+      error: null,
+    });
+    const rows = await getAdminReportOrders();
+    expect(rows[0].items).toEqual([
+      { id: "known", unit_cost: 45000 },
+      { id: "legacy", unit_cost: null },
+    ]);
+    expect(mocks.rpc).toHaveBeenCalledWith("get_admin_order_item_costs", {
+      p_offset: 0,
+      p_limit: 500,
+    });
+    expect(mocks.select.mock.calls.flat().join(",")).not.toContain("unit_cost");
   });
 });

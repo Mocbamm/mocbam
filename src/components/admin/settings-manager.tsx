@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { SiteSettings } from "@/lib/types";
 import { BANKS } from "@/lib/banks";
+import provinces from "@/lib/data/vietnam-addresses.json";
 import {
   adminRequest,
   CheckField,
@@ -58,7 +59,9 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
         <section className={panelClass}>
           <h2 className="mb-5 text-xl font-semibold">Giao hàng</h2>
           <div className="max-w-sm space-y-2">
-            <Label htmlFor="shipping-fee">Phí giao hàng cố định (₫)</Label>
+            <Label htmlFor="shipping-fee">
+              Phí mặc định ngoài khu vực đã cài đặt (₫)
+            </Label>
             <Input
               id="shipping-fee"
               type="number"
@@ -74,6 +77,172 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
               Áp dụng cho đơn đặt mới; đơn đã đặt giữ nguyên phí giao hàng.
             </p>
           </div>
+          <p className="mt-5 text-sm leading-6 text-[#6b7867]">
+            Tự đặt phí theo tỉnh/thành và phường/xã. Khách chọn địa chỉ, phí
+            được tính tự động trước khi đặt đơn. Phường/xã cụ thể được ưu tiên
+            trước mức phí toàn tỉnh/thành.
+          </p>
+          <div className="mt-4 space-y-4">
+            {(draft.shipping_zones || []).map((zone, index) => (
+              <div
+                key={index}
+                className="grid gap-3 rounded-xl border p-4 sm:grid-cols-2"
+              >
+                <div>
+                  <Label htmlFor={`zone-name-${index}`}>Tên khu vực</Label>
+                  <Input
+                    id={`zone-name-${index}`}
+                    required
+                    maxLength={100}
+                    value={zone.name}
+                    onChange={(event) =>
+                      update(
+                        "shipping_zones",
+                        (draft.shipping_zones || []).map((item, i) =>
+                          i === index
+                            ? { ...item, name: event.target.value }
+                            : item,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`zone-province-${index}`}>
+                    Tỉnh / thành phố
+                  </Label>
+                  <select
+                    id={`zone-province-${index}`}
+                    className={fieldClass}
+                    required
+                    value={zone.province}
+                    onChange={(event) =>
+                      update(
+                        "shipping_zones",
+                        (draft.shipping_zones || []).map((item, i) =>
+                          i === index
+                            ? {
+                                ...item,
+                                province: event.target.value,
+                                wards: [],
+                              }
+                            : item,
+                        ),
+                      )
+                    }
+                  >
+                    <option value="">Chọn tỉnh / thành phố</option>
+                    {provinces.map((province) => (
+                      <option key={province.code} value={province.name}>
+                        {province.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor={`zone-wards-${index}`}>
+                    Phường / xã (để trống áp dụng toàn tỉnh/thành)
+                  </Label>
+                  <select
+                    id={`zone-wards-${index}`}
+                    multiple
+                    className={`${fieldClass} h-28`}
+                    value={zone.wards}
+                    onChange={(event) =>
+                      update(
+                        "shipping_zones",
+                        (draft.shipping_zones || []).map((item, i) =>
+                          i === index
+                            ? {
+                                ...item,
+                                wards: [...event.target.selectedOptions].map(
+                                  (option) => option.value,
+                                ),
+                              }
+                            : item,
+                        ),
+                      )
+                    }
+                  >
+                    {provinces
+                      .find((province) => province.name === zone.province)
+                      ?.wards.map((ward) => (
+                        <option key={ward.code} value={ward.name}>
+                          {ward.name}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="mt-1 text-xs underline"
+                    onClick={() =>
+                      update(
+                        "shipping_zones",
+                        (draft.shipping_zones || []).map((item, i) =>
+                          i === index ? { ...item, wards: [] } : item,
+                        ),
+                      )
+                    }
+                  >
+                    Áp dụng toàn tỉnh/thành
+                  </button>
+                </div>
+                <div>
+                  <Label htmlFor={`zone-fee-${index}`}>Phí giao hàng (₫)</Label>
+                  <Input
+                    id={`zone-fee-${index}`}
+                    type="number"
+                    min={0}
+                    max={100000000}
+                    step={1}
+                    required
+                    value={zone.fee}
+                    onChange={(event) =>
+                      update(
+                        "shipping_zones",
+                        (draft.shipping_zones || []).map((item, i) =>
+                          i === index
+                            ? { ...item, fee: Number(event.target.value) }
+                            : item,
+                        ),
+                      )
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() =>
+                      update(
+                        "shipping_zones",
+                        (draft.shipping_zones || []).filter(
+                          (_, i) => i !== index,
+                        ),
+                      )
+                    }
+                  >
+                    Xóa khu vực
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            disabled={(draft.shipping_zones?.length || 0) >= 50}
+            onClick={() =>
+              update("shipping_zones", [
+                ...(draft.shipping_zones || []),
+                { name: "", province: "", wards: [], fee: 0 },
+              ])
+            }
+          >
+            Thêm khu vực giao hàng
+          </Button>
         </section>
         <section className={panelClass}>
           <h2 className="mb-4 text-xl font-semibold">Chuyển khoản ngân hàng</h2>
@@ -163,6 +332,23 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
             hàng hay OTP. Thay đổi áp dụng cho đơn mới; đơn cũ giữ thông tin
             ngân hàng tại thời điểm đặt.
           </p>
+          <div className="mt-4 rounded-xl bg-[#f2f5eb] p-4 text-sm leading-6">
+            <strong>
+              {draft.bank_transfer_enabled
+                ? "Chuyển khoản đang được bật"
+                : "Chuyển khoản đang tắt"}
+            </strong>
+            <p>
+              {draft.bank_transfer_enabled
+                ? `Đơn mới sẽ hiển thị ${draft.bank_name} · ${draft.bank_account_number} · ${draft.bank_account_name}.`
+                : "Khách vẫn có thể chọn COD. Lưu đủ thông tin nhận tiền rồi bật chuyển khoản khi cửa hàng sẵn sàng."}
+            </p>
+            <p>
+              Mỗi đơn chuyển khoản có mã QR, số tiền và mã đơn riêng. Chỉ đánh
+              dấu đã thanh toán sau khi kiểm tra giao dịch trong tài khoản nhận
+              tiền.
+            </p>
+          </div>
         </section>
         <section className={panelClass}>
           <h2 className="mb-5 text-xl font-semibold">Thông tin liên hệ</h2>

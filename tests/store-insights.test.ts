@@ -9,6 +9,7 @@ import {
   csvCell,
   reportCsv,
   reportDateRange,
+  reportPeriodRange,
   storeDate,
   type ReportOrder,
 } from "@/lib/store-reports";
@@ -149,6 +150,100 @@ describe("customer identity and history", () => {
 
 describe("transactional store reports", () => {
   const range = { from: "2026-10-01", to: "2026-10-05" };
+  it("distinguishes gross merchandise, net sales, completed AOV and recorded cash without shipping or refund double counts", () => {
+    const report = buildStoreReport(
+      [
+        reportOrder({
+          subtotal: 100000,
+          discount_amount: 10000,
+          shipping_fee: 20000,
+          total: 110000,
+          status: "completed",
+          payment_method: "cod",
+          payment_status: "paid",
+          paid_at: "2026-10-02T00:00:00Z",
+        }),
+        reportOrder({
+          id: "pending",
+          subtotal: 200000,
+          discount_amount: 0,
+          shipping_fee: 30000,
+          total: 230000,
+          payment_method: "bank_transfer",
+        }),
+        reportOrder({
+          id: "cancelled",
+          subtotal: 80000,
+          discount_amount: 8000,
+          total: 92000,
+          status: "cancelled",
+        }),
+        reportOrder({
+          id: "returned",
+          subtotal: 50000,
+          discount_amount: 5000,
+          shipping_fee: 20000,
+          total: 65000,
+          status: "returned",
+          payment_status: "refunded",
+          paid_at: "2026-10-01T00:00:00Z",
+          refunded_at: "2026-10-03T00:00:00Z",
+        }),
+      ],
+      range,
+    );
+    expect(report).toMatchObject({
+      gross_sales: 430000,
+      discounts: 10000,
+      cancelled_sales: 80000,
+      returned_sales: 50000,
+      refunded_sales: 0,
+      net_sales: 290000,
+      order_value: 340000,
+      completed_average_order_value: 90000,
+      awaiting_payment_value: 230000,
+      collected: 175000,
+      refunded: 65000,
+      net_collected: 110000,
+    });
+    expect(
+      report.payment_breakdown.find((row) => row.method === "cod"),
+    ).toMatchObject({ collected: 110000, awaiting: 0 });
+    expect(
+      report.payment_breakdown.find((row) => row.method === "bank_transfer"),
+    ).toMatchObject({ awaiting: 230000 });
+    expect(report.products[0].quantity).toBe(4);
+    expect(report.daily.reduce((sum, row) => sum + row.net_sales, 0)).toBe(
+      report.net_sales,
+    );
+  });
+  it("uses Vietnam calendar presets including yesterday, Monday week start and year boundaries", () => {
+    const now = new Date("2026-10-04T18:00:00Z"); // Monday in Vietnam.
+    expect(reportPeriodRange(now, "today")).toEqual({
+      from: "2026-10-05",
+      to: "2026-10-05",
+    });
+    expect(reportPeriodRange(now, "yesterday")).toEqual({
+      from: "2026-10-04",
+      to: "2026-10-04",
+    });
+    expect(reportPeriodRange(now, "week")).toEqual({
+      from: "2026-10-05",
+      to: "2026-10-05",
+    });
+    expect(reportPeriodRange(now, "month")).toEqual({
+      from: "2026-10-01",
+      to: "2026-10-05",
+    });
+    expect(
+      reportPeriodRange(new Date("2026-01-01T01:00:00Z"), "yesterday"),
+    ).toEqual({ from: "2025-12-31", to: "2025-12-31" });
+    expect(reportPeriodRange(now, "year").from).toBe("2026-01-01");
+    expect(reportCsv(buildStoreReport([], range))).toContain(
+      '"Doanh thu sản phẩm thuần","0"',
+    );
+  });
+
   it("excludes cancellations from order value and popular items while counting their status", () => {
     const report = buildStoreReport(
       [
@@ -254,5 +349,106 @@ describe("transactional store reports", () => {
     expect(csv.startsWith("\ufeff")).toBe(true);
     expect(csvCell(" +SUM(A1:A2)")).toBe('"\' +SUM(A1:A2)"');
     expect(csvCell(-50)).toBe('"-50"');
+  });
+});
+
+describe("immutable sale costs", () => {
+  const range = { from: "2026-10-01", to: "2026-10-05" };
+  const lines = [
+    {
+      id: "a",
+      product_id: "a",
+      name: "Eligible",
+      price: 50000,
+      quantity: 2,
+      unit_cost: 20000,
+      line_discount: 10000,
+    },
+    {
+      id: "b",
+      product_id: "b",
+      name: "Other",
+      price: 20000,
+      quantity: 1,
+      unit_cost: 5000,
+      line_discount: 0,
+    },
+  ];
+  it("uses exact line discounts and snapshots, with paid merchandise AOV", () => {
+    const report = buildStoreReport(
+      [
+        reportOrder({
+          items: lines,
+          subtotal: 120000,
+          discount_amount: 10000,
+          shipping_fee: 20000,
+          total: 130000,
+          status: "completed",
+          payment_status: "paid",
+        }),
+      ],
+      range,
+    );
+    expect(report).toMatchObject({
+      net_sales: 110000,
+      cogs: 45000,
+      gross_profit: 65000,
+      shipping_charged: 20000,
+      completed_average_order_value: 110000,
+      successful_order_count: 1,
+    });
+    expect(report.products.find((row) => row.id === "a")).toMatchObject({
+      net_value: 90000,
+      gross_profit: 50000,
+    });
+    expect(report.products.find((row) => row.id === "b")).toMatchObject({
+      net_value: 20000,
+      gross_profit: 15000,
+    });
+    expect(report.daily[0].gross_profit).toBe(65000);
+  });
+  it("keeps damaged returns as cost and reverses only explicitly restocked returns", () => {
+    const order = reportOrder({
+      items: lines,
+      subtotal: 120000,
+      discount_amount: 10000,
+      status: "returned",
+      payment_status: "refunded",
+      return_restocked: false,
+    });
+    const damaged = buildStoreReport([order], range);
+    expect(damaged).toMatchObject({
+      net_sales: 0,
+      cogs: 45000,
+      gross_profit: -45000,
+      damaged_return_cost: 45000,
+    });
+    expect(
+      buildStoreReport([{ ...order, return_restocked: true }], range),
+    ).toMatchObject({
+      net_sales: 0,
+      cogs: 0,
+      gross_profit: 0,
+      damaged_return_cost: 0,
+    });
+    expect(
+      buildStoreReport([{ ...order, status: "cancelled" }], range).cogs,
+    ).toBe(0);
+  });
+  it("never invents missing legacy costs or product discount allocation", () => {
+    const report = buildStoreReport(
+      [reportOrder({ discount_amount: 10000 })],
+      range,
+    );
+    expect(report).toMatchObject({
+      cogs: null,
+      gross_profit: null,
+      missing_cost_order_count: 1,
+    });
+    expect(report.products[0]).toMatchObject({
+      net_value: null,
+      gross_profit: null,
+    });
+    expect(reportCsv(report)).toContain("Chưa đủ giá vốn");
   });
 });

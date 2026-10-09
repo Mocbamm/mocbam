@@ -1,3 +1,4 @@
+import { contentSections } from "./site-content";
 import type {
   BlogPost,
   Category,
@@ -163,44 +164,7 @@ export const demoPosts: BlogPost[] = [
   },
 ];
 
-export const demoContent: SiteContent[] = [
-  {
-    key: "home-intro",
-    title: "Những điều nhỏ, làm nên bình yên",
-    content:
-      "Nhân vật gỗ và phụ kiện thủ công, mang một chút mộc mạc và ấm áp vào mỗi ngày.",
-  },
-  {
-    key: "about",
-    title: "Nhỏ thôi, nhưng có câu chuyện",
-    content:
-      "Mộc Bàm bắt đầu từ tình yêu với những món đồ nhỏ được làm bằng tay. Chúng mình tạo nên nhân vật gỗ và phụ kiện từ chất liệu tự nhiên, với mong muốn mang chút mộc mạc, ấm áp vào cuộc sống hằng ngày.\n\nMỗi sản phẩm có vân gỗ và sắc độ riêng. Đó là nét đặc biệt của đồ thủ công và cũng là câu chuyện bạn mang về.",
-  },
-  {
-    key: "shipping",
-    title: "Giao hàng",
-    content:
-      "Cửa hàng tiếp nhận đơn hàng trên toàn Việt Nam. Phí giao hàng được cấu hình trong trang quản trị. Thông tin và thời gian giao hàng thực tế sẽ được xác nhận sau khi chúng mình liên hệ kiểm tra đơn.\n\nBạn có thể chọn thanh toán khi nhận hàng (COD). Chuyển khoản ngân hàng chỉ xuất hiện khi cửa hàng đã cấu hình thông tin nhận tiền. Gửi đơn không đồng nghĩa với đã thanh toán; cửa hàng xác nhận thanh toán sau khi kiểm tra tiền đã nhận.",
-  },
-  {
-    key: "returns",
-    title: "Đổi trả & chăm sóc",
-    content:
-      "Nếu sản phẩm bị hư hỏng khi nhận hoặc khác với đơn đã xác nhận, vui lòng liên hệ cửa hàng kèm mã đơn và hình ảnh để được hỗ trợ. Điều kiện đổi trả cụ thể được xác nhận trực tiếp cho từng đơn.\n\nVân gỗ và sắc độ khác nhau nhẹ là đặc trưng của chất liệu tự nhiên. Giữ sản phẩm khô ráo, tránh chất tẩy mạnh và ánh nắng kéo dài.",
-  },
-  {
-    key: "privacy",
-    title: "Quyền riêng tư",
-    content:
-      "Thông tin tên, email, số điện thoại và địa chỉ được sử dụng để tiếp nhận, xác nhận và xử lý đơn hàng hoặc yêu cầu hỗ trợ. Chúng mình không đưa thông tin nhận diện cá nhân vào sự kiện phân tích website.\n\nBạn có thể lựa chọn cho phép hoặc từ chối công cụ phân tích và quảng cáo. Liên hệ cửa hàng nếu cần kiểm tra hoặc xóa dữ liệu của mình.",
-  },
-  {
-    key: "terms",
-    title: "Điều khoản sử dụng",
-    content:
-      "Đơn được tiếp nhận ở trạng thái chờ thanh toán với phương thức COD hoặc chuyển khoản khi cửa hàng đã bật. Website không tự động thu tiền, xác nhận giao dịch ngân hàng hoặc hoàn tiền.\n\nGiá và tồn kho được kiểm tra lại khi gửi đơn. Cửa hàng cần xác nhận các thông tin giao hàng trước khi thực hiện đơn. Việc hủy đơn đã thanh toán không tự động hoàn tiền; vui lòng liên hệ cửa hàng để xử lý và xác nhận hoàn tiền.",
-  },
-];
+export const demoContent: SiteContent[] = contentSections.map(({ key, title, content }) => ({ key, title, content }));
 
 export const demoSettings: SiteSettings = {
   shipping_fee: 0,

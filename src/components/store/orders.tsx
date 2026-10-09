@@ -19,6 +19,7 @@ export const statusLabels: Record<OrderStatus, string> = {
   shipped: "Đang giao hàng",
   completed: "Hoàn thành",
   cancelled: "Đã hủy",
+  returned: "Đã nhận hoàn hàng",
 };
 function PaymentDetails({
   order,
@@ -27,7 +28,7 @@ function PaymentDetails({
   order: Order;
   transfer?: BankTransfer | null;
 }) {
-  const cancelled = order.status === "cancelled";
+  const cancelled = order.status === "cancelled" || order.status === "returned";
   const paid = order.payment_status === "paid";
   const refunded = order.payment_status === "refunded";
   const showBankInstructions =
@@ -190,7 +191,8 @@ function OrderLines({ order }: { order: Order }) {
             className="flex justify-between gap-5 py-4 text-sm"
           >
             <span>
-              {item.name}{" "}
+              {item.name}
+              {item.variant_name ? ` — ${item.variant_name}` : ""}{" "}
               <span className="ml-2 text-xs text-[#8b947d]">
                 × {item.quantity}
               </span>
@@ -295,7 +297,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
     <>
       <div className="mb-10 text-center">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e5ecda] text-[#456237]">
-          {order.status === "cancelled" ? (
+          {["cancelled", "returned"].includes(order.status) ? (
             <X size={24} strokeWidth={1.5} />
           ) : (
             <Check size={24} strokeWidth={1.5} />
@@ -307,11 +309,13 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
         <h1 className="mt-3 font-serif text-4xl tracking-tight text-[#29412d] sm:text-5xl">
           {order.status === "cancelled"
             ? "Đơn hàng đã được hủy."
-            : order.payment_status === "refunded"
-              ? "Mộc đã xác nhận hoàn tiền."
-              : order.payment_status === "paid"
-                ? "Mộc đã xác nhận thanh toán."
-                : "Mộc đã nhận đơn hàng của bạn."}
+            : order.status === "returned"
+              ? "Mộc đã nhận lại hàng hoàn."
+              : order.payment_status === "refunded"
+                ? "Mộc đã xác nhận hoàn tiền."
+                : order.payment_status === "paid"
+                  ? "Mộc đã xác nhận thanh toán."
+                  : "Mộc đã nhận đơn hàng của bạn."}
         </h1>
         <p className="mx-auto mt-5 max-w-lg text-sm leading-7 text-[#7c866b]">
           Trạng thái xử lý: <strong>{statusLabels[order.status]}</strong>. Thanh
@@ -529,6 +533,13 @@ export function OrderProgress({ status }: { status: OrderStatus }) {
     "shipped",
     "completed",
   ];
+  if (status === "returned")
+    return (
+      <p className="mt-6 text-sm">
+        Mộc đã nhận lại hàng hoàn. Trạng thái hoàn tiền được cập nhật riêng bên
+        dưới.
+      </p>
+    );
   if (status === "cancelled")
     return <p className="mt-6 text-sm">Đơn hàng đã hủy.</p>;
   return (

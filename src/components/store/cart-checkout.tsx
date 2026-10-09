@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { money } from "./format";
 import { AddressFields } from "./address-fields";
 import { saveOrderReceipt } from "@/lib/saved-orders";
+import { quoteShipping, type ShippingZone } from "@/lib/shipping";
 
 function EmptyCart() {
   return (
@@ -57,9 +58,9 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
   return (
     <div className="grid gap-12 md:grid-cols-[1.6fr_1fr]">
       <div>
-        {items.map(({ product, quantity }) => (
+        {items.map(({ product, quantity, key }) => (
           <article
-            key={product.id}
+            key={key}
             className="flex gap-5 border-b border-[#dde1d0] py-6 first:pt-0"
           >
             <Link
@@ -84,7 +85,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
                 </Link>
                 <button
                   type="button"
-                  onClick={() => remove(product.id)}
+                  onClick={() => remove(key)}
                   aria-label={`Xóa ${product.name}`}
                   className="self-start text-[#8c947e]"
                 >
@@ -98,7 +99,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
                 <div className="flex items-center border border-[#d8ddce]">
                   <button
                     type="button"
-                    onClick={() => update(product.id, quantity - 1)}
+                    onClick={() => update(key, quantity - 1)}
                     aria-label={`Giảm số lượng ${product.name}`}
                     className="p-2"
                   >
@@ -109,7 +110,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
                   </span>
                   <button
                     type="button"
-                    onClick={() => update(product.id, quantity + 1)}
+                    onClick={() => update(key, quantity + 1)}
                     disabled={quantity >= Math.min(product.stock, 10)}
                     aria-label={`Tăng số lượng ${product.name}`}
                     className="p-2 disabled:opacity-30"
@@ -141,7 +142,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
             <span>{money(subtotal)}</span>
           </p>
           <p className="flex justify-between">
-            <span>Phí giao hàng</span>
+            <span>Phí giao hàng dự kiến</span>
             <span>{money(shippingFee)}</span>
           </p>
           <p className="flex justify-between border-t border-[#d1d9c2] pt-5 text-base font-medium text-[#29412d]">
@@ -155,8 +156,8 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
           </Link>
         </Button>
         <p className="mt-4 text-[11px] leading-6 text-[#8b947d]">
-          Giá và tồn kho sẽ được kiểm tra lại trước khi tiếp nhận đơn. Bạn chọn
-          phương thức thanh toán tại bước đặt hàng.
+          Phí giao hàng được cập nhật theo địa chỉ ở bước đặt hàng. Giá và tồn
+          kho sẽ được kiểm tra lại trước khi tiếp nhận đơn.
         </p>
       </aside>
     </div>
@@ -164,6 +165,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
 }
 export function CheckoutScreen({
   shippingFee,
+  shippingZones = [],
   configured,
   bankTransferAvailable,
   initialEmail = "",
@@ -172,6 +174,7 @@ export function CheckoutScreen({
   signedIn = false,
 }: {
   shippingFee: number;
+  shippingZones?: ShippingZone[];
   configured: boolean;
   bankTransferAvailable: boolean;
   initialEmail?: string;
@@ -182,6 +185,13 @@ export function CheckoutScreen({
   const { items, subtotal, ready, clear } = useCart();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [destination, setDestination] = useState({ province: "", ward: "" });
+  const shipping = quoteShipping(
+    shippingFee,
+    shippingZones,
+    destination.province,
+    destination.ward,
+  );
   const [error, setError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">(
     "cod",
@@ -192,12 +202,27 @@ export function CheckoutScreen({
     title: string;
     discount_amount: number;
     subtotal: number;
+    cart_fingerprint: string;
   } | null>(null);
   const [discountError, setDiscountError] = useState("");
   const [quoting, setQuoting] = useState(false);
+  const cartFingerprint = JSON.stringify(
+    items
+      .map(({ product, variant_id, quantity }) => ({
+        product_id: product.id,
+        variant_id: variant_id || "",
+        quantity,
+      }))
+      .sort((a, b) =>
+        `${a.product_id}:${a.variant_id}`.localeCompare(
+          `${b.product_id}:${b.variant_id}`,
+        ),
+      ),
+  );
   const effectiveDiscount =
     discount &&
     discount.subtotal === subtotal &&
+    discount.cart_fingerprint === cartFingerprint &&
     discount.code === discountCode.trim().toUpperCase()
       ? discount
       : null;
@@ -244,15 +269,15 @@ export function CheckoutScreen({
     const draft = {
       payment_method: paymentMethod,
       discount_code: effectiveDiscount?.code || "",
-      items: items.map(({ product, quantity }) => ({
+      items: items.map(({ product, quantity, variant_id }) => ({
         product_id: product.id,
+        ...(variant_id ? { variant_id } : {}),
         quantity,
       })),
       customer: Object.fromEntries(
-        ["name", "email", "phone", "address", "city", "note"].map((key) => [
-          key,
-          String(form.get(key) || "").trim(),
-        ]),
+        ["name", "email", "phone", "address", "city", "ward", "note"].map(
+          (key) => [key, String(form.get(key) || "").trim()],
+        ),
       ),
     };
     draft.customer.address = [
@@ -375,7 +400,7 @@ export function CheckoutScreen({
               className="mt-2"
             />
           </div>
-          <AddressFields />
+          <AddressFields onChange={setDestination} />
           <div className="sm:col-span-2">
             <Label htmlFor="checkout-note">Lời nhắn cho Mộc</Label>
             <Textarea
@@ -458,8 +483,8 @@ export function CheckoutScreen({
           Những điều bạn chọn
         </h2>
         <div className="mt-5 space-y-4">
-          {items.map(({ product, quantity }) => (
-            <div key={product.id} className="flex items-center gap-3">
+          {items.map(({ product, quantity, key }) => (
+            <div key={key} className="flex items-center gap-3">
               <div className="relative h-14 w-14 shrink-0">
                 <Image
                   src={product.image_url}
@@ -505,8 +530,9 @@ export function CheckoutScreen({
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       code: discountCode,
-                      items: items.map(({ product, quantity }) => ({
+                      items: items.map(({ product, quantity, variant_id }) => ({
                         product_id: product.id,
+                        ...(variant_id ? { variant_id } : {}),
                         quantity,
                       })),
                     }),
@@ -514,7 +540,7 @@ export function CheckoutScreen({
                   const d = await r.json();
                   if (!r.ok) throw new Error(d.error);
                   setDiscountCode(d.code);
-                  setDiscount(d);
+                  setDiscount({ ...d, cart_fingerprint: cartFingerprint });
                 } catch (cause) {
                   setDiscountError(
                     cause instanceof Error
@@ -557,8 +583,15 @@ export function CheckoutScreen({
             <span>{money(subtotal)}</span>
           </p>
           <p className="flex justify-between">
-            <span>Phí giao hàng</span>
-            <span>{money(shippingFee)}</span>
+            <span>
+              {destination.province && destination.ward
+                ? "Phí giao hàng"
+                : "Phí giao hàng dự kiến"}
+              {destination.province
+                ? ` · ${shipping.name}`
+                : " (chọn địa chỉ để tính)"}
+            </span>
+            <span>{money(shipping.fee)}</span>
           </p>
           {effectiveDiscount ? (
             <p className="flex justify-between">
@@ -571,7 +604,7 @@ export function CheckoutScreen({
             <span>
               {money(
                 subtotal +
-                  shippingFee -
+                  shipping.fee -
                   (effectiveDiscount?.discount_amount || 0),
               )}
             </span>

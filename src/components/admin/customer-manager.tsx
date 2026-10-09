@@ -80,7 +80,8 @@ export function CustomerManager({
       <p className="text-xs leading-6 text-[#6b7867]">
         Hồ sơ được tổng hợp từ tài khoản, đơn hàng và lời nhắn liên hệ. Khách
         mua không đăng nhập được nhóm theo email; các tài khoản riêng biệt giữ
-        hồ sơ riêng. Giá trị đơn gồm phí giao hàng và chỉ tính đơn chưa hủy.
+        hồ sơ riêng. Giá trị đơn gồm phí giao hàng, loại trừ đơn đã hủy và hoàn
+        hàng.
       </p>
       <p className="text-sm text-[#6b7867]" aria-live="polite">
         {visible.length} hồ sơ
@@ -132,7 +133,9 @@ export function CustomerManager({
                   <dd className="mt-1">{formatDate(customer.created_at)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-[#6b7867]">Đơn chưa hủy</dt>
+                  <dt className="text-xs text-[#6b7867]">
+                    Đơn chưa hủy / hoàn
+                  </dt>
                   <dd className="mt-1">
                     {customer.active_order_count} / {customer.order_count} đơn
                   </dd>
@@ -182,7 +185,7 @@ export function CustomerManager({
               )}
               <div className="mt-4 flex flex-wrap gap-4 text-xs font-medium">
                 <Link
-                  href="/admin/orders"
+                  href={`/admin/orders?customer=${encodeURIComponent(customer.id)}`}
                   className="underline underline-offset-4"
                 >
                   Quản lý đơn hàng

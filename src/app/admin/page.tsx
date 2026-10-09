@@ -36,9 +36,21 @@ export default async function AdminDashboard() {
       icon: ShoppingBag,
     },
     {
-      title: "Giá trị đơn hàng",
-      value: formatPrice(stats.total_order_value),
-      note: "Đơn không bị hủy, gồm đơn chưa thanh toán",
+      title: "Doanh thu thuần",
+      value: formatPrice(
+        orders
+          .filter(
+            (order) =>
+              !["cancelled", "returned"].includes(order.status) &&
+              order.payment_status !== "refunded",
+          )
+          .reduce(
+            (sum, order) =>
+              sum + Number(order.subtotal) - Number(order.discount_amount || 0),
+            0,
+          ),
+      ),
+      note: "Sau ưu đãi, loại đơn hủy/hoàn; gồm đơn chưa thanh toán, chưa gồm phí giao hàng",
       icon: Wallet,
     },
     {

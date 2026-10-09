@@ -2,13 +2,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Pencil, Plus, Search, X } from "lucide-react";
+import { Copy, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Product } from "@/lib/types";
+import type { Product, ProductVariant } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import {
   adminRequest,
@@ -21,32 +21,59 @@ import {
   reportError,
 } from "./admin-common";
 
-type ProductDraft = Omit<Product, "id" | "created_at">;
+type ProductDraft = Omit<Product, "id" | "created_at" | "revision">;
 const blank: ProductDraft = {
   name: "",
   slug: "",
   category_id: categoryOptions[0].id,
   price: 0,
+  cost_price: null,
   stock: 0,
   image_url: "",
   image_urls: [],
   video_url: "",
+  variants: [],
   description: "",
   active: true,
   featured: false,
   is_new: false,
 };
-export function ProductManager({ products }: { products: Product[] }) {
+export function ProductManager({
+  products,
+  sold = {},
+}: {
+  products: Product[];
+  sold?: Record<string, number>;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [visibility, setVisibility] = useState("all");
+  const [stockFilter, setStockFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [draft, setDraft] = useState<ProductDraft>(blank);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const visible = products.filter((product) =>
-    `${product.name} ${product.slug}`
-      .toLocaleLowerCase("vi")
-      .includes(query.toLocaleLowerCase("vi")),
+  const visible = products.filter(
+    (product) =>
+      (visibility === "all" || product.active === (visibility === "visible")) &&
+      (categoryFilter === "all" || product.category_id === categoryFilter) &&
+      (stockFilter === "all" ||
+        (stockFilter === "out"
+          ? product.stock === 0
+          : stockFilter === "low"
+            ? (product.stock > 0 && product.stock <= 5) ||
+              Boolean(
+                product.variants?.some(
+                  (variant) =>
+                    variant.active && variant.stock > 0 && variant.stock <= 5,
+                ),
+              )
+            : product.stock > 5)) &&
+      `${product.name} ${product.slug} ${(product.variants || []).map((variant) => variant.name).join(" ")}`
+        .toLocaleLowerCase("vi")
+        .includes(query.toLocaleLowerCase("vi")),
   );
   function open(product: Product | "new") {
     setEditing(product);
@@ -58,15 +85,58 @@ export function ProductManager({ products }: { products: Product[] }) {
             slug: product.slug,
             category_id: product.category_id,
             price: product.price,
+            cost_price: product.cost_price ?? null,
             stock: product.stock,
             image_url: product.image_url,
             image_urls: product.image_urls || [],
             video_url: product.video_url || "",
+            variants: structuredClone(product.variants || []),
             description: product.description,
             active: product.active,
             featured: product.featured,
             is_new: product.is_new || false,
           },
+    );
+  }
+  function duplicate(product: Product) {
+    open(product);
+    setEditing("new");
+    setDraft((previous) => ({
+      ...previous,
+      name: `${product.name} (bản sao)`,
+      slug: `${product.slug}-ban-sao-${Date.now().toString(36)}`,
+      active: false,
+      variants: previous.variants?.map((variant) => ({
+        ...variant,
+        id: crypto.randomUUID(),
+      })),
+    }));
+  }
+  async function remove(product: Product) {
+    if (
+      !window.confirm(
+        `Xóa sản phẩm “${product.name}”? Sản phẩm đã có đơn hàng cần được ẩn để giữ lịch sử.`,
+      )
+    )
+      return;
+    setDeleting(product.id);
+    try {
+      await adminRequest(`/api/admin/products/${product.id}`, "DELETE");
+      if (editing !== "new" && editing?.id === product.id) setEditing(null);
+      toast.success("Đã xóa sản phẩm.");
+      router.refresh();
+    } catch (error) {
+      reportError(error);
+    } finally {
+      setDeleting(null);
+    }
+  }
+  function updateVariant(id: string, changes: Partial<ProductVariant>) {
+    update(
+      "variants",
+      (draft.variants || []).map((variant) =>
+        variant.id === id ? { ...variant, ...changes } : variant,
+      ),
     );
   }
   function update<K extends keyof ProductDraft>(
@@ -85,7 +155,9 @@ export function ProductManager({ products }: { products: Product[] }) {
           ? "/api/admin/products"
           : `/api/admin/products/${editing.id}`,
         editing === "new" ? "POST" : "PATCH",
-        draft,
+        editing === "new"
+          ? draft
+          : { ...draft, expected_revision: editing.revision ?? 0 },
       );
       toast.success(
         editing === "new" ? "Đã thêm sản phẩm." : "Đã cập nhật sản phẩm.",
@@ -168,6 +240,45 @@ export function ProductManager({ products }: { products: Product[] }) {
           Thêm sản phẩm
         </Button>
       </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <select
+          aria-label="Lọc hiển thị sản phẩm"
+          className={fieldClass}
+          value={visibility}
+          onChange={(event) => setVisibility(event.target.value)}
+        >
+          <option value="all">Tất cả hiển thị</option>
+          <option value="visible">Đang hiển thị</option>
+          <option value="hidden">Đã ẩn</option>
+        </select>
+        <select
+          aria-label="Lọc tồn kho"
+          className={fieldClass}
+          value={stockFilter}
+          onChange={(event) => setStockFilter(event.target.value)}
+        >
+          <option value="all">Tất cả tồn kho</option>
+          <option value="out">Hết hàng</option>
+          <option value="low">Sắp hết (1–5)</option>
+          <option value="available">Còn trên 5</option>
+        </select>
+        <select
+          aria-label="Lọc danh mục"
+          className={fieldClass}
+          value={categoryFilter}
+          onChange={(event) => setCategoryFilter(event.target.value)}
+        >
+          <option value="all">Tất cả danh mục</option>
+          {categoryOptions.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="text-sm text-[#6b7867]" aria-live="polite">
+        {visible.length} sản phẩm · Đã bán tính từ đơn hoàn tất, chưa hoàn tiền.
+      </p>
       {editing && (
         <form onSubmit={save} className={panelClass}>
           <div className="mb-5 flex items-center justify-between">
@@ -233,6 +344,7 @@ export function ProductManager({ products }: { products: Product[] }) {
                 <Label htmlFor="product-price">Giá (₫)</Label>
                 <Input
                   id="product-price"
+                  disabled={Boolean(draft.variants?.length)}
                   type="number"
                   min={0}
                   step={1}
@@ -247,6 +359,7 @@ export function ProductManager({ products }: { products: Product[] }) {
                 <Label htmlFor="product-stock">Tồn kho</Label>
                 <Input
                   id="product-stock"
+                  disabled={Boolean(draft.variants?.length)}
                   type="number"
                   min={0}
                   step={1}
@@ -257,6 +370,167 @@ export function ProductManager({ products }: { products: Product[] }) {
                   required
                 />
               </div>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="product-cost">Giá vốn mỗi sản phẩm (₫)</Label>
+              <Input
+                id="product-cost"
+                type="number"
+                min={0}
+                max={100000000}
+                step={1}
+                value={draft.cost_price ?? ""}
+                onChange={(event) =>
+                  update(
+                    "cost_price",
+                    event.target.value === ""
+                      ? null
+                      : Number(event.target.value),
+                  )
+                }
+                placeholder="Bỏ trống khi chưa biết giá vốn"
+              />
+              <p className="text-xs leading-6 text-[#788273]">
+                Chỉ quản trị viên xem được. Áp dụng cho mọi phân loại; mỗi đơn
+                mới lưu giá vốn tại thời điểm đặt để tính lãi gộp. Bỏ trống
+                nghĩa là chưa có dữ liệu, khác với giá vốn 0₫ đã xác nhận.
+              </p>
+            </div>
+            <div className="space-y-4 md:col-span-2 rounded-xl border border-[#dfe5d8] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-medium">Màu sắc / phân loại</h3>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={(draft.variants?.length || 0) >= 30}
+                  onClick={() =>
+                    update("variants", [
+                      ...(draft.variants || []),
+                      {
+                        id: crypto.randomUUID(),
+                        name: "",
+                        price: draft.price,
+                        stock: 0,
+                        image_url: "",
+                        active: true,
+                      },
+                    ])
+                  }
+                >
+                  <Plus className="size-4" />
+                  Thêm phân loại
+                </Button>
+              </div>
+              <p className="text-xs leading-6 text-[#788273]">
+                Mỗi phân loại có giá và tồn kho riêng. Khi có phân loại, giá
+                chung là giá thấp nhất và tồn kho chung cộng các phân loại đang
+                bán. Với sản phẩm đã có đơn, giữ mã phân loại và ẩn mẫu ngừng
+                bán; tạo bản sao để đổi cách quản lý tồn kho.
+              </p>
+              {(draft.variants || []).map((variant, index) => (
+                <div
+                  key={variant.id}
+                  className="grid gap-3 rounded-lg bg-[#f7f8f2] p-3 sm:grid-cols-3"
+                >
+                  <div>
+                    <Label htmlFor={`variant-name-${variant.id}`}>
+                      Tên phân loại {index + 1}
+                    </Label>
+                    <Input
+                      id={`variant-name-${variant.id}`}
+                      value={variant.name}
+                      onChange={(event) =>
+                        updateVariant(variant.id, { name: event.target.value })
+                      }
+                      placeholder="Ví dụ: Chuỗi hồng"
+                      required
+                      maxLength={80}
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`variant-price-${variant.id}`}>
+                      Giá (₫)
+                    </Label>
+                    <Input
+                      id={`variant-price-${variant.id}`}
+                      type="number"
+                      min={0}
+                      max={100000000}
+                      step={1}
+                      value={variant.price}
+                      onChange={(event) =>
+                        updateVariant(variant.id, {
+                          price: Number(event.target.value),
+                        })
+                      }
+                      required
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`variant-stock-${variant.id}`}>
+                      Tồn kho
+                    </Label>
+                    <Input
+                      id={`variant-stock-${variant.id}`}
+                      type="number"
+                      min={0}
+                      max={100000}
+                      step={1}
+                      value={variant.stock}
+                      onChange={(event) =>
+                        updateVariant(variant.id, {
+                          stock: Number(event.target.value),
+                        })
+                      }
+                      required
+                      className="mt-2"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <Label htmlFor={`variant-image-${variant.id}`}>
+                      URL ảnh riêng (bỏ trống để dùng ảnh chung)
+                    </Label>
+                    <Input
+                      id={`variant-image-${variant.id}`}
+                      value={variant.image_url}
+                      onChange={(event) =>
+                        updateVariant(variant.id, {
+                          image_url: event.target.value,
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
+                    <CheckField
+                      label="Đang bán"
+                      checked={variant.active}
+                      onChange={(active) =>
+                        updateVariant(variant.id, { active })
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        update(
+                          "variants",
+                          (draft.variants || []).filter(
+                            (item) => item.id !== variant.id,
+                          ),
+                        )
+                      }
+                    >
+                      <Trash2 className="size-3.5" />
+                      Xóa phân loại
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
             <div className="md:col-span-2">
               <ImageField
@@ -413,6 +687,7 @@ export function ProductManager({ products }: { products: Product[] }) {
                 <th className="py-3 font-medium">Sản phẩm</th>
                 <th className="font-medium">Giá</th>
                 <th className="font-medium">Tồn kho</th>
+                <th className="font-medium">Đã bán</th>
                 <th className="font-medium">Hiển thị</th>
                 <th className="font-medium">
                   <span className="sr-only">Thao tác</span>
@@ -452,9 +727,30 @@ export function ProductManager({ products }: { products: Product[] }) {
                   <td className="whitespace-nowrap">
                     {formatPrice(product.price)}
                   </td>
-                  <td className={product.stock === 0 ? "text-red-700" : ""}>
+                  <td
+                    className={
+                      product.stock === 0
+                        ? "text-red-700"
+                        : product.stock <= 5
+                          ? "text-amber-700"
+                          : ""
+                    }
+                  >
                     {product.stock}
+                    <span className="mt-1 block text-xs">
+                      {product.stock === 0
+                        ? "Hết hàng"
+                        : product.stock <= 5
+                          ? "Sắp hết"
+                          : "Còn hàng"}
+                    </span>
+                    {product.variants?.length ? (
+                      <span className="mt-1 block text-xs text-[#7c8774]">
+                        {product.variants.length} phân loại
+                      </span>
+                    ) : null}
                   </td>
+                  <td>{sold[product.id] || 0}</td>
                   <td>
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs ${product.active ? "bg-[#edf3e7] text-[#426533]" : "bg-[#f1f1ef] text-[#7b8174]"}`}
@@ -471,6 +767,25 @@ export function ProductManager({ products }: { products: Product[] }) {
                     >
                       <Pencil className="size-3.5" />
                       Sửa
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => duplicate(product)}
+                      disabled={saving || uploading || deleting !== null}
+                    >
+                      <Copy className="size-3.5" />
+                      Nhân bản
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void remove(product)}
+                      disabled={saving || uploading || deleting !== null}
+                      className="text-red-700"
+                    >
+                      <Trash2 className="size-3.5" />
+                      {deleting === product.id ? "Đang xóa..." : "Xóa"}
                     </Button>
                   </td>
                 </tr>

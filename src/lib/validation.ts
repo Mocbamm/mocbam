@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { shippingZoneSchema } from "./shipping";
 
 const short = (max = 200) => z.string().trim().min(1).max(max);
 const optionalText = (max = 500) => z.string().trim().max(max).default("");
@@ -53,10 +54,32 @@ export const productSchema = z
     name: short(),
     category_id: z.uuid(),
     price: money,
+    cost_price: money.nullable().optional(),
     stock: z.number().int().min(0).max(100_000),
     image_url: image,
     image_urls: z.array(image).max(8).optional(),
     video_url: video.optional(),
+    variants: z
+      .array(
+        z
+          .object({
+            id: z.uuid(),
+            name: short(80),
+            price: money,
+            stock: z.number().int().min(0).max(100_000),
+            image_url: z.union([z.literal(""), image]),
+            active: z.boolean(),
+          })
+          .strict(),
+      )
+      .max(30)
+      .refine(
+        (variants) =>
+          new Set(variants.map((variant) => variant.id)).size ===
+          variants.length,
+        "Mã phân loại không được lặp lại.",
+      )
+      .optional(),
     description: short(10_000),
     featured: z.boolean(),
     is_new: z.boolean().optional(),
@@ -69,7 +92,8 @@ export const postSchema = z
     title: short(),
     excerpt: short(1_000),
     content: short(30_000),
-    image_url: image,
+    image_url: z.union([z.literal(""), image]),
+    video_url: video.optional(),
     published: z.boolean(),
   })
   .strict();
@@ -86,6 +110,7 @@ export const categorySchema = z
 export const settingsSchema = z
   .object({
     shipping_fee: money,
+    shipping_zones: z.array(shippingZoneSchema).max(50).optional(),
     shop_email: z.email().max(254),
     shop_phone: short(30),
     shop_address: short(500),
@@ -143,9 +168,15 @@ export const statusSchema = z
       "shipped",
       "completed",
       "cancelled",
+      "returned",
     ]),
+    restock: z.boolean().optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (input) => input.restock === undefined || input.status === "returned",
+    { message: "Chỉ chọn cộng tồn kho khi nhận hoàn hàng.", path: ["restock"] },
+  );
 export const inquirySchema = z
   .object({
     name: short(100),
@@ -162,6 +193,7 @@ export const orderSchema = z
         z
           .object({
             product_id: z.uuid(),
+            variant_id: z.uuid().optional(),
             quantity: z.number().int().min(1).max(99),
           })
           .strict(),
@@ -170,7 +202,9 @@ export const orderSchema = z
       .max(20)
       .refine(
         (items) =>
-          new Set(items.map((item) => item.product_id)).size === items.length,
+          new Set(
+            items.map((item) => `${item.product_id}:${item.variant_id || ""}`),
+          ).size === items.length,
         "Một sản phẩm không được lặp lại.",
       ),
     customer: z
@@ -180,6 +214,7 @@ export const orderSchema = z
         phone: short(30).regex(/^[+0-9().\s-]{7,30}$/),
         address: short(500),
         city: short(100),
+        ward: optionalText(100).optional(),
         note: optionalText(1_000),
       })
       .strict(),
@@ -198,7 +233,9 @@ export function canonicalOrderPayload(
 ) {
   return JSON.stringify({
     items: [...input.items].sort((a, b) =>
-      a.product_id.localeCompare(b.product_id),
+      `${a.product_id}:${a.variant_id || ""}`.localeCompare(
+        `${b.product_id}:${b.variant_id || ""}`,
+      ),
     ),
     customer: input.customer,
     user_id: userId,
@@ -245,11 +282,16 @@ export const discountSchema = z
     ends_at: z.iso.datetime({ offset: true }).nullable(),
     active: z.boolean(),
     public_campaign: z.boolean(),
+    scope: z.enum(["shop", "product", "private"]).optional(),
+    product_ids: z.array(z.uuid()).max(200).default([]),
+    customer_user_ids: z.array(z.uuid()).max(200).default([]),
     customer_user_id: z.uuid().nullable(),
     max_uses: z.number().int().min(1).max(1_000_000).nullable(),
   })
   .strict()
   .superRefine((discount, context) => {
+    const scope =
+      discount.scope ?? (discount.customer_user_id ? "private" : "shop");
     if (discount.kind === "percentage" && discount.value > 100)
       context.addIssue({
         code: "custom",
@@ -266,13 +308,71 @@ export const discountSchema = z
         path: ["ends_at"],
         message: "Ngày kết thúc phải sau ngày bắt đầu.",
       });
-    if (discount.public_campaign && discount.customer_user_id)
+    if (scope === "product" && !discount.product_ids.length)
+      context.addIssue({
+        code: "custom",
+        path: ["product_ids"],
+        message: "Chọn ít nhất một sản phẩm áp dụng.",
+      });
+    if (scope !== "product" && discount.product_ids.length)
+      context.addIssue({
+        code: "custom",
+        path: ["product_ids"],
+        message: "Chỉ ưu đãi sản phẩm được giới hạn sản phẩm.",
+      });
+    if (
+      scope === "private" &&
+      !discount.customer_user_id &&
+      !discount.customer_user_ids.length
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["customer_user_ids"],
+        message: "Chọn ít nhất một khách hàng áp dụng.",
+      });
+    if (
+      scope !== "private" &&
+      (discount.customer_user_id || discount.customer_user_ids.length)
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["customer_user_ids"],
+        message: "Chỉ ưu đãi riêng được giới hạn khách hàng.",
+      });
+    if (discount.customer_user_id && discount.customer_user_ids.length)
+      context.addIssue({
+        code: "custom",
+        path: ["customer_user_ids"],
+        message: "Không thể kết hợp hai cách chọn khách hàng.",
+      });
+    if (
+      new Set(discount.product_ids).size !== discount.product_ids.length ||
+      new Set(discount.customer_user_ids).size !==
+        discount.customer_user_ids.length
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["scope"],
+        message: "Danh sách áp dụng không được trùng lặp.",
+      });
+    if (
+      discount.public_campaign &&
+      (discount.customer_user_id ||
+        discount.customer_user_ids.length ||
+        scope === "private")
+    )
       context.addIssue({
         code: "custom",
         path: ["public_campaign"],
         message: "Ưu đãi riêng cho khách hàng không được hiển thị công khai.",
       });
-  });
+  })
+  .transform((discount) => ({
+    ...discount,
+    scope:
+      discount.scope ??
+      (discount.customer_user_id ? ("private" as const) : ("shop" as const)),
+  }));
 
 export function videoExtension(
   bytes: Uint8Array,

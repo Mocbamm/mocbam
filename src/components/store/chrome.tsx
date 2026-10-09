@@ -9,12 +9,13 @@ import {
   ArrowUpRight,
   ChevronDown,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useCart } from "@/lib/cart";
 import type { SiteSettings } from "@/lib/types";
 import { StoreSearch } from "./search-dialog";
 import { policyHref, policyLinks } from "./policies";
 const navigation = [
+  { href: "/", text: "Trang chủ" },
   { href: "/san-pham", text: "Sản phẩm" },
   { href: "/chung-toi", text: "Chúng tôi" },
   { href: "/blog", text: "Nhật ký Mộc Bàm" },
@@ -23,44 +24,78 @@ export function StoreHeader() {
   const pathname = usePathname();
   const { count } = useCart();
   const [open, setOpen] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
+  const policyTrigger = useRef<HTMLButtonElement>(null);
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-[#dfe2d4] bg-[#faf9f3]/95 backdrop-blur-md">
         <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-5 sm:px-8">
           <nav
-            className="hidden items-center gap-6 lg:flex"
+            className="hidden items-center gap-4 lg:order-2 lg:flex"
             aria-label="Điều hướng chính"
           >
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-[13px] transition-colors hover:text-[#406344] ${pathname.startsWith(item.href) ? "text-[#29412d] underline underline-offset-8" : "text-[#62685d]"}`}
+                className={`text-[12px] transition-colors hover:text-[#406344] ${(item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)) ? "text-[#29412d] underline underline-offset-8" : "text-[#62685d]"}`}
               >
                 {item.text}
               </Link>
             ))}
-            <details className="relative text-[13px] text-[#62685d]">
-              <summary className="flex cursor-pointer list-none items-center gap-1 hover:text-[#406344]">
+            <div
+              className="relative text-[12px] text-[#62685d]"
+              onMouseEnter={() => setPolicyOpen(true)}
+              onMouseLeave={() => setPolicyOpen(false)}
+              onBlur={(event) => {
+                if (
+                  !event.currentTarget.contains(
+                    event.relatedTarget as Node | null,
+                  )
+                )
+                  setPolicyOpen(false);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  setPolicyOpen(false);
+                  policyTrigger.current?.focus();
+                }
+              }}
+            >
+              <button
+                ref={policyTrigger}
+                type="button"
+                className="flex cursor-pointer items-center gap-1 py-3 hover:text-[#406344]"
+                aria-expanded={policyOpen}
+                aria-controls="desktop-policy-links"
+                onClick={(event) =>
+                  setPolicyOpen((previous) =>
+                    event.detail === 0 ? !previous : true,
+                  )
+                }
+              >
                 Chính sách <ChevronDown size={13} />
-              </summary>
-              <div className="absolute left-0 top-full mt-4 w-56 border border-[#dfe2d4] bg-[#faf9f3] p-2 shadow-lg">
-                {policyLinks.map((policy) => (
-                  <Link
-                    key={policy.id}
-                    href={policyHref(policy.id)}
-                    className="block px-3 py-2 text-xs hover:bg-[#edf0e5]"
-                    onClick={(event) =>
-                      event.currentTarget
-                        .closest("details")
-                        ?.removeAttribute("open")
-                    }
-                  >
-                    {policy.title}
-                  </Link>
-                ))}
-              </div>
-            </details>
+              </button>
+              {policyOpen ? (
+                <div
+                  id="desktop-policy-links"
+                  className="absolute left-0 top-full w-56 pt-2"
+                >
+                  <div className="border border-[#dfe2d4] bg-[#faf9f3] p-2 shadow-lg">
+                    {policyLinks.map((policy) => (
+                      <Link
+                        key={policy.id}
+                        href={policyHref(policy.id)}
+                        className="block px-3 py-2 text-xs hover:bg-[#edf0e5] focus-visible:bg-[#edf0e5]"
+                        onClick={() => setPolicyOpen(false)}
+                      >
+                        {policy.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </nav>
           <button
             className="p-2 lg:hidden"
@@ -74,16 +109,16 @@ export function StoreHeader() {
           <Link
             href="/"
             aria-label="Mộc Bàm - Trang chủ"
-            className="min-w-0 flex-1 px-2 text-center lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:flex-none"
+            className="min-w-0 flex-1 px-2 text-center lg:order-1 lg:flex-none lg:px-0 lg:text-left"
           >
-            <span className="block whitespace-nowrap font-serif text-[25px] sm:text-[34px] leading-none tracking-[-0.06em] text-[#29412d]">
-              Mộc Bàm<span className="ml-0.5 text-sm">✳</span>
+            <span className="block whitespace-nowrap font-serif text-[22px] sm:text-[30px] leading-none tracking-[-0.04em] text-[#29412d]">
+              MỘC BÀM
             </span>
-            <span className="mt-2 hidden text-[8px] tracking-[0.38em] text-[#7b826e] sm:block">
-              ĐIỀU NHỎ BÉ, NIỀM VUI LỚN
+            <span className="mt-2 block text-[7px] tracking-[0.03em] text-[#7b826e] sm:text-[9px] sm:tracking-[0.08em]">
+              Gom nét mộc, tạo góc xinh.
             </span>
           </Link>
-          <div className="flex items-center gap-3 sm:gap-5">
+          <div className="flex items-center gap-3 sm:gap-5 lg:order-3">
             <StoreSearch />
             <Link href="/tai-khoan" aria-label="Tài khoản" className="p-1">
               <UserRound size={20} strokeWidth={1.5} />
@@ -163,11 +198,10 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
             href="/"
             className="font-serif text-4xl tracking-[-0.05em] text-[#f4f0dc]"
           >
-            Mộc Bàm ✳
+            MỘC BÀM
           </Link>
           <p className="mt-5 max-w-xs text-sm leading-7 text-[#acbaa2]">
-            Một chút mộc mạc, một chút đáng yêu. Mang những điều nhỏ bé cùng bạn
-            mỗi ngày.
+            Gom nét mộc, tạo góc xinh.
           </p>
           <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-xs">
             {[

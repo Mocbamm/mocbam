@@ -43,10 +43,19 @@ export async function POST(
     const input: Record<string, unknown> = schemas[
       collection as keyof typeof schemas
     ].parse(await readJson(request, 120_000));
+    if (
+      collection === "discounts" &&
+      typeof input.ends_at === "string" &&
+      new Date(input.ends_at) <= new Date()
+    )
+      throw new HttpError(
+        400,
+        "Ngày kết thúc ưu đãi phải nằm trong tương lai.",
+      );
     const { data, error } = await supabase
       .from(collection === "content" ? "site_content" : collection)
       .insert(input)
-      .select()
+      .select(collection === "products" ? "id" : "*")
       .single();
     if (error) throw databaseError(error);
     return json({ data }, 201);

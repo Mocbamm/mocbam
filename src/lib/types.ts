@@ -4,6 +4,14 @@ export type Category = {
   name: string;
   description: string;
 };
+export type ProductVariant = {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  image_url: string;
+  active: boolean;
+};
 export type Product = {
   id: string;
   slug: string;
@@ -14,6 +22,9 @@ export type Product = {
   image_url: string;
   image_urls?: string[];
   video_url?: string;
+  variants?: ProductVariant[];
+  revision?: number;
+  cost_price?: number | null;
   description: string;
   featured: boolean;
   is_new?: boolean;
@@ -27,12 +38,14 @@ export type BlogPost = {
   excerpt: string;
   content: string;
   image_url: string;
+  video_url?: string;
   published: boolean;
   created_at: string;
 };
 export type SiteContent = { key: string; title: string; content: string };
 export type SiteSettings = {
   shipping_fee: number;
+  shipping_zones?: import("./shipping").ShippingZone[];
   shop_email: string;
   shop_phone: string;
   shop_address: string;
@@ -64,10 +77,15 @@ export type OrderStatus =
   | "processing"
   | "shipped"
   | "completed"
-  | "cancelled";
+  | "cancelled"
+  | "returned";
 export type OrderItem = {
   id: string;
   product_id: string;
+  variant_id?: string | null;
+  variant_name?: string;
+  unit_cost?: number | null;
+  line_discount?: number | null;
   name: string;
   price: number;
   quantity: number;
@@ -92,6 +110,8 @@ export type Order = {
   payment_status: PaymentStatus;
   paid_at: string | null;
   refunded_at: string | null;
+  return_restocked?: boolean;
+  returned_at?: string | null;
   payment_bank_bin: string;
   payment_bank_name: string;
   payment_bank_account_number: string;
@@ -122,6 +142,9 @@ export type Discount = {
   ends_at: string | null;
   active: boolean;
   public_campaign: boolean;
+  scope?: "shop" | "product" | "private";
+  product_ids?: string[];
+  customer_user_ids?: string[];
   customer_user_id: string | null;
   max_uses: number | null;
   used_count: number;
