@@ -1,8 +1,11 @@
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite, type Transaction } from "@electric-sql/pglite";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { quoteShipping } from "@/lib/shipping";
+import { getAdminDashboard } from "@/lib/catalog";
+const auth = vi.hoisted(() => ({ requireAdmin: vi.fn() }));
+vi.mock("@/lib/auth", () => ({ requireAdmin: auth.requireAdmin }));
 const owner = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const stranger = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const admin = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
@@ -126,6 +129,78 @@ describe("staff support", () => {
         )
       ).rows[0].resolved,
     ).toBe(false);
+  });
+});
+
+describe("admin overview with the migrated support schema", () => {
+  it("counts unresolved support threads and contact inquiries without failing the dashboard", async () => {
+    await db.query(
+      "insert into public.support_threads(user_id,resolved) values($1,false),($2,true) on conflict(user_id) do update set resolved=excluded.resolved",
+      [owner, stranger],
+    );
+    await db.query(
+      "insert into public.inquiries(name,email,message,resolved) values('Dashboard QA','dashboard@example.invalid','Unresolved contact',false),('Resolved QA','resolved@example.invalid','Resolved contact',true)",
+    );
+    // Execute the production reader's selected columns against the migrated
+    // database: a nonexistent support-thread column must fail this test.
+    auth.requireAdmin.mockResolvedValue({
+      supabase: {
+        from(table: string) {
+          let fields = "*";
+          let count = false;
+          const filters: [string, unknown][] = [];
+          async function execute() {
+            try {
+              const where = filters.length
+                ? ` where ${filters.map(([column], i) => `${column}=$${i + 1}`).join(" and ")}`
+                : "";
+              const result = await asRole("authenticated", admin, (tx) =>
+                tx.query<Record<string, unknown>>(
+                  `select ${count ? `count(${fields})::integer as count` : fields} from public.${table}${where}`,
+                  filters.map(([, value]) => value),
+                ),
+              );
+              return count
+                ? { data: null, count: result.rows[0].count, error: null }
+                : { data: result.rows, error: null };
+            } catch (error) {
+              return { data: null, error };
+            }
+          }
+          const query = {
+            select(columns: string, options?: { head?: boolean }) {
+              fields = columns;
+              count = Boolean(options?.head);
+              return query;
+            },
+            eq(column: string, value: unknown) {
+              filters.push([column, value]);
+              return query;
+            },
+            order() {
+              return query;
+            },
+            range: execute,
+            then: (...args: Parameters<ReturnType<typeof execute>["then"]>) =>
+              execute().then(...args),
+          };
+          return query;
+        },
+      },
+    });
+    expect(await getAdminDashboard()).toMatchObject({
+      product_count: 0,
+      order_count: 0,
+      pending_orders: 0,
+      inquiry_count: 2,
+    });
+    await asRole("authenticated", admin, (tx) =>
+      tx.query(
+        "update public.support_threads set resolved=true where user_id=$1",
+        [owner],
+      ),
+    );
+    expect((await getAdminDashboard()).inquiry_count).toBe(1);
   });
 });
 

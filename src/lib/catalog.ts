@@ -178,7 +178,7 @@ export async function getAdminDashboard() {
       .eq("resolved", false),
     supabase
       .from("support_threads")
-      .select("id", { count: "exact", head: true })
+      .select("user_id", { count: "exact", head: true })
       .eq("resolved", false),
   ]);
   for (const result of [products, orders, inquiries, support])
