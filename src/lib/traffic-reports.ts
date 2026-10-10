@@ -34,6 +34,17 @@ export type TrafficRow = {
   sessions: number;
   views: number;
   engagement_rate: number;
+  bounce_rate: number;
+  revenue: number | null;
+  successful_orders: number | null;
+};
+export type TrafficCommerce = {
+  successful_orders: number;
+  attributed_orders: number;
+  landing_revenue: { name: string; orders: number; revenue: number }[];
+  pending_events: number;
+  expired_events: number;
+  uncertain_events: number;
 };
 export type TrafficReport = {
   configured: true;
@@ -41,6 +52,13 @@ export type TrafficReport = {
   fetched_at: string;
   timezone: string;
   metrics: Record<TrafficMetric, number>;
+  pages_per_session: number | null;
+  successful_order_conversion_rate: number | null;
+  commerce: TrafficCommerce | null;
+  commerce_error: string | null;
+  purchase_tracking_configured: boolean;
+  trend: { date: string; users: number; sessions: number; views: number }[];
+  trend_error: string | null;
   realtime: { users: number; views: number } | null;
   realtime_error: string | null;
   sources: TrafficRow[];
@@ -88,6 +106,7 @@ export function mapTrafficReport(
   realtime: GaTable | null,
   funnel: GaTable | null,
   range: ReportRange,
+  trend: GaTable | null = null,
 ): TrafficReport {
   const summary = gaRows(tables[0])[0]?.metrics ?? {};
   function breakdown(table: GaTable): TrafficRow[] {
@@ -97,9 +116,51 @@ export function mapTrafficReport(
       sessions: row.metrics.sessions ?? 0,
       views: row.metrics.screenPageViews ?? 0,
       engagement_rate: row.metrics.engagementRate ?? 0,
+      bounce_rate:
+        row.metrics.bounceRate ?? 1 - (row.metrics.engagementRate ?? 0),
+      revenue: null,
+      successful_orders: null,
     }));
   }
   const live = realtime ? (gaRows(realtime)[0]?.metrics ?? {}) : null;
+  const observedTrend = trend
+    ? gaRows(trend)
+        .map((row) => ({
+          date: row.dimensions.date.replace(
+            /^(\d{4})(\d{2})(\d{2})$/,
+            "$1-$2-$3",
+          ),
+          users: row.metrics.totalUsers ?? 0,
+          sessions: row.metrics.sessions ?? 0,
+          views: row.metrics.screenPageViews ?? 0,
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date))
+    : [];
+  const daily = new Map(observedTrend.map((row) => [row.date, row]));
+  const trendRows: TrafficReport["trend"] = [];
+  const completeTrend =
+    trend &&
+    !trend.metadata?.subjectToThresholding &&
+    !trend.metadata?.samplingMetadatas?.some(
+      (sample) =>
+        Number(sample.samplesReadCount) < Number(sample.samplingSpaceSize),
+    ) &&
+    (trend.rowCount ?? 0) <= (trend.rows?.length ?? 0);
+  if (completeTrend) {
+    const end = Date.parse(`${range.to}T00:00:00Z`);
+    // A complete successful GA query omits dates with no events. Fill those
+    // calendar dates only; a failed/unavailable query remains null upstream.
+    for (
+      let day = Date.parse(`${range.from}T00:00:00Z`);
+      day <= end && trendRows.length < 10000;
+      day += 86_400_000
+    ) {
+      const date = new Date(day).toISOString().slice(0, 10);
+      trendRows.push(
+        daily.get(date) ?? { date, users: 0, sessions: 0, views: 0 },
+      );
+    }
+  } else trendRows.push(...observedTrend);
   return {
     configured: true,
     range,
@@ -108,6 +169,15 @@ export function mapTrafficReport(
     metrics: Object.fromEntries(
       trafficMetricNames.map((name) => [name, summary[name] ?? 0]),
     ) as Record<TrafficMetric, number>,
+    pages_per_session: summary.sessions
+      ? (summary.screenPageViews ?? 0) / summary.sessions
+      : null,
+    successful_order_conversion_rate: null,
+    commerce: null,
+    commerce_error: null,
+    purchase_tracking_configured: false,
+    trend: trendRows,
+    trend_error: null,
     realtime: live
       ? { users: live.activeUsers ?? 0, views: live.screenPageViews ?? 0 }
       : null,
@@ -132,9 +202,16 @@ export function mapTrafficReport(
         }))
       : null,
     funnel_error: null,
-    truncated: tables.some(
-      (table) => (table.rowCount ?? 0) > (table.rows?.length ?? 0),
-    ),
+    truncated:
+      Boolean(
+        trend &&
+          Date.parse(`${range.to}T00:00:00Z`) -
+            Date.parse(`${range.from}T00:00:00Z`) >=
+            10000 * 86_400_000,
+      ) ||
+      [...tables, ...(trend ? [trend] : [])].some(
+        (table) => (table.rowCount ?? 0) > (table.rows?.length ?? 0),
+      ),
     thresholded: tables.some((table) => table.metadata?.subjectToThresholding),
     sampled: [...tables, ...(funnel ? [funnel] : [])].some((table) =>
       table.metadata?.samplingMetadatas?.some(
@@ -160,6 +237,34 @@ export function trafficCsv(state: TrafficState) {
     );
     for (const [key, value] of Object.entries(state.metrics))
       rows.push([key, value]);
+    rows.push(
+      ["Số trang / phiên", state.pages_per_session ?? "Không có phiên"],
+      [
+        "Đơn thành công / phiên GA4",
+        state.successful_order_conversion_rate ?? "Chưa có dữ liệu",
+      ],
+      [
+        "Đơn thành công (đã giao + đã thanh toán)",
+        state.commerce?.successful_orders ?? "Chưa đọc được sổ đơn hàng",
+      ],
+      [
+        "Đơn thành công có nguồn trang đích",
+        state.commerce?.attributed_orders ?? "Chưa đọc được sổ đơn hàng",
+      ],
+      [
+        "Kết nối gửi purchase/refund",
+        state.purchase_tracking_configured ? "Đã cấu hình" : "Chưa cấu hình",
+      ],
+      ["Sự kiện chờ gửi", state.commerce?.pending_events ?? "Chưa đọc được"],
+      [
+        "Sự kiện quá 72 giờ không thể gửi bù",
+        state.commerce?.expired_events ?? "Chưa đọc được",
+      ],
+      [
+        "Sự kiện hoàn tiền cần đối soát GA4 trước khi gửi lại",
+        state.commerce?.uncertain_events ?? "Chưa đọc được",
+      ],
+    );
     if (state.realtime)
       rows.push(
         ["Người dùng hoạt động 30 phút gần nhất", state.realtime.users],
@@ -172,7 +277,16 @@ export function trafficCsv(state: TrafficState) {
     ] as const) {
       rows.push(
         [],
-        [label, "Người dùng", "Phiên", "Lượt xem", "Tỷ lệ tương tác"],
+        [
+          label,
+          "Người dùng",
+          "Phiên",
+          "Lượt xem",
+          "Tỷ lệ tương tác",
+          "Tỷ lệ thoát",
+          "Doanh thu đơn thành công (VND)",
+          "Đơn thành công",
+        ],
       );
       for (const row of values)
         rows.push([
@@ -181,7 +295,29 @@ export function trafficCsv(state: TrafficState) {
           row.sessions,
           row.views,
           row.engagement_rate,
+          row.bounce_rate,
+          row.revenue ?? "Chưa có dữ liệu",
+          row.successful_orders ?? "Chưa có dữ liệu",
         ]);
+    }
+    rows.push([], ["Ngày", "Người dùng", "Phiên", "Lượt xem"]);
+    for (const row of state.trend)
+      rows.push([row.date, row.users, row.sessions, row.views]);
+    if (state.trend_error)
+      rows.push(["Xu hướng chưa có dữ liệu", state.trend_error]);
+    if (state.commerce_error)
+      rows.push(["Sổ đơn hàng chưa có dữ liệu", state.commerce_error]);
+    if (state.commerce) {
+      rows.push(
+        [],
+        [
+          "Trang đích có doanh thu (toàn bộ)",
+          "Đơn thành công",
+          "Doanh thu (VND)",
+        ],
+      );
+      for (const row of state.commerce.landing_revenue)
+        rows.push([row.name, row.orders, row.revenue]);
     }
     rows.push([], ["Sự kiện", "Số lần", "Người dùng"]);
     for (const row of state.events) rows.push([row.name, row.count, row.users]);

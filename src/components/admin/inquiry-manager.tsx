@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Inquiry, Order } from "@/lib/types";
 import type { SupportThread } from "@/lib/support";
 import { formatDate } from "@/lib/utils";
+import { InquiryReplyComposer } from "./inquiry-reply-composer";
 import {
   adminRequest,
   EmptyState,
@@ -31,6 +32,7 @@ export function InquiryManager({
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
   const [replies, setReplies] = useState<Record<string, string>>({});
+  const [emailInquiryId, setEmailInquiryId] = useState<string | null>(null);
   useEffect(() => {
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") router.refresh();
@@ -265,11 +267,19 @@ export function InquiryManager({
           </p>
           <div className="flex flex-wrap items-center justify-between gap-4 border-t pt-4">
             <div className="space-y-2 text-sm">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEmailInquiryId(inquiry.id)}
+              >
+                Soạn phản hồi trực tiếp
+              </Button>
               <a
                 className="block underline"
                 href={`mailto:${inquiry.email}?subject=${encodeURIComponent("Mộc Bàm phản hồi lời nhắn của bạn")}&body=${encodeURIComponent("Chào " + inquiry.name + ",\n\nMộc đã nhận được lời nhắn:\n" + inquiry.message + "\n\nPhản hồi của Mộc:\n")}`}
               >
-                Soạn email phản hồi · {inquiry.email}
+                Mở ứng dụng email · {inquiry.email}
               </a>
               {inquiry.phone ? (
                 <a className="block underline" href={`tel:${inquiry.phone}`}>
@@ -292,6 +302,13 @@ export function InquiryManager({
               {inquiry.resolved ? "Mở lại" : "Đã phản hồi / xử lý"}
             </Button>
           </div>
+          {emailInquiryId === inquiry.id && (
+            <InquiryReplyComposer
+              key={inquiry.id}
+              inquiry={inquiry}
+              onClose={() => setEmailInquiryId(null)}
+            />
+          )}
         </article>
       ))}
     </div>

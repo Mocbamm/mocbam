@@ -250,3 +250,156 @@ describe("shipping source of truth", () => {
     expect(result.rows[0].definition).toContain("eligible_subtotal");
   });
 });
+
+describe("distance shipping quotes", () => {
+  const address = {
+    address: "12 Test Road, Test Ward",
+    city: "Hồ Chí Minh",
+    ward: "Test Ward",
+  };
+  const quote = async (meters: number) =>
+    (
+      await asRole("service_role", null, (tx) =>
+        tx.query<{
+          quote: { id: string; fee: number; distance_meters: number };
+        }>(
+          "select public.create_shipping_quote($1,$2,(select shipping_origin_address from public.site_settings where id=true)) as quote",
+          [JSON.stringify(address), meters],
+        ),
+      )
+    ).rows[0].quote;
+  const fee = (id?: string, changes = {}) =>
+    asRole("service_role", null, (tx) =>
+      tx.query<{ fee: string }>("select public.quote_shipping_fee($1) as fee", [
+        JSON.stringify({
+          ...address,
+          ...changes,
+          ...(id ? { shipping_quote_id: id } : {}),
+        }),
+      ]),
+    );
+  it("validates ordered bands and uses inclusive road-distance boundaries with zone fallback", async () => {
+    await db.query(
+      "update public.site_settings set shipping_distance_enabled=true,shipping_origin_address='1 Store Road',shipping_distance_bands=$1",
+      [
+        JSON.stringify([
+          { up_to_km: 5, fee: 10000 },
+          { up_to_km: 10, fee: 20000 },
+        ]),
+      ],
+    );
+    expect((await quote(0)).fee).toBe(10000);
+    expect((await quote(5000)).fee).toBe(10000);
+    expect((await quote(5001)).fee).toBe(20000);
+    expect((await quote(10000)).fee).toBe(20000);
+    expect((await quote(10001)).fee).toBe(30000);
+    for (const bands of [
+      [{ up_to_km: 0, fee: 10 }],
+      [
+        { up_to_km: 5, fee: 10 },
+        { up_to_km: 5, fee: 20 },
+      ],
+      [
+        { up_to_km: 6, fee: 10 },
+        { up_to_km: 5, fee: 20 },
+      ],
+    ]) {
+      await expect(
+        db.query("update public.site_settings set shipping_distance_bands=$1", [
+          JSON.stringify(bands),
+        ]),
+      ).rejects.toThrow("INVALID_REQUEST");
+    }
+  });
+  it("rejects absent, forged, expired, changed-address, and stale-configuration quotes", async () => {
+    await expect(fee()).rejects.toThrow("SHIPPING_QUOTE_REQUIRED");
+    await expect(fee("dddddddd-dddd-4ddd-8ddd-dddddddddddd")).rejects.toThrow(
+      "SHIPPING_QUOTE_EXPIRED",
+    );
+    const q = await quote(4200);
+    expect(Number((await fee(q.id)).rows[0].fee)).toBe(10000);
+    expect(
+      Number(
+        (
+          await fee(q.id, {
+            address: " 12 test road, test ward ",
+            city: "hồ chí minh",
+            ward: "test ward ",
+          })
+        ).rows[0].fee,
+      ),
+    ).toBe(10000);
+    await expect(fee(q.id, { address: "Another address" })).rejects.toThrow(
+      "SHIPPING_QUOTE_EXPIRED",
+    );
+    await expect(fee(q.id, { ward: "Another ward" })).rejects.toThrow(
+      "SHIPPING_QUOTE_EXPIRED",
+    );
+    await expect(fee(q.id, { city: "Another city" })).rejects.toThrow(
+      "SHIPPING_QUOTE_EXPIRED",
+    );
+    await db.query(
+      "update public.shipping_quotes set expires_at=now()-interval '1 second' where id=$1",
+      [q.id],
+    );
+    await expect(fee(q.id)).rejects.toThrow("SHIPPING_QUOTE_EXPIRED");
+    const fresh = await quote(4200);
+    await db.query(
+      "update public.site_settings set shipping_origin_address='2 Store Road'",
+    );
+    await expect(fee(fresh.id)).rejects.toThrow("SHIPPING_QUOTE_EXPIRED");
+    await expect(
+      asRole("service_role", null, (tx) =>
+        tx.query(
+          "select public.create_shipping_quote($1,4200,'1 Store Road')",
+          [JSON.stringify(address)],
+        ),
+      ),
+    ).rejects.toThrow("SHIPPING_QUOTE_EXPIRED");
+    expect((await quote(4200)).fee).toBe(10000);
+  });
+  it("rejects a quote expiring while the checkout transaction waits", async () => {
+    const q = await quote(4200);
+    await expect(
+      asRole("service_role", null, async (tx) => {
+        await tx.query(
+          "update public.shipping_quotes set expires_at=clock_timestamp()+interval '0.02 seconds' where id=$1",
+          [q.id],
+        );
+        await tx.query("select pg_sleep(0.04)");
+        return tx.query("select public.quote_shipping_fee($1)", [
+          JSON.stringify({ ...address, shipping_quote_id: q.id }),
+        ]);
+      }),
+    ).rejects.toThrow("SHIPPING_QUOTE_EXPIRED");
+  });
+  it("prevents customers from reading private address quotes or forging distance and limits requests atomically", async () => {
+    for (const role of ["anon", "authenticated"] as const) {
+      await expect(
+        asRole(role, owner, (tx) =>
+          tx.query("select * from public.shipping_quotes"),
+        ),
+      ).rejects.toThrow();
+      await expect(
+        asRole(role, owner, (tx) =>
+          tx.query("select public.create_shipping_quote($1,1,'2 Store Road')", [
+            JSON.stringify(address),
+          ]),
+        ),
+      ).rejects.toThrow();
+    }
+    for (let i = 0; i < 11; i++) {
+      const result = await asRole("service_role", null, (tx) =>
+        tx.query<{ allowed: boolean }>(
+          "select public.reserve_shipping_request($1) as allowed",
+          ["a".repeat(64)],
+        ),
+      );
+      expect(result.rows[0].allowed).toBe(i < 10);
+    }
+    await db.query(
+      "update public.site_settings set shipping_distance_enabled=false",
+    );
+    expect(Number((await fee()).rows[0].fee)).toBe(30000);
+  });
+});

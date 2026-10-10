@@ -9,11 +9,19 @@ import {
   buildStoreReport,
   reportCsv,
   reportPeriodRange,
+  reportTrend,
+  type ReportGrouping,
   type ReportOrder,
   type ReportRange,
   type ReportPeriod,
 } from "@/lib/store-reports";
 import { formatPrice } from "@/lib/utils";
+import {
+  FinanceTrendChart,
+  PaymentShareChart,
+  financePaymentLabels,
+  trendPeriodLabel,
+} from "./finance-report-charts";
 import {
   EmptyState,
   fieldClass,
@@ -28,11 +36,7 @@ const periods: { value: ReportPeriod; label: string }[] = [
   { value: "month", label: "Tháng này" },
   { value: "year", label: "Năm nay" },
 ];
-const paymentLabels = {
-  cod: "Tiền mặt / COD",
-  bank_transfer: "Chuyển khoản",
-  unconfigured: "Chưa xác định",
-};
+const groupingLabels = { day: "ngày", week: "tuần", month: "tháng" };
 
 export function ReportModules({ traffic = false }: { traffic?: boolean }) {
   return (
@@ -70,10 +74,15 @@ export function AnalyticsManager({
   );
   const [pending, startTransition] = useTransition();
   const [chart, setChart] = useState<"revenue" | "orders">("revenue");
+  const [grouping, setGrouping] = useState<ReportGrouping>("day");
   const invalidRange = Boolean(range.from && range.to && range.from > range.to);
   const report = useMemo(
     () => buildStoreReport(orders, range),
     [orders, range],
+  );
+  const trend = useMemo(
+    () => reportTrend(report, grouping, range),
+    [report, grouping, range],
   );
   useEffect(() => {
     if (!live) return;
@@ -93,17 +102,12 @@ export function AnalyticsManager({
       ),
     [report.products, productRank],
   );
-  const maxValue = Math.max(
-    1,
-    ...report.daily.map((row) =>
-      chart === "orders"
-        ? row.order_count
-        : Math.max(row.gross_sales, row.net_sales),
-    ),
-  );
+  const maxValue = Math.max(1, ...trend.map((row) => row.order_count));
   function exportReport() {
     const url = URL.createObjectURL(
-      new Blob([reportCsv(report)], { type: "text/csv;charset=utf-8" }),
+      new Blob([reportCsv(report, grouping, range)], {
+        type: "text/csv;charset=utf-8",
+      }),
     );
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -154,7 +158,12 @@ export function AnalyticsManager({
     {
       label: "Đơn được đặt",
       value: report.order_count,
-      note: `${report.cancelled_order_count} hủy · ${report.returned_order_count} trả hàng · ${report.completed_order_count} hoàn tất`,
+      note: `${report.cancelled_order_count} hủy · ${report.returned_order_count} trả hàng · ${report.successful_order_count} hoàn tất đã thanh toán`,
+    },
+    {
+      label: "Đơn đã hoàn tiền",
+      value: report.refunded_order_count,
+      note: "Đơn đặt trong kỳ; có thể gồm đơn đã trả hàng",
     },
     {
       label: "AOV đơn hoàn tất",
@@ -312,74 +321,99 @@ export function AnalyticsManager({
           ) : (
             <div className={panelClass}>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-semibold">Biểu đồ theo ngày</h2>
-                <label className="text-xs">
-                  Chỉ số
-                  <select
-                    className={`${fieldClass} ml-2 w-auto`}
-                    value={chart}
-                    onChange={(event) =>
-                      setChart(event.target.value as typeof chart)
-                    }
-                  >
-                    <option value="revenue">Doanh thu</option>
-                    <option value="orders">Số đơn</option>
-                  </select>
-                </label>
+                <h2 className="font-semibold">Biểu đồ xu hướng</h2>
+                <div className="flex flex-wrap gap-3">
+                  <label className="text-xs">
+                    Chỉ số
+                    <select
+                      className={`${fieldClass} ml-2 w-auto`}
+                      value={chart}
+                      onChange={(event) =>
+                        setChart(event.target.value as typeof chart)
+                      }
+                    >
+                      <option value="revenue">
+                        Doanh thu thuần & lợi nhuận gộp
+                      </option>
+                      <option value="orders">Số đơn</option>
+                    </select>
+                  </label>
+                  <label className="text-xs">
+                    Nhóm theo
+                    <select
+                      className={`${fieldClass} ml-2 w-auto`}
+                      value={grouping}
+                      onChange={(event) =>
+                        setGrouping(event.target.value as ReportGrouping)
+                      }
+                    >
+                      <option value="day">Ngày</option>
+                      <option value="week">Tuần</option>
+                      <option value="month">Tháng</option>
+                    </select>
+                  </label>
+                </div>
               </div>
               <p className="mt-2 text-xs text-[#6b7867]">
                 {chart === "revenue"
-                  ? "Màu nhạt: GMV · Màu đậm: doanh thu sản phẩm thuần"
-                  : "Tất cả đơn đặt trong ngày, gồm đơn đã hủy"}
+                  ? "Xanh: doanh thu sản phẩm thuần · Nâu: lợi nhuận gộp dự kiến. Thiếu giá vốn sẽ ngắt đường lợi nhuận."
+                  : "Tất cả đơn đặt trong kỳ, gồm đơn đã hủy"}
               </p>
-              <div className="mt-6 overflow-x-auto pb-2">
-                <div
-                  role="img"
-                  aria-label={`Biểu đồ ${chart === "revenue" ? "doanh thu" : "số đơn"} theo ngày; bảng dữ liệu ở bên dưới.`}
-                  className="flex h-48 min-w-max items-end gap-2 border-b border-[#dfe5d8]"
-                >
-                  {report.daily.map((row) => (
-                    <div
-                      key={row.date}
-                      title={`${row.date}: ${row.order_count} đơn; GMV ${formatPrice(row.gross_sales)}; thuần ${formatPrice(row.net_sales)}`}
-                      className="flex h-full w-12 shrink-0 flex-col justify-end gap-2"
-                    >
-                      <div className="flex h-36 items-end justify-center gap-1">
-                        {chart === "revenue" && (
+              <p className="mt-1 text-xs leading-6 text-[#6b7867]">
+                Tuần bắt đầu thứ Hai; tháng theo lịch Việt Nam. Kỳ đầu/cuối chỉ
+                gồm ngày trong khoảng đã chọn. Bảng và CSV dùng cùng cách nhóm.
+              </p>
+              {chart === "revenue" ? (
+                <FinanceTrendChart rows={trend} grouping={grouping} />
+              ) : (
+                <div className="mt-6 overflow-x-auto pb-2">
+                  <div
+                    role="img"
+                    aria-label={`Biểu đồ số đơn theo ${groupingLabels[grouping]}; bảng dữ liệu ở bên dưới.`}
+                    className="flex h-48 min-w-max items-end gap-2 border-b border-[#dfe5d8]"
+                  >
+                    {trend.map((row) => (
+                      <div
+                        key={row.date}
+                        title={`${trendPeriodLabel(row, grouping)}: ${row.order_count} đơn`}
+                        className="flex h-full w-12 shrink-0 flex-col justify-end gap-2"
+                      >
+                        <div className="flex h-36 items-end justify-center gap-1">
                           <div
-                            className="w-4 rounded-t bg-[#c8d5bc]"
+                            className="w-4 rounded-t bg-[#426533]"
                             style={{
-                              height: `${(row.gross_sales / maxValue) * 140}px`,
+                              height: `${(row.order_count / maxValue) * 140}px`,
                             }}
                           />
-                        )}
-                        <div
-                          className="w-4 rounded-t bg-[#426533]"
-                          style={{
-                            height: `${((chart === "orders" ? row.order_count : row.net_sales) / maxValue) * 140}px`,
-                          }}
-                        />
+                        </div>
+                        <span className="mb-2 text-center text-[10px] text-[#6b7867]">
+                          {grouping === "month"
+                            ? row.date.slice(0, 7)
+                            : row.date.slice(5)}
+                        </span>
                       </div>
-                      <span className="mb-2 text-center text-[10px] text-[#6b7867]">
-                        {row.date.slice(5)}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
               <details className="mt-5">
                 <summary className="cursor-pointer text-sm font-medium">
-                  Xem bảng dữ liệu theo ngày
+                  Xem bảng dữ liệu theo {groupingLabels[grouping]}
                 </summary>
                 <div className="mt-3 overflow-x-auto">
                   <table className="w-full whitespace-nowrap text-left text-xs">
                     <caption className="sr-only">
-                      Doanh thu, đơn hàng và dòng tiền theo ngày Việt Nam
+                      Doanh thu, đơn hàng và dòng tiền theo{" "}
+                      {groupingLabels[grouping]} Việt Nam
                     </caption>
                     <thead className="border-b border-[#edf0e7] text-[#6b7867]">
                       <tr>
                         {[
-                          "Ngày",
+                          grouping === "week"
+                            ? "Tuần (thứ Hai – Chủ nhật)"
+                            : grouping === "month"
+                              ? "Tháng"
+                              : "Ngày",
                           "Số đơn",
                           "GMV",
                           "Doanh thu thuần",
@@ -400,13 +434,13 @@ export function AnalyticsManager({
                       </tr>
                     </thead>
                     <tbody>
-                      {report.daily.map((row) => (
+                      {trend.map((row) => (
                         <tr
                           key={row.date}
                           className="border-b border-[#edf0e7]"
                         >
                           <th scope="row" className="py-3 pr-4 font-medium">
-                            {row.date}
+                            {trendPeriodLabel(row, grouping)}
                           </th>
                           <td className="pr-4">{row.order_count}</td>
                           {[
@@ -434,6 +468,12 @@ export function AnalyticsManager({
           )}
           <div className={panelClass}>
             <h2 className="font-semibold">Phương thức thanh toán</h2>
+            <p className="mt-2 text-xs leading-6 text-[#6b7867]">
+              Biểu đồ phân bổ doanh thu sản phẩm thuần theo ngày đặt đơn, gồm
+              đơn chưa hoàn tất và chưa gồm phí giao hàng. Tiền xác nhận/hoàn
+              bên dưới theo ngày thực thu/hoàn trong kỳ.
+            </p>
+            <PaymentShareChart report={report} />
             {report.payment_breakdown.length === 0 ? (
               <p className="mt-4 text-sm text-[#6b7867]">
                 Chưa có giao dịch trong kỳ.
@@ -446,6 +486,7 @@ export function AnalyticsManager({
                       {[
                         "Phương thức",
                         "Số đơn",
+                        "Doanh thu thuần",
                         "Đã xác nhận",
                         "Đã hoàn",
                         "Chờ thanh toán",
@@ -463,9 +504,10 @@ export function AnalyticsManager({
                         className="border-t border-[#edf0e7]"
                       >
                         <th className="py-3 pr-5 font-medium">
-                          {paymentLabels[row.method]}
+                          {financePaymentLabels[row.method]}
                         </th>
                         <td className="pr-5">{row.order_count}</td>
+                        <td className="pr-5">{formatPrice(row.net_sales)}</td>
                         <td className="pr-5">{formatPrice(row.collected)}</td>
                         <td className="pr-5">{formatPrice(row.refunded)}</td>
                         <td>{formatPrice(row.awaiting)}</td>

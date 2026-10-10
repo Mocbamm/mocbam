@@ -14,7 +14,7 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import { useCart } from "@/lib/cart";
-import { trackStoreEvent } from "@/lib/analytics";
+import { checkoutAnalytics, trackStoreEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +22,12 @@ import { Label } from "@/components/ui/label";
 import { money } from "./format";
 import { AddressFields } from "./address-fields";
 import { saveOrderReceipt } from "@/lib/saved-orders";
-import { quoteShipping, type ShippingZone } from "@/lib/shipping";
+import {
+  checkoutAddress,
+  quoteShipping,
+  type ShippingZone,
+  type ShippingDistanceQuote,
+} from "@/lib/shipping";
 
 function EmptyCart() {
   return (
@@ -166,6 +171,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
 export function CheckoutScreen({
   shippingFee,
   shippingZones = [],
+  shippingDistanceEnabled = false,
   configured,
   bankTransferAvailable,
   initialEmail = "",
@@ -175,6 +181,7 @@ export function CheckoutScreen({
 }: {
   shippingFee: number;
   shippingZones?: ShippingZone[];
+  shippingDistanceEnabled?: boolean;
   configured: boolean;
   bankTransferAvailable: boolean;
   initialEmail?: string;
@@ -185,13 +192,85 @@ export function CheckoutScreen({
   const { items, subtotal, ready, clear } = useCart();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [destination, setDestination] = useState({ province: "", ward: "" });
-  const shipping = quoteShipping(
-    shippingFee,
-    shippingZones,
-    destination.province,
-    destination.ward,
+  const [destination, setDestination] = useState({
+    province: "",
+    ward: "",
+    address: "",
+  });
+  const [distanceResult, setDistanceResult] = useState<{
+    key: string;
+    quote?: ShippingDistanceQuote;
+    error?: string;
+  } | null>(null);
+  const [quoteRefresh, setQuoteRefresh] = useState(0);
+  const addressKey = JSON.stringify(
+    checkoutAddress(
+      destination.address,
+      destination.province,
+      destination.ward,
+    ),
   );
+  const addressComplete = Boolean(
+    destination.address.trim() &&
+      destination.province.trim() &&
+      destination.ward.trim(),
+  );
+  const distanceQuote =
+    distanceResult?.key === addressKey ? distanceResult.quote : undefined;
+  const distanceError =
+    distanceResult?.key === addressKey ? distanceResult.error : undefined;
+  const distanceReady = !shippingDistanceEnabled || Boolean(distanceQuote);
+  useEffect(() => {
+    if (!shippingDistanceEnabled || !addressComplete) return;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/shipping/quote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: addressKey,
+          signal: controller.signal,
+        });
+        const result = await response.json();
+        if (!response.ok)
+          throw new Error(result.error || "Chưa thể tính phí giao hàng.");
+        if (!controller.signal.aborted)
+          setDistanceResult({ key: addressKey, quote: result.data });
+      } catch (cause) {
+        if (!controller.signal.aborted)
+          setDistanceResult({
+            key: addressKey,
+            error:
+              cause instanceof Error
+                ? cause.message
+                : "Chưa thể tính phí giao hàng.",
+          });
+      }
+    }, 650);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [addressKey, addressComplete, shippingDistanceEnabled, quoteRefresh]);
+  useEffect(() => {
+    if (!distanceQuote) return;
+    const timer = setTimeout(
+      () => {
+        setDistanceResult(null);
+        setQuoteRefresh((value) => value + 1);
+      },
+      Math.max(1000, Date.parse(distanceQuote.expires_at) - Date.now() - 10000),
+    );
+    return () => clearTimeout(timer);
+  }, [distanceQuote]);
+  const shipping =
+    distanceQuote ||
+    quoteShipping(
+      shippingFee,
+      shippingZones,
+      destination.province,
+      destination.ward,
+    );
   const [error, setError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">(
     "cod",
@@ -292,7 +371,16 @@ export function CheckoutScreen({
   if (!items.length) return <EmptyCart />;
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || quoting || !configured) return;
+    if (busy || quoting || !configured || !distanceReady) return;
+    if (
+      shippingDistanceEnabled &&
+      distanceQuote &&
+      Date.parse(distanceQuote.expires_at) <= Date.now()
+    ) {
+      setDistanceResult(null);
+      setQuoteRefresh((value) => value + 1);
+      return;
+    }
     setBusy(true);
     setError("");
     const form = new FormData(event.currentTarget);
@@ -322,16 +410,25 @@ export function CheckoutScreen({
       submittedDraft.current = fingerprint;
     }
     try {
+      const analytics = await checkoutAnalytics();
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...draft,
           idempotency_key: idempotency.current,
+          ...(shippingDistanceEnabled && distanceQuote
+            ? { shipping_quote_id: distanceQuote.id }
+            : {}),
+          ...(analytics ? { analytics } : {}),
         }),
       });
       const result = await response.json();
       if (!response.ok) {
+        if (response.status === 409 && shippingDistanceEnabled) {
+          setDistanceResult(null);
+          setQuoteRefresh((value) => value + 1);
+        }
         if (response.status < 500 && response.status !== 409)
           idempotency.current = "";
         throw new Error(
@@ -364,7 +461,10 @@ export function CheckoutScreen({
     }
   }
   return (
-    <form onSubmit={submit} className="grid gap-12 md:grid-cols-[1.4fr_1fr]">
+    <form
+      onSubmit={submit}
+      className="grid gap-12 md:grid-cols-[1.4fr_1fr]"
+    >
       <div>
         {!configured ? (
           <div
@@ -594,12 +694,44 @@ export function CheckoutScreen({
               {destination.province && destination.ward
                 ? "Phí giao hàng"
                 : "Phí giao hàng dự kiến"}
-              {destination.province
+              {destination.province &&
+              (!shippingDistanceEnabled || distanceQuote)
                 ? ` · ${shipping.name}`
                 : " (chọn địa chỉ để tính)"}
             </span>
-            <span>{money(shipping.fee)}</span>
+            <span>
+              {shippingDistanceEnabled && !distanceQuote
+                ? "Chờ tính phí"
+                : money(shipping.fee)}
+            </span>
           </p>
+          {shippingDistanceEnabled ? (
+            <div className="space-y-2" aria-live="polite">
+              <p>
+                {distanceQuote
+                  ? `${(distanceQuote.distance_meters / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} km đường bộ từ cửa hàng.`
+                  : !addressComplete
+                    ? "Điền đủ địa chỉ để tự động tính phí theo km."
+                    : distanceError ||
+                      "Đang tính khoảng cách và phí giao hàng..."}
+              </p>
+              <p>
+                Địa chỉ giao hàng được gửi tới Google Maps để tính quãng đường.
+              </p>
+              {distanceError ? (
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => {
+                    setDistanceResult(null);
+                    setQuoteRefresh((value) => value + 1);
+                  }}
+                >
+                  Tính lại phí
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           {effectiveDiscount ? (
             <p className="flex justify-between">
               <span>Ưu đãi ({effectiveDiscount.code})</span>
@@ -609,11 +741,13 @@ export function CheckoutScreen({
           <p className="flex justify-between border-t border-[#d1d9c2] pt-5 text-base font-medium text-[#29412d]">
             <span>Tổng dự kiến</span>
             <span>
-              {money(
-                subtotal +
-                  shipping.fee -
-                  (effectiveDiscount?.discount_amount || 0),
-              )}
+              {shippingDistanceEnabled && !distanceQuote
+                ? "Chờ tính phí giao hàng"
+                : money(
+                    subtotal +
+                      shipping.fee -
+                      (effectiveDiscount?.discount_amount || 0),
+                  )}
             </span>
           </p>
         </div>
@@ -627,7 +761,7 @@ export function CheckoutScreen({
         ) : null}
         <Button
           type="submit"
-          disabled={busy || quoting || !configured}
+          disabled={busy || quoting || !configured || !distanceReady}
           className="mt-6 h-12 w-full"
         >
           {busy ? "Đang gửi đơn..." : "Gửi đơn hàng"}

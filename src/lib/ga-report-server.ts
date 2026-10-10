@@ -7,8 +7,13 @@ import {
   trafficMetricNames,
   type GaTable,
   type TrafficState,
+  type TrafficCommerce,
 } from "./traffic-reports";
 import { type ReportRange } from "./store-reports";
+import {
+  deliverOrderAnalytics,
+  purchaseAnalyticsConfigured,
+} from "./order-analytics-server";
 
 const oauthEndpoint = "https://oauth2.googleapis.com/token";
 let cachedToken: { email: string; token: string; expires: number } | null =
@@ -111,10 +116,24 @@ async function googleReport<T>(
   }
   return response.json() as Promise<T>;
 }
+function completeTable(
+  table: GaTable | undefined,
+  metrics: string[],
+  dimension?: string,
+) {
+  return Boolean(
+    table &&
+      metrics.every((name) =>
+        table.metricHeaders?.some((header) => header.name === name),
+      ) &&
+      (!dimension ||
+        table.dimensionHeaders?.some((header) => header.name === dimension)),
+  );
+}
 export async function getAdminTrafficReport(
   range: ReportRange,
 ): Promise<TrafficState> {
-  await requireAdmin();
+  const { supabase } = await requireAdmin();
   if (!gaReadConfigured())
     return {
       configured: false,
@@ -124,6 +143,7 @@ export async function getAdminTrafficReport(
     };
   try {
     const token = await accessToken();
+    await deliverOrderAnalytics();
     const dateRanges = [{ startDate: range.from, endDate: range.to }];
     const report = (
       dimensions: string[],
@@ -143,11 +163,15 @@ export async function getAdminTrafficReport(
       "sessions",
       "screenPageViews",
       "engagementRate",
+      "bounceRate",
     ];
     const requests = [
       report([], trafficMetricNames, "1"),
       report(["sessionSourceMedium"], breakdownMetrics),
-      report(["landingPage"], breakdownMetrics),
+      {
+        ...report(["landingPage"], breakdownMetrics),
+        orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }],
+      },
       report(["deviceCategory"], breakdownMetrics, "20"),
       {
         ...report(["eventName"], ["eventCount", "totalUsers"]),
@@ -156,10 +180,13 @@ export async function getAdminTrafficReport(
             fieldName: "eventName",
             inListFilter: {
               values: [
+                "session_start",
                 "view_item",
                 "add_to_cart",
                 "begin_checkout",
                 "order_submitted",
+                "purchase",
+                "refund",
               ],
               caseSensitive: true,
             },
@@ -167,14 +194,20 @@ export async function getAdminTrafficReport(
         },
       },
     ];
-    const [batch, live, funnel] = await Promise.all([
+    const [batch, live, funnel, trend, commerce] = await Promise.all([
       googleReport<{ reports?: GaTable[] }>(token, "batchRunReports", {
         requests,
       }),
       googleReport<GaTable>(token, "runRealtimeReport", {
         metrics: [{ name: "activeUsers" }, { name: "screenPageViews" }],
       }).then(
-        (data) => ({ data, error: null }),
+        (data) =>
+          completeTable(data, ["activeUsers", "screenPageViews"])
+            ? { data, error: null }
+            : {
+                data: null,
+                error: "GA4 trả về dữ liệu thời gian thực chưa đầy đủ.",
+              },
         () => ({
           data: null,
           error:
@@ -189,10 +222,11 @@ export async function getAdminTrafficReport(
           funnel: {
             isOpenFunnel: false,
             steps: [
+              "session_start",
               "view_item",
               "add_to_cart",
               "begin_checkout",
-              "order_submitted",
+              "purchase",
             ].map((name) => ({
               name,
               filterExpression: { funnelEventFilter: { eventName: name } },
@@ -203,8 +237,28 @@ export async function getAdminTrafficReport(
         true,
       ).then(
         (data) => ({
-          data: data.funnelTable ?? null,
-          error: data.funnelTable ? null : "GA4 chưa trả về báo cáo phễu.",
+          data: completeTable(
+            data.funnelTable,
+            [
+              "activeUsers",
+              "funnelStepCompletionRate",
+              "funnelStepAbandonments",
+            ],
+            "funnelStepName",
+          )
+            ? data.funnelTable!
+            : null,
+          error: completeTable(
+            data.funnelTable,
+            [
+              "activeUsers",
+              "funnelStepCompletionRate",
+              "funnelStepAbandonments",
+            ],
+            "funnelStepName",
+          )
+            ? null
+            : "GA4 chưa trả về báo cáo phễu đầy đủ.",
         }),
         () => ({
           data: null,
@@ -212,6 +266,51 @@ export async function getAdminTrafficReport(
             "Phễu tuần tự GA4 tạm chưa đọc được. Số liệu sự kiện riêng vẫn hiển thị bên dưới.",
         }),
       ),
+      googleReport<GaTable>(token, "runReport", {
+        ...report(
+          ["date"],
+          ["totalUsers", "sessions", "screenPageViews"],
+          "10000",
+        ),
+        orderBys: [{ dimension: { dimensionName: "date" } }],
+        keepEmptyRows: true,
+      }).then(
+        (data) =>
+          completeTable(
+            data,
+            ["totalUsers", "sessions", "screenPageViews"],
+            "date",
+          )
+            ? { data, error: null }
+            : { data: null, error: "GA4 trả về dữ liệu xu hướng chưa đầy đủ." },
+        () => ({
+          data: null,
+          error:
+            "Xu hướng theo ngày tạm chưa đọc được; chỉ số tổng quan vẫn có hiệu lực.",
+        }),
+      ),
+      (async () => {
+        try {
+          const { data, error } = await supabase.rpc("traffic_order_summary", {
+            p_from: range.from,
+            p_to: range.to,
+          });
+          if (
+            error ||
+            !data ||
+            !Number.isFinite(data.successful_orders) ||
+            !Array.isArray(data.landing_revenue)
+          )
+            throw new Error("Incomplete ledger summary");
+          return { data: data as TrafficCommerce, error: null };
+        } catch {
+          return {
+            data: null,
+            error:
+              "Chưa đọc được sổ đơn hàng để tính chuyển đổi và doanh thu theo trang đích. Kiểm tra kết nối và cập nhật cơ sở dữ liệu.",
+          };
+        }
+      })(),
     ]);
     if (
       batch.reports?.length !== 5 ||
@@ -233,9 +332,28 @@ export async function getAdminTrafficReport(
       live.data,
       funnel.data,
       range,
+      trend.data,
     );
     result.realtime_error = live.error;
     result.funnel_error = funnel.error;
+    result.trend_error = trend.error;
+    result.commerce = commerce.data;
+    result.commerce_error = commerce.error;
+    result.purchase_tracking_configured = purchaseAnalyticsConfigured();
+    result.successful_order_conversion_rate =
+      commerce.data && result.metrics.sessions
+        ? commerce.data.successful_orders / result.metrics.sessions
+        : null;
+    if (commerce.data) {
+      const byPath = new Map(
+        commerce.data.landing_revenue.map((row) => [row.name, row]),
+      );
+      for (const row of result.landing_pages) {
+        const attributed = byPath.get(row.name);
+        row.revenue = attributed?.revenue ?? 0;
+        row.successful_orders = attributed?.orders ?? 0;
+      }
+    }
     return result;
   } catch (error) {
     if (error instanceof HttpError) throw error;

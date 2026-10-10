@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Mail, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Discount } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
+import {
+  privateVoucherCustomerIds,
+  voucherEmailFooter,
+  voucherEmailStatusLabels,
+  type VoucherEmailCampaign,
+  type VoucherEmailDelivery,
+} from "@/lib/voucher-email";
 import {
   adminRequest,
   CheckField,
@@ -116,7 +123,99 @@ export function DiscountManager({
   const [scopeFilter, setScopeFilter] = useState<Scope | "all">("all");
   const [status, setStatus] = useState<keyof typeof statusLabels>("all");
   const [search, setSearch] = useState("");
+  const [voucherSearch, setVoucherSearch] = useState("");
   const [emailDiscount, setEmailDiscount] = useState<Discount | null>(null);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailRecipients, setEmailRecipients] = useState<string[]>([]);
+  const [emailConfigured, setEmailConfigured] = useState<boolean | null>(null);
+  const [emailHistory, setEmailHistory] = useState<VoucherEmailCampaign[]>([]);
+  const [emailResults, setEmailResults] = useState<
+    VoucherEmailDelivery[] | null
+  >(null);
+  const [emailAttempted, setEmailAttempted] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const emailKey = useRef("");
+  const emailInFlight = useRef(false);
+  const emailOpenToken = useRef(0);
+
+  async function openEmail(discount: Discount) {
+    const token = ++emailOpenToken.current;
+    emailKey.current = crypto.randomUUID();
+    setEmailDiscount(discount);
+    setEmailSubject(`${discount.title} — ưu đãi riêng từ Mộc Bàm`);
+    setEmailBody(
+      "Chào {ten_khach},\n\nMộc Bàm gửi bạn một ưu đãi riêng để cảm ơn bạn đã đồng hành cùng Mộc. Thông tin mã ưu đãi và cách sử dụng ở bên dưới.\n\nCảm ơn bạn,\nMộc Bàm",
+    );
+    setEmailRecipients(
+      privateVoucherCustomerIds(discount)
+        .filter((id) =>
+          customers.some(
+            (customer) => customer.user_id === id && customer.email,
+          ),
+        )
+        .slice(0, 50),
+    );
+    setEmailAttempted(false);
+    setEmailConfigured(null);
+    setEmailHistory([]);
+    setEmailResults(null);
+    try {
+      const data = await adminRequest(
+        `/api/admin/discounts/${discount.id}/email`,
+        "GET",
+      );
+      if (emailOpenToken.current !== token) return;
+      setEmailConfigured(Boolean(data.configured));
+      setEmailHistory(data.campaigns ?? []);
+    } catch (error) {
+      if (emailOpenToken.current !== token) return;
+      setEmailConfigured(false);
+      reportError(error);
+    }
+  }
+
+  async function sendEmail(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !emailDiscount ||
+      !emailConfigured ||
+      emailInFlight.current ||
+      !emailRecipients.length
+    )
+      return;
+    emailInFlight.current = true;
+    setEmailSending(true);
+    setEmailAttempted(true);
+    try {
+      const data = await adminRequest(
+        `/api/admin/discounts/${emailDiscount.id}/email`,
+        "POST",
+        {
+          idempotency_key: emailKey.current,
+          subject: emailSubject,
+          body: emailBody,
+          recipient_user_ids: emailRecipients,
+        },
+      );
+      const deliveries = data.deliveries as VoucherEmailDelivery[];
+      setEmailResults(deliveries);
+      const sent = deliveries.filter(
+        (delivery) => delivery.status === "sent",
+      ).length;
+      if (sent === deliveries.length)
+        toast.success(`Máy chủ email đã tiếp nhận ${sent} email.`);
+      else
+        toast.error(
+          `Đã tiếp nhận ${sent}/${deliveries.length} email. Xem kết quả từng khách hàng.`,
+        );
+    } catch (error) {
+      reportError(error);
+    } finally {
+      emailInFlight.current = false;
+      setEmailSending(false);
+    }
+  }
   function open(discount: Discount | "new", scope: Scope = "shop") {
     setEditing(discount);
     setSearch("");
@@ -213,16 +312,14 @@ export function DiscountManager({
   const filtered = discounts.filter(
     (discount) =>
       (scopeFilter === "all" || scopeOf(discount) === scopeFilter) &&
-      (status === "all" || statusOf(discount) === status),
+      (status === "all" || statusOf(discount) === status) &&
+      `${discount.title} ${discount.code}`
+        .toLocaleLowerCase("vi-VN")
+        .includes(voucherSearch.trim().toLocaleLowerCase("vi-VN")),
   );
   const recipients = emailDiscount
     ? customers.filter((customer) =>
-        (emailDiscount.customer_user_ids?.length
-          ? emailDiscount.customer_user_ids
-          : emailDiscount.customer_user_id
-            ? [emailDiscount.customer_user_id]
-            : []
-        ).includes(customer.user_id),
+        privateVoucherCustomerIds(emailDiscount).includes(customer.user_id),
       )
     : [];
   return (
@@ -586,38 +683,181 @@ export function DiscountManager({
               size="icon"
               variant="ghost"
               aria-label="Đóng phần email"
-              onClick={() => setEmailDiscount(null)}
+              disabled={emailSending}
+              onClick={() => {
+                emailOpenToken.current++;
+                setEmailDiscount(null);
+              }}
             >
               <X className="size-4" />
             </Button>
           </div>
           <p className="mt-2 text-sm leading-6 text-[#6b7867]">
-            Mỗi liên kết mở bản nháp trong ứng dụng email. Xem lại nội dung và
-            chọn gửi trong ứng dụng đó.
+            Chỉnh nội dung và chọn khách trước khi bấm gửi. Mỗi khách nhận email
+            riêng, không nhìn thấy địa chỉ của khách khác. Chỉ tài khoản đã xác
+            minh email được gửi.
           </p>
-          <ul className="mt-4 space-y-3">
-            {recipients.map((customer) => {
-              const subject = `${emailDiscount.title} — ưu đãi riêng từ Mộc Bàm`;
-              const body = `Chào ${customer.name || "bạn"},\n\nMộc Bàm gửi bạn mã ưu đãi riêng: ${emailDiscount.code}\nMức giảm: ${emailDiscount.kind === "percentage" ? `${emailDiscount.value}%` : formatPrice(emailDiscount.value)}\n${emailDiscount.description}\nGiá trị đơn tối thiểu: ${formatPrice(emailDiscount.min_subtotal)}\n${emailDiscount.max_discount !== null ? `Giảm tối đa: ${formatPrice(emailDiscount.max_discount)}\n` : ""}Thời gian bắt đầu: ${dateLabel(emailDiscount.starts_at)}\nThời gian kết thúc: ${dateLabel(emailDiscount.ends_at)}\n\nĐăng nhập bằng tài khoản ${customer.email} và nhập mã khi thanh toán trên website Mộc Bàm.\n\nCảm ơn bạn,\nMộc Bàm`;
-              return (
-                <li
-                  key={customer.user_id}
-                  className="flex flex-wrap items-center justify-between gap-2 border-b border-[#edf0e7] pb-3"
+          {emailConfigured === null ? (
+            <p className="mt-3 text-sm" role="status">
+              Đang kiểm tra kết nối email...
+            </p>
+          ) : (
+            !emailConfigured && (
+              <p
+                className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-900"
+                role="alert"
+              >
+                Chưa kết nối dịch vụ gửi email cho website. Cần cấu hình SMTP
+                trước khi gửi voucher.
+              </p>
+            )
+          )}
+          <form onSubmit={sendEmail} className="mt-5 space-y-4">
+            <fieldset
+              disabled={emailSending || emailAttempted}
+              className="space-y-4"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="voucher-email-subject">Tiêu đề email</Label>
+                <Input
+                  id="voucher-email-subject"
+                  required
+                  maxLength={200}
+                  value={emailSubject}
+                  onChange={(event) => setEmailSubject(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="voucher-email-body">Nội dung email</Label>
+                <Textarea
+                  id="voucher-email-body"
+                  required
+                  maxLength={10_000}
+                  rows={8}
+                  value={emailBody}
+                  onChange={(event) => setEmailBody(event.target.value)}
+                />
+                <p className="text-xs text-[#788273]">
+                  Dùng {"{ten_khach}"} để chèn tên khách và {"{email}"} để chèn
+                  tài khoản nhận email. Mã voucher và điều kiện được thêm tự
+                  động ở cuối email.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <p className="text-sm font-medium">
+                  Người nhận ({emailRecipients.length}/50)
+                </p>
+                <div className="max-h-64 space-y-3 overflow-y-auto rounded-lg border border-[#dfe5d8] p-3">
+                  {recipients.map((customer) => (
+                    <CheckField
+                      key={customer.user_id}
+                      label={`${customer.name || "Khách hàng"} · ${customer.email || "Chưa có email"}`}
+                      checked={emailRecipients.includes(customer.user_id)}
+                      disabled={
+                        !customer.email ||
+                        (!emailRecipients.includes(customer.user_id) &&
+                          emailRecipients.length >= 50)
+                      }
+                      onChange={(checked) =>
+                        setEmailRecipients((selected) =>
+                          checked
+                            ? [...selected, customer.user_id]
+                            : selected.filter((id) => id !== customer.user_id),
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            </fieldset>
+            <details className="rounded-lg bg-[#f6f8f1] p-3 text-sm">
+              <summary className="cursor-pointer font-medium">
+                Thông tin voucher tự động đính kèm
+              </summary>
+              <p className="mt-2 whitespace-pre-line leading-6">
+                {voucherEmailFooter(
+                  emailDiscount,
+                  typeof window === "undefined"
+                    ? "website Mộc Bàm"
+                    : window.location.origin,
+                )}
+              </p>
+            </details>
+            {emailAttempted && (
+              <p className="text-sm text-[#6b7867]">
+                Nội dung lần gửi này đã được khóa để tránh gửi trùng. Thử lại
+                chỉ xử lý email chưa bắt đầu gửi. Muốn soạn lần gửi mới, đóng
+                phần email rồi mở lại và kiểm tra lịch sử bên dưới.
+              </p>
+            )}
+            <Button
+              type="submit"
+              disabled={
+                emailSending ||
+                !emailConfigured ||
+                !emailRecipients.length ||
+                (emailResults !== null &&
+                  !emailResults.some(
+                    (delivery) => delivery.status === "pending",
+                  ))
+              }
+            >
+              <Mail className="size-4" />
+              {emailSending
+                ? "Đang gửi..."
+                : emailAttempted
+                  ? "Kiểm tra / tiếp tục lần gửi"
+                  : `Gửi email cho ${emailRecipients.length} khách`}
+            </Button>
+          </form>
+          {emailResults && (
+            <div className="mt-5 space-y-2" aria-live="polite">
+              <h3 className="font-medium">Kết quả lần gửi</h3>
+              {emailResults.map((delivery) => (
+                <p
+                  key={delivery.id}
+                  className="rounded-lg bg-[#f6f8f1] p-3 text-sm"
                 >
-                  <span className="text-sm">
-                    {customer.name} · {customer.email}
-                  </span>
-                  <a
-                    className="inline-flex items-center gap-2 rounded-lg border border-[#d4dcce] px-3 py-2 text-sm"
-                    href={`mailto:${encodeURIComponent(customer.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
-                  >
-                    <Mail className="size-4" />
-                    Soạn email
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
+                  {delivery.recipient_email}:{" "}
+                  {voucherEmailStatusLabels[delivery.status]}
+                  {delivery.error_message && (
+                    <span className="mt-1 block text-red-800">
+                      {delivery.error_message}
+                    </span>
+                  )}
+                </p>
+              ))}
+              <p className="text-xs text-[#788273]">
+                Máy chủ tiếp nhận email chưa bảo đảm email vào hộp thư đến.
+                Email thất bại hoặc chưa rõ kết quả không được tự động gửi lại.
+              </p>
+            </div>
+          )}
+          {!!emailHistory.length && (
+            <details className="mt-5 border-t border-[#edf0e7] pt-4 text-sm">
+              <summary className="cursor-pointer font-medium">
+                Lịch sử 5 lần gửi gần nhất
+              </summary>
+              <ul className="mt-3 space-y-4">
+                {emailHistory.map((campaign) => (
+                  <li key={campaign.id}>
+                    <p className="font-medium">
+                      {campaign.subject} · {dateLabel(campaign.created_at)}
+                    </p>
+                    {campaign.deliveries.map((delivery) => (
+                      <p key={delivery.id} className="mt-1 text-[#6b7867]">
+                        {delivery.recipient_email}:{" "}
+                        {voucherEmailStatusLabels[delivery.status]}
+                        {delivery.error_message
+                          ? ` · ${delivery.error_message}`
+                          : ""}
+                      </p>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           {!recipients.length && (
             <p className="mt-4 text-sm text-[#6b7867]">
               Không tìm thấy thông tin email của tài khoản đã chọn. Hãy kiểm tra
@@ -627,6 +867,13 @@ export function DiscountManager({
         </section>
       )}
       <div className="flex flex-wrap items-center gap-3">
+        <Input
+          aria-label="Tìm voucher theo tên hoặc mã"
+          placeholder="Tìm tên chương trình hoặc mã voucher"
+          value={voucherSearch}
+          onChange={(event) => setVoucherSearch(event.target.value)}
+          className="sm:max-w-xs"
+        />
         <label className="text-sm">
           Loại voucher
           <select
@@ -760,7 +1007,8 @@ export function DiscountManager({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setEmailDiscount(discount)}
+                          disabled={emailSending}
+                          onClick={() => void openEmail(discount)}
                         >
                           <Mail className="size-4" />
                           Soạn email

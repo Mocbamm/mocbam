@@ -6,14 +6,19 @@ import { Input } from "@/components/ui/input";
 export function AddressFields({
   onChange,
 }: {
-  onChange?: (destination: { province: string; ward: string }) => void;
+  onChange?: (destination: {
+    province: string;
+    ward: string;
+    address: string;
+  }) => void;
 }) {
   const [province, setProvince] = useState(""),
     [manual, setManual] = useState(false);
   const selected = provinces.find((p) => p.name === province);
   const [ward, setWard] = useState("");
+  const [address, setAddress] = useState("");
   const style =
-    "mt-2 h-10 w-full border border-[#d7ddcd] bg-transparent px-3 text-sm";
+    "store-address-select mt-2 h-10 w-full border border-[#d7ddcd] bg-transparent px-3 text-sm";
   return (
     <>
       <div className="sm:col-span-2">
@@ -21,6 +26,11 @@ export function AddressFields({
         <Input
           id="checkout-address"
           name="address"
+          value={address}
+          onChange={(event) => {
+            setAddress(event.target.value);
+            onChange?.({ province, ward, address: event.target.value });
+          }}
           autoComplete="street-address"
           required
           maxLength={398}
@@ -39,7 +49,7 @@ export function AddressFields({
             maxLength={100}
             onChange={(event) => {
               setProvince(event.target.value);
-              onChange?.({ province: event.target.value, ward });
+              onChange?.({ province: event.target.value, ward, address });
             }}
             className="mt-2"
           />
@@ -51,7 +61,7 @@ export function AddressFields({
             onChange={(e) => {
               setProvince(e.target.value);
               setWard("");
-              onChange?.({ province: e.target.value, ward: "" });
+              onChange?.({ province: e.target.value, ward: "", address });
             }}
             autoComplete="address-level1"
             required
@@ -77,7 +87,7 @@ export function AddressFields({
             maxLength={100}
             onChange={(event) => {
               setWard(event.target.value);
-              onChange?.({ province, ward: event.target.value });
+              onChange?.({ province, ward: event.target.value, address });
             }}
             className="mt-2"
           />
@@ -89,7 +99,7 @@ export function AddressFields({
             value={ward}
             onChange={(event) => {
               setWard(event.target.value);
-              onChange?.({ province, ward: event.target.value });
+              onChange?.({ province, ward: event.target.value, address });
             }}
             autoComplete="address-level2"
             required
@@ -112,7 +122,7 @@ export function AddressFields({
             setManual((v) => !v);
             setProvince("");
             setWard("");
-            onChange?.({ province: "", ward: "" });
+            onChange?.({ province: "", ward: "", address });
           }}
           className="text-xs underline underline-offset-4"
         >

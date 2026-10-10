@@ -127,6 +127,14 @@ export function safeNext(value: string | null, fallback = "/tai-khoan") {
 
 export function databaseError(error: { message: string; code?: string }) {
   const known: Record<string, [number, string]> = {
+    SHIPPING_QUOTE_REQUIRED: [
+      409,
+      "Vui lòng tính lại phí giao hàng theo địa chỉ trước khi đặt đơn.",
+    ],
+    SHIPPING_QUOTE_EXPIRED: [
+      409,
+      "Phí giao hàng đã hết hạn hoặc địa chỉ/cài đặt đã đổi. Vui lòng tính lại phí.",
+    ],
     DISCOUNT_UNAVAILABLE: [
       409,
       "Mã ưu đãi không còn hiệu lực hoặc không áp dụng cho tài khoản này.",

@@ -27,7 +27,7 @@ const postColumns =
 export const orderColumns =
   "id,reference,user_id,customer_name,email,phone,address,city,note,subtotal,shipping_fee,total,discount_code,discount_amount,status,payment_method,payment_status,paid_at,refunded_at,return_restocked,returned_at,payment_bank_bin,payment_bank_name,payment_bank_account_number,payment_bank_account_name,created_at,items:order_items(id,product_id,variant_id,variant_name,name,price,quantity,line_discount)";
 export const settingsColumns =
-  "shipping_fee,shipping_zones,shop_email,shop_phone,shop_address,shop_hours,facebook_url,instagram_url,tiktok_url,zalo_url,shopee_url,bank_transfer_enabled,bank_bin,bank_name,bank_account_number,bank_account_name";
+  "shipping_fee,shipping_zones,shipping_distance_enabled,shipping_origin_address,shipping_distance_bands,shop_email,shop_phone,shop_address,shop_hours,facebook_url,instagram_url,tiktok_url,zalo_url,shopee_url,bank_transfer_enabled,bank_bin,bank_name,bank_account_number,bank_account_name";
 
 export async function getProducts(): Promise<Product[]> {
   if (!isConfigured())

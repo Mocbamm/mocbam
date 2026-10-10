@@ -53,6 +53,47 @@ beforeEach(() => {
     error: null,
   });
 });
+
+it("saves optional consented attribution atomically without changing order idempotency hashes", async () => {
+  mocks.rpc.mockResolvedValue({
+    data: { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", reference: "MB-1" },
+    error: null,
+  });
+  const analytics = {
+    consent: true,
+    client_id: "123.456",
+    session_id: "789",
+    landing_path: "/san-pham",
+  };
+  const response = await send({ ...input, payment_method: "cod", analytics });
+  expect(response.status).toBe(201);
+  expect(mocks.rpc).toHaveBeenCalledWith(
+    "create_order_with_analytics",
+    expect.objectContaining({
+      p_analytics: analytics,
+      p_payload_hash: digest(
+        canonicalOrderPayload(
+          orderSchema.parse({ ...input, payment_method: "cod" }),
+          null,
+        ),
+      ),
+    }),
+  );
+});
+
+it("rejects private URLs and personal fields in attribution before creating an order", async () => {
+  const response = await send({
+    ...input,
+    analytics: {
+      consent: true,
+      client_id: "123.456",
+      session_id: "789",
+      landing_path: "/don-hang/private",
+    },
+  });
+  expect(response.status).toBe(400);
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});
 afterEach(() => vi.unstubAllEnvs());
 
 describe("HTTP checkout compatibility across manual-payment deployment", () => {

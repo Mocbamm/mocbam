@@ -5,6 +5,7 @@ import {
   databaseError,
   json,
   readJson,
+  HttpError,
 } from "@/lib/http";
 import { getAdminSettings, settingsColumns } from "@/lib/catalog";
 import { settingsSchema } from "@/lib/validation";
@@ -14,6 +15,11 @@ export async function PATCH(request: Request) {
     assertSameOrigin(request);
     const { supabase } = await requireAdmin();
     const input = settingsSchema.parse(await readJson(request));
+    if (input.shipping_distance_enabled && !process.env.GOOGLE_MAPS_API_KEY)
+      throw new HttpError(
+        409,
+        "Cần cấu hình Google Routes trên máy chủ trước khi bật phí theo km.",
+      );
     const { data, error } = await supabase
       .from("site_settings")
       .update(input)

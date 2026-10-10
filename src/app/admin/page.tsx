@@ -12,16 +12,40 @@ import { paymentStatusLabels } from "@/lib/payments";
 import { AdminHeading } from "@/components/admin/admin-shell";
 import { EmptyState, StatusBadge } from "@/components/admin/admin-common";
 import { canRenderAdmin } from "@/components/admin/admin-access";
+import { filterOverviewOrders } from "@/lib/admin-search";
+import type { OrderStatus } from "@/lib/types";
 
 const panelClass =
   "rounded-2xl border border-[#dfe5d8] bg-white p-5 shadow-sm sm:p-6";
 
-export default async function AdminDashboard() {
+const overviewStatuses: { value: OrderStatus; label: string }[] = [
+  { value: "pending", label: "Chờ xác nhận" },
+  { value: "confirmed", label: "Đã xác nhận" },
+  { value: "processing", label: "Đang chuẩn bị" },
+  { value: "shipped", label: "Đang giao" },
+  { value: "completed", label: "Hoàn tất" },
+  { value: "cancelled", label: "Đã hủy" },
+  { value: "returned", label: "Đã nhận hoàn hàng" },
+];
+
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[]; status?: string | string[] }>;
+}) {
   if (!(await canRenderAdmin())) return null;
+  const params = await searchParams;
+  const query = (typeof params.q === "string" ? params.q : "").slice(0, 200);
+  const status = overviewStatuses.some(
+    (option) => option.value === params.status,
+  )
+    ? (params.status as OrderStatus)
+    : "all";
   const [stats, orders] = await Promise.all([
     getAdminDashboard(),
     getAdminOrders(),
   ]);
+  const filteredOrders = filterOverviewOrders(orders, query, status);
   const cards = [
     {
       title: "Sản phẩm",
@@ -90,9 +114,59 @@ export default async function AdminDashboard() {
             Xem tất cả <ArrowUpRight className="size-4" />
           </Link>
         </div>
-        {orders.length === 0 ? (
+        <form
+          action="/admin"
+          method="get"
+          className="mb-4 flex flex-wrap items-end gap-3"
+        >
+          <label className="min-w-48 flex-1 text-xs text-[#6b7867]">
+            Tìm đơn hàng
+            <input
+              className="mt-1 w-full rounded-lg border border-[#d4dcce] px-3 py-2.5 text-sm text-[#294836]"
+              type="search"
+              name="q"
+              defaultValue={query}
+              maxLength={200}
+              placeholder="Mã đơn, khách hàng, email, điện thoại"
+            />
+          </label>
+          <label className="text-xs text-[#6b7867]">
+            Trạng thái
+            <select
+              className="mt-1 block rounded-lg border border-[#d4dcce] bg-white px-3 py-2.5 text-sm text-[#294836]"
+              name="status"
+              defaultValue={status}
+            >
+              <option value="all">Tất cả trạng thái</option>
+              {overviewStatuses.map((option) => (
+                <option value={option.value} key={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className="rounded-lg bg-[#294836] px-4 py-2.5 text-sm font-medium text-white"
+            type="submit"
+          >
+            Lọc đơn
+          </button>
+          {(query || status !== "all") && (
+            <Link className="px-2 py-2.5 text-sm underline" href="/admin">
+              Xóa bộ lọc
+            </Link>
+          )}
+        </form>
+        <p className="mb-4 text-xs leading-5 text-[#6b7867]">
+          Hiển thị {Math.min(6, filteredOrders.length)}/{filteredOrders.length}{" "}
+          đơn phù hợp, mới nhất trước. Bộ lọc chỉ áp dụng cho danh sách đơn; các
+          thẻ tổng quan tính toàn cửa hàng.
+        </p>
+        {filteredOrders.length === 0 ? (
           <EmptyState>
-            Chưa có đơn hàng. Đơn đặt mới sẽ xuất hiện tại đây.
+            {orders.length === 0
+              ? "Chưa có đơn hàng. Đơn đặt mới sẽ xuất hiện tại đây."
+              : "Không có đơn hàng phù hợp với tìm kiếm và trạng thái đã chọn."}
           </EmptyState>
         ) : (
           <div className="overflow-x-auto">
@@ -107,7 +181,7 @@ export default async function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {orders.slice(0, 6).map((order) => (
+                {filteredOrders.slice(0, 6).map((order) => (
                   <tr
                     key={order.id}
                     className="border-b border-[#edf0e7] last:border-0"

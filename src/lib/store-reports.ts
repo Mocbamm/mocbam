@@ -23,6 +23,7 @@ export type ReportOrder = Pick<
   >;
 export type ReportRange = { from: string; to: string };
 export type ReportPeriod = "today" | "yesterday" | "week" | "month" | "year";
+export type ReportGrouping = "day" | "week" | "month";
 
 export function storeDate(value: string | Date) {
   const date = new Date(value);
@@ -189,6 +190,7 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
     {
       method: PaymentMethod;
       order_count: number;
+      net_sales: number;
       collected: number;
       refunded: number;
       awaiting: number;
@@ -200,6 +202,7 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
       payments.set(method, {
         method,
         order_count: 0,
+        net_sales: 0,
         collected: 0,
         refunded: 0,
         awaiting: 0,
@@ -271,6 +274,7 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
     if (order.payment_status === "awaiting_payment")
       method.awaiting += Number(order.total);
     if (order.payment_status === "refunded") continue;
+    method.net_sales += merchandiseNet(order);
     shippingCharged += Number(order.shipping_fee ?? 0);
     const lines = order.items ?? [];
     for (const item of lines) {
@@ -312,6 +316,9 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
     completed_order_count: statusCounts.completed,
     successful_order_count: completed.length,
     returned_order_count: statusCounts.returned,
+    refunded_order_count: selected.filter(
+      (order) => order.payment_status === "refunded",
+    ).length,
     order_value: orderValue,
     average_order_value: active.length ? orderValue / active.length : 0,
     completed_average_order_value: completed.length
@@ -372,6 +379,85 @@ export function buildStoreReport(orders: ReportOrder[], range: ReportRange) {
   };
 }
 export type StoreReport = ReturnType<typeof buildStoreReport>;
+export type ReportTrendRow = StoreReport["daily"][number] & {
+  end_date: string;
+};
+
+function calendarDate(date: string) {
+  return new Date(`${date}T12:00:00Z`);
+}
+function dateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+function bucketStart(date: string, grouping: ReportGrouping) {
+  if (grouping === "month") return `${date.slice(0, 7)}-01`;
+  if (grouping === "day") return date;
+  const start = calendarDate(date);
+  start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7));
+  return dateKey(start);
+}
+function nextBucket(date: string, grouping: ReportGrouping) {
+  const next = calendarDate(date);
+  if (grouping === "month") next.setUTCMonth(next.getUTCMonth() + 1);
+  else next.setUTCDate(next.getUTCDate() + (grouping === "week" ? 7 : 1));
+  return dateKey(next);
+}
+
+/** Aggregate only the selected report; a missing unit cost stays unknown. */
+export function reportTrend(
+  report: StoreReport,
+  grouping: ReportGrouping,
+  range?: ReportRange,
+): ReportTrendRow[] {
+  if (!report.daily.length) return [];
+  const from = range?.from || report.daily[0].date;
+  const to = range?.to || report.daily.at(-1)!.date;
+  if (from > to) return [];
+  const buckets = new Map<string, ReportTrendRow>();
+  for (
+    let start = bucketStart(from, grouping);
+    start <= to;
+    start = nextBucket(start, grouping)
+  ) {
+    const end = calendarDate(nextBucket(start, grouping));
+    end.setUTCDate(end.getUTCDate() - 1);
+    buckets.set(start, {
+      date: start,
+      end_date: dateKey(end),
+      order_count: 0,
+      order_value: 0,
+      gross_sales: 0,
+      discounts: 0,
+      cancelled_sales: 0,
+      net_sales: 0,
+      collected: 0,
+      refunded: 0,
+      cost: 0,
+      cost_complete: true,
+      cogs: 0,
+      gross_profit: 0,
+    });
+  }
+  for (const row of report.daily) {
+    const bucket = buckets.get(bucketStart(row.date, grouping));
+    if (!bucket) continue;
+    bucket.order_count += row.order_count;
+    bucket.order_value += row.order_value;
+    bucket.gross_sales += row.gross_sales;
+    bucket.discounts += row.discounts;
+    bucket.cancelled_sales += row.cancelled_sales;
+    bucket.net_sales += row.net_sales;
+    bucket.collected += row.collected;
+    bucket.refunded += row.refunded;
+    bucket.cost += row.cost;
+    bucket.cost_complete &&= row.cost_complete;
+    bucket.cogs = bucket.cost_complete ? bucket.cost : null;
+    bucket.gross_profit = bucket.cost_complete
+      ? bucket.net_sales - bucket.cost
+      : null;
+  }
+  return [...buckets.values()];
+}
 
 /** Quote delimiters and neutralize spreadsheet formula prefixes. */
 export function csvCell(value: string | number) {
@@ -382,10 +468,28 @@ export function csvCell(value: string | number) {
       : text;
   return `"${safe.replaceAll('"', '""')}"`;
 }
-export function reportCsv(report: StoreReport) {
+export function reportCsv(
+  report: StoreReport,
+  grouping: ReportGrouping = "day",
+  range?: ReportRange,
+) {
+  const trend =
+    grouping === "day" && !range
+      ? report.daily
+      : reportTrend(report, grouping, range);
   const rows: (string | number)[][] = [
     ["Chỉ số", "Giá trị (VND nếu là tiền)"],
     ["Số đơn", report.order_count],
+    ["Đơn hoàn tất đã thanh toán", report.successful_order_count],
+    ["Đơn hủy", report.cancelled_order_count],
+    [
+      "Tỷ lệ hủy (%)",
+      report.order_count
+        ? (report.cancelled_order_count / report.order_count) * 100
+        : 0,
+    ],
+    ["Đơn trả hàng", report.returned_order_count],
+    ["Đơn đã hoàn tiền (có thể gồm đơn trả hàng)", report.refunded_order_count],
     ["GMV trước giảm giá và hủy/hoàn", report.gross_sales],
     ["Giảm giá (đơn chưa hủy)", report.discounts],
     ["Giá trị sản phẩm đã hủy", report.cancelled_sales],
@@ -413,7 +517,11 @@ export function reportCsv(report: StoreReport) {
     ["Đơn còn thiếu giá vốn", report.missing_cost_order_count],
     [],
     [
-      "Ngày (Việt Nam)",
+      grouping === "week"
+        ? "Tuần bắt đầu thứ Hai (Việt Nam)"
+        : grouping === "month"
+          ? "Tháng (Việt Nam)"
+          : "Ngày (Việt Nam)",
       "Số đơn",
       "GMV",
       "Giảm giá",
@@ -426,7 +534,7 @@ export function reportCsv(report: StoreReport) {
       "Giá vốn",
       "Lợi nhuận gộp dự kiến",
     ],
-    ...report.daily.map((row) => [
+    ...trend.map((row) => [
       row.date,
       row.order_count,
       row.gross_sales,
@@ -444,6 +552,8 @@ export function reportCsv(report: StoreReport) {
     [
       "Phương thức thanh toán",
       "Số đơn",
+      "Doanh thu sản phẩm thuần",
+      "Tỷ trọng doanh thu (%)",
       "Tiền xác nhận",
       "Tiền hoàn",
       "Chờ thanh toán",
@@ -451,6 +561,8 @@ export function reportCsv(report: StoreReport) {
     ...report.payment_breakdown.map((row) => [
       row.method,
       row.order_count,
+      row.net_sales,
+      report.net_sales ? (row.net_sales / report.net_sales) * 100 : 0,
       row.collected,
       row.refunded,
       row.awaiting,

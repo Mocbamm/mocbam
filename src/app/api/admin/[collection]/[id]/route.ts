@@ -17,6 +17,7 @@ import {
   statusSchema,
   discountSchema,
 } from "@/lib/validation";
+import { deliverOrderAnalytics } from "@/lib/order-analytics-server";
 
 export async function PATCH(
   request: Request,
@@ -37,6 +38,7 @@ export async function PATCH(
           input.status === "returned" ? (input.restock ?? false) : false,
       });
       if (error) throw databaseError(error);
+      await deliverOrderAnalytics();
       return json({ data });
     }
     if (collection === "products") {

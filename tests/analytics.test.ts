@@ -5,9 +5,14 @@ import {
   syncAnalyticsPage,
   trackCartQuantityChange,
   trackStoreEvent,
+  checkoutAnalytics,
+  analyticsReferrer,
 } from "../src/lib/analytics";
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
 function browser(pathname: string, consent: boolean) {
   const gtag = vi.fn(),
     fbq = vi.fn();
@@ -21,6 +26,72 @@ function browser(pathname: string, consent: boolean) {
   return { gtag, fbq };
 }
 describe("shopping analytics", () => {
+  it("keeps only the external referrer domain for source reporting", () => {
+    browser("/san-pham", true);
+    vi.stubGlobal("document", {
+      referrer: "https://www.google.com/search?q=private+email",
+    });
+    expect(analyticsReferrer()).toBe("https://www.google.com");
+  });
+  it("captures supported GA identity only after consent and excludes personal checkout fields", async () => {
+    const { gtag } = browser("/thanh-toan", true);
+    vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST");
+    gtag.mockImplementation((_command, _id, field, callback) =>
+      callback(field === "client_id" ? "123.456" : "789"),
+    );
+    expect(await checkoutAnalytics()).toEqual({
+      consent: true,
+      client_id: "123.456",
+      session_id: "789",
+      landing_path: "/thanh-toan",
+    });
+    (
+      window as Window & { mocbamAnalyticsConsent?: boolean }
+    ).mocbamAnalyticsConsent = false;
+    expect(await checkoutAnalytics()).toBeNull();
+    expect(gtag).toHaveBeenCalledTimes(2);
+  });
+  it("drops attribution when consent is withdrawn during GA identity resolution", async () => {
+    const { gtag } = browser("/thanh-toan", true);
+    vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST");
+    gtag.mockImplementation((_command, _id, field, callback) => {
+      (
+        window as Window & { mocbamAnalyticsConsent?: boolean }
+      ).mocbamAnalyticsConsent = false;
+      callback(field === "client_id" ? "123.456" : "789");
+    });
+    expect(await checkoutAnalytics()).toBeNull();
+  });
+  it("preserves the first consented landing across a reload and resets it for a new GA session", async () => {
+    const values = new Map<string, string>();
+    vi.stubGlobal("sessionStorage", {
+      getItem: (key: string) => values.get(key) || null,
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
+    });
+    vi.stubEnv("NEXT_PUBLIC_GA_ID", "G-TEST");
+    const target = () =>
+      window as Window & {
+        mocbamAnalyticsLandingPath?: string;
+        mocbamAnalyticsLandingSession?: string;
+      };
+    let sessionId = "789";
+    let { gtag } = browser("/thanh-toan", true);
+    const get = (
+      _command: unknown,
+      _id: unknown,
+      field: string,
+      callback: (value: string) => void,
+    ) => callback(field === "client_id" ? "123.456" : sessionId);
+    gtag.mockImplementation(get);
+    target().mocbamAnalyticsLandingPath = "/san-pham";
+    expect((await checkoutAnalytics())?.landing_path).toBe("/san-pham");
+    ({ gtag } = browser("/thanh-toan", true));
+    gtag.mockImplementation(get);
+    expect((await checkoutAnalytics())?.landing_path).toBe("/san-pham");
+    sessionId = "790";
+    expect((await checkoutAnalytics())?.landing_path).toBe("/thanh-toan");
+  });
   it("does not send events before consent", () => {
     const { gtag, fbq } = browser("/san-pham", false);
     trackStoreEvent("add_to_cart", { value: 189000, currency: "VND" });

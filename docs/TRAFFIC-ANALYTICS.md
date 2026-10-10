@@ -1,0 +1,38 @@
+# Website traffic reporting and successful purchases
+
+The admin traffic module reads the existing Mộc Bàm GA4 property; it does not create another property or duplicate the storefront tag. Collection, report access and backend purchase delivery have separate credentials. A public `G-` measurement ID proves neither report access nor purchase delivery.
+
+## Activate the existing property
+
+The previously configured property is `557218756`, with web measurement ID `G-PV2R92QXC7`. Confirm these against the intended Mộc Bàm property before changing production settings.
+
+1. Keep the existing `NEXT_PUBLIC_GA_ID` in Vercel Production. Public tracking values are embedded during the build, so changing that ID requires redeployment.
+2. In the existing Google Cloud project, enable Google Analytics Data API. Use a reporting service account and grant its email **Viewer** access to the existing GA4 property. Set server-only `GA_PROPERTY_ID`, `GA_SERVICE_ACCOUNT_EMAIL` and `GA_SERVICE_ACCOUNT_PRIVATE_KEY` in Vercel Production. Escaped `\n` separators in the PEM key are supported. The application requests only the `analytics.readonly` scope. A short-lived `GA_ACCESS_TOKEN` can be used for diagnostics, but is not durable production authentication.
+3. In the existing GA4 web data stream, obtain a Measurement Protocol API secret and set server-only `GA_MEASUREMENT_PROTOCOL_SECRET`. It must belong to the same stream as `NEXT_PUBLIC_GA_ID`. The reporting service account does not replace this secret. Never prefix secrets or private keys with `NEXT_PUBLIC_`, commit them, paste them into content settings, or expose them in screenshots.
+4. Apply `202610100013_analytics_attribution.sql` after the earlier migrations, then redeploy. This adds private consented attribution, a delivery outbox and an admin-only aggregate report function. Without the migration the report marks ledger conversion and revenue unavailable, rather than displaying fabricated values.
+
+Open Admin → Analytics → Website traffic with the real administrator account. Verify date selection, realtime, charts, CSV and the absence of the disconnected-source message. Public tracking was verified previously; current server report and purchase credentials must be verified independently. At the time of this implementation, Vercel had the public GA tag but no server reporting credentials or Measurement Protocol secret.
+
+## What the figures mean
+
+- GA4 supplies sessions, unique users, views, engagement, bounce rate, average session duration, daily user trend, source/medium and device breakdowns. Pages/session is views divided by sessions; a period with no sessions has no defined ratio. Successful daily reports fill calendar dates without events with zero; failed, sampled, thresholded or truncated responses never invent missing dates.
+- Successful orders are real store orders whose current state is **completed and paid**. Conversion is that count for orders created in the selected dates divided by GA4 sessions. Store dates use Vietnam time; GA4 uses the property's configured timezone. The ledger includes customers who decline analytics, while GA4 may omit declined or blocked sessions. The displayed ratio is therefore not a matched, fully observed customer cohort and can exceed 100%.
+- The five-step sequential GA4 funnel is `session_start → view_item → add_to_cart → begin_checkout → purchase`. Its counts are users, its baseline is the first step, and its dates follow event occurrence. Opening a receipt or accepting an unpaid order never sends `purchase`; accepted orders remain the separate `order_submitted` event.
+- Landing revenue comes from the store ledger: successful merchandise sales after vouchers, excluding shipping. Only the first public pathname recorded after consent in the same GA session is assigned. Orders without valid saved attribution remain unassigned. Cancelled, returned and refunded orders do not contribute. The table includes GA4 landing sessions, views and bounce rate; CSV also exports every attributed revenue row, even outside the top 100 GA landing pages.
+- GA4 bounce rate means the proportion of sessions that were not engaged. It is not the old single-page-only definition. Thresholding, sampling, provider delays and row limits are identified in the report. Missing credentials, failed auxiliary reports and unknown ledger values remain unavailable; a provider-confirmed empty period can correctly show zero.
+
+## Consent and delivery behavior
+
+Analytics scripts load only after consent on public storefront routes. Admin, authentication, account and receipt routes are excluded. No tracking runs on previews. External referrer domains are retained for search/social/referral sources; referrer paths, queries, campaign/ad identifiers, emails, phone numbers, addresses and receipt tokens are excluded.
+
+Checkout uses Google's supported `gtag get` callbacks for the actual consented client and session IDs. It never parses Google cookies or invents an ID when tracking is blocked. A query-free public landing pathname is retained in session storage, reset for a new GA session and removed when consent is withdrawn. Order attribution is saved atomically with order creation, cannot be replaced by an idempotent replay, and is not exposed in customer receipts, admin exports or customer-readable tables. A checkout-time consent decision allows the later backend purchase event for that order.
+
+The database queues purchase once both delivery and payment succeed, irrespective of which was confirmed first. A real refund queues a refund event only if a purchase was recorded. Dispatch runs after staff fulfillment/payment changes and when connected traffic reports refresh. Leases prevent concurrent sends; failed purchases retry with the same order UUID as transaction ID. The event contains the actual discounted merchandise value, shipping separately, VND and item snapshots. Advertising personalization and advertising user data are denied.
+
+HTTP acceptance means Google accepted the request, not that a processed report is already available. Google documents transaction-ID deduplication for web purchases. Refunds do not have that same documented guarantee, so an ambiguous refund network failure or abandoned dispatch lease is marked `uncertain` instead of automatically deducting revenue again. The admin report flags events requiring reconciliation. An authorized operator must confirm the transaction in GA4 before marking it accepted or returning it to the pending queue. Synchronous HTTP failures can retry; events beyond Google's 72-hour backdate window expire rather than being assigned a false recent timestamp. Store finance and landing revenue remain authoritative regardless of delivery status.
+
+## Verification
+
+Unit and migrated PostgreSQL tests cover consent, private-path/PII rejection, immutable replay attribution, staff-only access, paid-plus-completed transitions in both orders, delivery leases, retries, real refund sequencing, expired events, provider failures, complete funnel requests, derived metrics and CSV values. Production verification still requires the real provider credentials. Avoid sending synthetic production GA purchases merely to populate a chart.
+
+Provider references: [GA4 Data API dimensions and metrics](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema), [sequential funnels](https://developers.google.com/analytics/devguides/reporting/data/v1/funnels), [Measurement Protocol transport and consent](https://developers.google.com/analytics/devguides/collection/protocol/ga4/reference), [purchase transaction deduplication](https://support.google.com/analytics/answer/12313109?hl=en).

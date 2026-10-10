@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { ImagePlus, LoaderCircle } from "lucide-react";
+import { ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,20 +168,43 @@ export function ImageField({
             className="hidden"
             aria-label="Chọn ảnh tải lên"
           />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => fileInput.current?.click()}
-            disabled={disabled || uploading}
-          >
-            {uploading ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <ImagePlus className="size-4" />
-            )}
-            {uploading ? "Đang tải..." : "Tải ảnh lên"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInput.current?.click()}
+              disabled={disabled || uploading}
+            >
+              {uploading ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <ImagePlus className="size-4" />
+              )}
+              {uploading ? "Đang tải..." : "Tải ảnh lên"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onChange("/images/product-placeholder.svg")}
+              disabled={
+                disabled ||
+                uploading ||
+                !value ||
+                value === "/images/product-placeholder.svg"
+              }
+            >
+              <Trash2 className="size-4" />
+              Gỡ ảnh
+            </Button>
+          </div>
+          {value === "/images/product-placeholder.svg" && (
+            <p className="text-xs leading-5 text-[#6b7867]">
+              Ảnh sản phẩm đã được gỡ; ảnh giữ chỗ được dùng cho đến khi chọn
+              ảnh mới. Lưu sản phẩm để áp dụng.
+            </p>
+          )}
           <p className="text-xs text-[#788273]">
             URL HTTPS từ Supabase, /images/... hoặc ảnh đã tải. Tải JPG, PNG
             hoặc WebP · tối đa 4 MB.

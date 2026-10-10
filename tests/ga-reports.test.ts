@@ -34,6 +34,7 @@ function reports() {
     "sessions",
     "screenPageViews",
     "engagementRate",
+    "bounceRate",
   ];
   return [
     {
@@ -43,13 +44,13 @@ function reports() {
       metadata: { timeZone: "Asia/Ho_Chi_Minh" },
     },
     table(["sessionSourceMedium"], breakdown, [
-      { dimensions: ["google / organic"], metrics: [5, 7, 15, 0.5] },
+      { dimensions: ["google / organic"], metrics: [5, 7, 15, 0.5, 0.5] },
     ]),
     table(["landingPage"], breakdown, [
-      { dimensions: ["/san-pham"], metrics: [4, 5, 10, 0.7] },
+      { dimensions: ["/san-pham"], metrics: [4, 5, 10, 0.7, 0.3] },
     ]),
     table(["deviceCategory"], breakdown, [
-      { dimensions: ["mobile"], metrics: [8, 12, 20, 0.6] },
+      { dimensions: ["mobile"], metrics: [8, 12, 20, 0.6, 0.4] },
     ]),
     table(
       ["eventName"],
@@ -66,6 +67,14 @@ function successFetch() {
   mocks.fetch.mockImplementation(async (url: string) => {
     if (url.includes("batchRunReports"))
       return Response.json({ reports: reports() });
+    if (url.endsWith(":runReport"))
+      return Response.json(
+        table(
+          ["date"],
+          ["totalUsers", "sessions", "screenPageViews"],
+          [{ dimensions: ["20261001"], metrics: [5, 8, 11] }],
+        ),
+      );
     if (url.includes("runRealtimeReport"))
       return Response.json(
         table([], ["activeUsers", "screenPageViews"], [{ metrics: [3, 7] }]),
@@ -89,7 +98,21 @@ beforeEach(() => {
     "GA_SERVICE_ACCOUNT_PRIVATE_KEY",
   ])
     vi.stubEnv(name, "");
-  mocks.requireAdmin.mockResolvedValue({});
+  mocks.requireAdmin.mockResolvedValue({
+    supabase: {
+      rpc: vi.fn().mockResolvedValue({
+        data: {
+          successful_orders: 3,
+          attributed_orders: 2,
+          landing_revenue: [{ name: "/san-pham", orders: 2, revenue: 240000 }],
+          pending_events: 0,
+          expired_events: 0,
+          uncertain_events: 0,
+        },
+        error: null,
+      }),
+    },
+  });
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -114,7 +137,7 @@ describe("GA4 reports and secure server access", () => {
     expect(csv).toContain("Chưa kết nối quyền đọc");
     expect(csv).not.toContain('"totalUsers","0"');
   });
-  it("maps live provider values and requests only bounded read reports without purchase assumptions", async () => {
+  it("maps provider values, ledger conversion and complete successful-purchase funnel", async () => {
     configured();
     successFetch();
     const result = await getAdminTrafficReport(range);
@@ -122,9 +145,36 @@ describe("GA4 reports and secure server access", () => {
       configured: true,
       metrics: { totalUsers: 10, sessions: 20, bounceRate: 0.4 },
       realtime: { users: 3, views: 7 },
+      pages_per_session: 2,
+      successful_order_conversion_rate: 0.15,
+      commerce: { successful_orders: 3, attributed_orders: 2 },
+      landing_pages: [
+        {
+          name: "/san-pham",
+          bounce_rate: 0.3,
+          revenue: 240000,
+          successful_orders: 2,
+        },
+      ],
       sources: [{ name: "google / organic", users: 5 }],
       funnel: [{ name: "1. view_item", users: 8, completion_rate: 0.5 }],
     });
+    if (result.configured) {
+      expect(result.trend).toHaveLength(9);
+      expect(result.trend[0]).toEqual({
+        date: "2026-10-01",
+        users: 5,
+        sessions: 8,
+        views: 11,
+      });
+      expect(result.trend[1]).toEqual({
+        date: "2026-10-02",
+        users: 0,
+        sessions: 0,
+        views: 0,
+      });
+      expect(result.trend.at(-1)?.date).toBe("2026-10-09");
+    }
     const batchCall = mocks.fetch.mock.calls.find(([url]) =>
       url.includes("batchRunReports"),
     )!;
@@ -145,12 +195,13 @@ describe("GA4 reports and secure server access", () => {
         (step: { name: string }) => step.name,
       ),
     ).toEqual([
+      "session_start",
       "view_item",
       "add_to_cart",
       "begin_checkout",
-      "order_submitted",
+      "purchase",
     ]);
-    expect(JSON.stringify(body)).not.toContain('"purchase"');
+    expect(JSON.stringify(body)).toContain('"purchase"');
     expect(JSON.stringify(result)).not.toContain("server-test-token");
   });
   it("keeps core metrics when realtime or the alpha funnel is temporarily unavailable", async () => {
@@ -171,6 +222,50 @@ describe("GA4 reports and secure server access", () => {
       expect(result.realtime_error).toBeTruthy();
       expect(result.funnel_error).toBeTruthy();
     }
+  });
+  it("keeps unknown ledger and auxiliary provider values unavailable instead of reporting zero success", async () => {
+    configured();
+    successFetch();
+    mocks.requireAdmin.mockResolvedValue({
+      supabase: {
+        rpc: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: "missing migration" },
+        }),
+      },
+    });
+    const provider = mocks.fetch.getMockImplementation()!;
+    mocks.fetch.mockImplementation((url: string, init: RequestInit) =>
+      url.includes("batchRunReports")
+        ? provider(url, init)
+        : Promise.resolve(Response.json({})),
+    );
+    const report = await getAdminTrafficReport(range);
+    expect(report).toMatchObject({
+      configured: true,
+      commerce: null,
+      successful_order_conversion_rate: null,
+      realtime: null,
+      funnel: null,
+      trend: [],
+    });
+    if (report.configured) {
+      expect(report.commerce_error).toBeTruthy();
+      expect(report.trend_error).toBeTruthy();
+      expect(report.landing_pages[0].revenue).toBeNull();
+      expect(trafficCsv(report)).toContain("Chưa đọc được sổ đơn hàng");
+    }
+  });
+  it("exports derived metrics, daily trend, bounce rates and real attributable revenue", async () => {
+    configured();
+    successFetch();
+    const report = await getAdminTrafficReport(range);
+    const csv = trafficCsv(report);
+    expect(csv).toContain('"Số trang / phiên","2"');
+    expect(csv).toContain('"Đơn thành công / phiên GA4","0.15"');
+    expect(csv).toContain('"2026-10-01","5","8","11"');
+    expect(csv).toContain('"2026-10-02","0","0","0"');
+    expect(csv).toContain('"/san-pham","4","5","10","0.7","0.3","240000","2"');
   });
   it.each([401, 403, 429, 500])(
     "returns redacted provider errors for status %i",
@@ -270,5 +365,33 @@ describe("GA4 reports and secure server access", () => {
     const populated = mapTrafficReport(reports(), null, null, range);
     populated.sources[0].name = "=HYPERLINK(1)";
     expect(trafficCsv(populated)).toContain('"\'=HYPERLINK(1)"');
+  });
+  it("zero-fills successful empty daily responses but preserves unknown or thresholded dates", () => {
+    const dailyMetrics = ["totalUsers", "sessions", "screenPageViews"];
+    const empty = mapTrafficReport(
+      reports(),
+      null,
+      null,
+      range,
+      table(["date"], dailyMetrics),
+    );
+    expect(empty.trend).toHaveLength(9);
+    expect(
+      empty.trend.every(
+        (day) => day.users === 0 && day.sessions === 0 && day.views === 0,
+      ),
+    ).toBe(true);
+    expect(mapTrafficReport(reports(), null, null, range, null).trend).toEqual(
+      [],
+    );
+    const protectedDaily = {
+      ...table(["date"], dailyMetrics, [
+        { dimensions: ["20261001"], metrics: [5, 8, 11] },
+      ]),
+      metadata: { subjectToThresholding: true },
+    };
+    expect(
+      mapTrafficReport(reports(), null, null, range, protectedDaily).trend,
+    ).toEqual([{ date: "2026-10-01", users: 5, sessions: 8, views: 11 }]);
   });
 });

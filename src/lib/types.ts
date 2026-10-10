@@ -46,6 +46,9 @@ export type SiteContent = { key: string; title: string; content: string };
 export type SiteSettings = {
   shipping_fee: number;
   shipping_zones?: import("./shipping").ShippingZone[];
+  shipping_distance_enabled?: boolean;
+  shipping_origin_address?: string;
+  shipping_distance_bands?: import("./shipping").ShippingDistanceBand[];
   shop_email: string;
   shop_phone: string;
   shop_address: string;

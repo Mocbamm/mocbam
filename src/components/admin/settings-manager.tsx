@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { SiteSettings } from "@/lib/types";
 import { BANKS } from "@/lib/banks";
+import { DistanceShippingSettings } from "./distance-shipping-settings";
+import { AdminSettingsSearch } from "./admin-settings-search";
 import provinces from "@/lib/data/vietnam-addresses.json";
 import {
   adminRequest,
@@ -16,7 +18,13 @@ import {
   reportError,
 } from "./admin-common";
 
-export function SettingsManager({ settings }: { settings: SiteSettings }) {
+export function SettingsManager({
+  settings,
+  distanceAvailable = false,
+}: {
+  settings: SiteSettings;
+  distanceAvailable?: boolean;
+}) {
   const router = useRouter();
   const [draft, setDraft] = useState(settings);
   const [saving, setSaving] = useState(false);
@@ -55,9 +63,15 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
   ] as const;
   return (
     <form onSubmit={save} className="max-w-4xl space-y-6">
+      <AdminSettingsSearch />
       <fieldset disabled={saving} className="space-y-6">
-        <section className={panelClass}>
+        <section id="settings-shipping" className={panelClass}>
           <h2 className="mb-5 text-xl font-semibold">Giao hàng</h2>
+          <DistanceShippingSettings
+            draft={draft}
+            available={distanceAvailable}
+            update={update}
+          />
           <div className="max-w-sm space-y-2">
             <Label htmlFor="shipping-fee">
               Phí mặc định ngoài khu vực đã cài đặt (₫)
@@ -244,7 +258,7 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
             Thêm khu vực giao hàng
           </Button>
         </section>
-        <section className={panelClass}>
+        <section id="settings-payments" className={panelClass}>
           <h2 className="mb-4 text-xl font-semibold">Chuyển khoản ngân hàng</h2>
           <CheckField
             label="Cho phép khách hàng chọn chuyển khoản"
@@ -350,7 +364,7 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
             </p>
           </div>
         </section>
-        <section className={panelClass}>
+        <section id="settings-contact" className={panelClass}>
           <h2 className="mb-5 text-xl font-semibold">Thông tin liên hệ</h2>
           <div className="grid gap-5 sm:grid-cols-2">
             {contactFields.map((field) => (
@@ -367,7 +381,7 @@ export function SettingsManager({ settings }: { settings: SiteSettings }) {
             ))}
           </div>
         </section>
-        <section className={panelClass}>
+        <section id="settings-social" className={panelClass}>
           <h2 className="mb-5 text-xl font-semibold">Mạng xã hội</h2>
           <div className="space-y-5">
             {socialFields.map((field) => (

@@ -9,6 +9,7 @@ import {
   readJson,
 } from "@/lib/http";
 import { manualPaymentSchema } from "@/lib/validation";
+import { deliverOrderAnalytics } from "@/lib/order-analytics-server";
 
 type PaymentContext = { params: Promise<{ id: string }> };
 
@@ -25,6 +26,7 @@ export async function POST(request: Request, { params }: PaymentContext) {
       p_note: input.note,
     });
     if (error) throw databaseError(error);
+    await deliverOrderAnalytics();
     return json({ data });
   } catch (error) {
     return apiError(error);

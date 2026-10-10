@@ -40,7 +40,9 @@ function checkout({
   // Only replace the hook runtime; handlers and controls are the real checkout.
   const values = [
     busy,
-    { province: "", ward: "" },
+    { province: "", ward: "", address: "" },
+    null,
+    0,
     "",
     "cod",
     code,

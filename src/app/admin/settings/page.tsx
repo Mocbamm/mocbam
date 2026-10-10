@@ -10,7 +10,10 @@ export default async function AdminSettingsPage() {
         title="Cài đặt cửa hàng"
         description="Quản lý phí giao hàng, thông tin liên hệ và các trang mạng xã hội của Mộc Bàm."
       />
-      <SettingsManager settings={await getAdminSettings()} />
+      <SettingsManager
+        settings={await getAdminSettings()}
+        distanceAvailable={Boolean(process.env.GOOGLE_MAPS_API_KEY)}
+      />
     </>
   );
 }

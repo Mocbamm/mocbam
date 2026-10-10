@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { shippingZoneSchema } from "./shipping";
+import { shippingZoneSchema, shippingDistanceBandsSchema } from "./shipping";
 
 const short = (max = 200) => z.string().trim().min(1).max(max);
 const optionalText = (max = 500) => z.string().trim().max(max).default("");
@@ -111,6 +111,9 @@ export const settingsSchema = z
   .object({
     shipping_fee: money,
     shipping_zones: z.array(shippingZoneSchema).max(50).optional(),
+    shipping_distance_enabled: z.boolean().optional(),
+    shipping_origin_address: z.string().trim().max(500).optional(),
+    shipping_distance_bands: shippingDistanceBandsSchema.optional(),
     shop_email: z.email().max(254),
     shop_phone: short(30),
     shop_address: short(500),
@@ -138,6 +141,17 @@ export const settingsSchema = z
   })
   .strict()
   .superRefine((settings, context) => {
+    if (
+      settings.shipping_distance_enabled &&
+      (!settings.shipping_origin_address ||
+        !settings.shipping_distance_bands?.length)
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["shipping_distance_enabled"],
+        message:
+          "Điền địa chỉ gửi hàng và ít nhất một mốc km trước khi bật phí theo khoảng cách.",
+      });
     if (
       settings.bank_transfer_enabled &&
       ![
@@ -219,6 +233,7 @@ export const orderSchema = z
       })
       .strict(),
     idempotency_key: z.uuid(),
+    shipping_quote_id: z.uuid().optional(),
     payment_method: z.enum(["cod", "bank_transfer"]).default("cod"),
     discount_code: discountCodeSchema.default(""),
   })
