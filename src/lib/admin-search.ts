@@ -31,7 +31,7 @@ export const adminSettingsSections = [
     id: "settings-shipping",
     title: "Giao hàng",
     description:
-      "Phí vận chuyển, tỉnh thành, phường xã, khoảng cách kilomet, khu vực giao hàng",
+      "Phí vận chuyển, tỉnh thành, phường xã, khoảng cách kilomet km đường bộ, Google Routes, địa chỉ gửi hàng, mốc km, phí mặc định, khu vực giao hàng",
   },
   {
     id: "settings-payments",
