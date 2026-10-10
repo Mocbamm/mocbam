@@ -229,6 +229,36 @@ export function CheckoutScreen({
   const idempotency = useRef("");
   const submittedDraft = useRef("");
   const started = useRef(false);
+  async function applyDiscount() {
+    if (busy || quoting || !configured || !discountCode.trim()) return;
+    setQuoting(true);
+    setDiscountError("");
+    setDiscount(null);
+    try {
+      const response = await fetch("/api/discounts/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: discountCode,
+          items: items.map(({ product, quantity, variant_id }) => ({
+            product_id: product.id,
+            ...(variant_id ? { variant_id } : {}),
+            quantity,
+          })),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      setDiscountCode(result.code);
+      setDiscount({ ...result, cart_fingerprint: cartFingerprint });
+    } catch (cause) {
+      setDiscountError(
+        cause instanceof Error ? cause.message : "Chưa thể kiểm tra ưu đãi.",
+      );
+    } finally {
+      setQuoting(false);
+    }
+  }
   useEffect(() => {
     function startCheckout() {
       if (ready && items.length && !started.current) {
@@ -509,6 +539,13 @@ export function CheckoutScreen({
               id="checkout-discount"
               value={discountCode}
               maxLength={40}
+              disabled={busy || quoting}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                  event.preventDefault();
+                  void applyDiscount();
+                }
+              }}
               onChange={(e) => {
                 setDiscountCode(e.target.value);
                 setDiscount(null);
@@ -519,38 +556,8 @@ export function CheckoutScreen({
             <Button
               type="button"
               variant="outline"
-              disabled={!configured || quoting || !discountCode.trim()}
-              onClick={async () => {
-                setQuoting(true);
-                setDiscountError("");
-                setDiscount(null);
-                try {
-                  const r = await fetch("/api/discounts/quote", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      code: discountCode,
-                      items: items.map(({ product, quantity, variant_id }) => ({
-                        product_id: product.id,
-                        ...(variant_id ? { variant_id } : {}),
-                        quantity,
-                      })),
-                    }),
-                  });
-                  const d = await r.json();
-                  if (!r.ok) throw new Error(d.error);
-                  setDiscountCode(d.code);
-                  setDiscount({ ...d, cart_fingerprint: cartFingerprint });
-                } catch (cause) {
-                  setDiscountError(
-                    cause instanceof Error
-                      ? cause.message
-                      : "Chưa thể kiểm tra ưu đãi.",
-                  );
-                } finally {
-                  setQuoting(false);
-                }
-              }}
+              disabled={busy || !configured || quoting || !discountCode.trim()}
+              onClick={applyDiscount}
             >
               {quoting ? "Đang kiểm tra..." : "Áp dụng"}
             </Button>
