@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "./image";
 import { useState } from "react";
 import type { Product } from "@/lib/types";
 
@@ -12,20 +12,32 @@ export function productImages(product: Product) {
   ];
 }
 
-export function ProductGallery({ product }: { product: Product }) {
-  const images = productImages(product);
+export function ProductGallery({
+  product,
+  variantImage,
+}: {
+  product: Product;
+  variantImage?: string;
+}) {
+  const images = [
+    ...new Set(
+      [variantImage, ...productImages(product)].filter(
+        (image): image is string => Boolean(image),
+      ),
+    ),
+  ];
   const [selected, setSelected] = useState(0);
   const videoSelected =
     selected === images.length && Boolean(product.video_url);
   return (
-    <div>
-      <div className="relative aspect-square overflow-hidden bg-[#e8ecdf]">
+    <div className="store-product-gallery">
+      <div className="store-product-gallery-main">
         {videoSelected ? (
           <video
             controls
             playsInline
             preload="metadata"
-            className="h-full w-full object-contain"
+            className="store-product-gallery-video"
             poster={product.image_url}
             aria-label={`Video ${product.name}`}
           >
@@ -42,14 +54,14 @@ export function ProductGallery({ product }: { product: Product }) {
                 ? `Xem ảnh tiếp theo của ${product.name}`
                 : `Ảnh ${product.name}`
             }
-            className="relative block h-full w-full disabled:cursor-default"
+            className="store-product-image-link disabled:cursor-default"
           >
             <Image
               src={images[selected] || product.image_url}
               alt={`${product.name} — ảnh ${selected + 1}`}
               fill
               preload={selected === 0}
-              sizes="(max-width: 768px) 95vw, 50vw"
+              sizes="(max-width: 767px) 95vw, 58vw"
               className="object-cover"
             />
           </button>
@@ -57,7 +69,7 @@ export function ProductGallery({ product }: { product: Product }) {
       </div>
       {images.length > 1 || product.video_url ? (
         <div
-          className="mt-3 flex flex-wrap gap-2"
+          className="store-product-gallery-thumbnails"
           aria-label="Chọn ảnh hoặc video sản phẩm"
         >
           {images.map((url, index) => (
@@ -67,7 +79,7 @@ export function ProductGallery({ product }: { product: Product }) {
               onClick={() => setSelected(index)}
               aria-label={`Ảnh ${index + 1} của ${product.name}`}
               aria-pressed={selected === index}
-              className={`relative h-16 w-16 overflow-hidden border-2 ${selected === index ? "border-[#29412d]" : "border-transparent"}`}
+              className="store-product-gallery-thumbnail"
             >
               <Image
                 src={url}
@@ -83,7 +95,7 @@ export function ProductGallery({ product }: { product: Product }) {
               type="button"
               onClick={() => setSelected(images.length)}
               aria-pressed={videoSelected}
-              className={`h-16 border-2 px-4 text-xs ${videoSelected ? "border-[#29412d]" : "border-[#d8ddce]"}`}
+              className="store-product-gallery-thumbnail store-product-gallery-video-button"
             >
               Xem video
             </button>
@@ -91,7 +103,7 @@ export function ProductGallery({ product }: { product: Product }) {
         </div>
       ) : null}
       {images.length > 1 && !videoSelected ? (
-        <p aria-live="polite" className="mt-2 text-xs text-[#7a866a]">
+        <p aria-live="polite" className="store-product-gallery-hint">
           Ảnh {selected + 1}/{images.length} · Bấm ảnh để xem góc khác
         </p>
       ) : null}

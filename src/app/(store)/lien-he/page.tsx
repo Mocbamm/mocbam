@@ -5,20 +5,18 @@ export const metadata = { title: "Liên hệ với Mộc" };
 export default async function ContactPage() {
   const settings = await getSettings();
   return (
-    <main className="mx-auto max-w-6xl px-5 pt-14 sm:px-8">
-      <p className="mb-4 text-[10px] uppercase tracking-[0.22em] text-[#889777]">
-        Chúng mình luôn sẵn lòng nghe
-      </p>
-      <h1 className="font-serif text-5xl tracking-tight text-[#29412d] sm:text-6xl">
-        Gửi Mộc một lời nhắn.
-      </h1>
-      <p className="mt-5 max-w-lg text-sm leading-7 text-[#7c866b]">
+    <div className="store-page store-contact-page">
+      <p className="store-eyebrow">Chúng mình luôn sẵn lòng nghe</p>
+      <h1 className="store-page-title">Gửi Mộc một lời nhắn.</h1>
+      <p className="store-page-description">
         Có một câu hỏi, một ý tưởng, hay chỉ muốn chào nhau? Để lại lời nhắn,
         Mộc sẽ trao đổi cùng bạn.
       </p>
-      <div className="mt-10 grid gap-12 md:grid-cols-[1.5fr_1fr]">
-        <ContactForm configured={isConfigured()} />
-        <aside className="self-start bg-[#edf0e5] p-8">
+      <div className="store-contact-layout">
+        <div className="store-form-panel">
+          <ContactForm configured={isConfigured()} />
+        </div>
+        <aside className="store-contact-details">
           <div className="space-y-7">
             <div>
               <p className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#839275]">
@@ -75,6 +73,6 @@ export default async function ContactPage() {
           </div>
         </aside>
       </div>
-    </main>
+    </div>
   );
 }

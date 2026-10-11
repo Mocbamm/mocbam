@@ -54,7 +54,10 @@ export function ContactForm({
   }
   if (sent)
     return (
-      <div role="status" className="border border-[#cbd8bc] bg-[#edf0e5] p-8">
+      <div
+        role="status"
+        className="store-contact-success border border-[#cbd8bc] bg-[#edf0e5] p-8"
+      >
         <Check size={27} className="text-[#627f4d]" />
         <h2 className="mt-5 font-serif text-3xl text-[#29412d]">
           Mộc đã nhận lời nhắn.
@@ -72,7 +75,7 @@ export function ContactForm({
       </div>
     );
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={submit} className="store-contact-form">
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <Label htmlFor={`${idPrefix}-name`}>Tên của bạn *</Label>

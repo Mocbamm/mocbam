@@ -11,13 +11,9 @@ export default async function CheckoutPage() {
   const [settings, user] = await Promise.all([getSettings(), getCurrentUser()]);
   const profile = user ? await getCustomerProfile() : null;
   return (
-    <main className="mx-auto max-w-6xl px-5 pt-12 sm:px-8">
-      <p className="mb-3 text-[10px] uppercase tracking-[0.22em] text-[#889777]">
-        Một chút Mộc sắp đến với bạn
-      </p>
-      <h1 className="mb-10 font-serif text-5xl tracking-tight text-[#29412d]">
-        Gửi thương, nhận Mộc.
-      </h1>
+    <div className="store-page store-checkout-page">
+      <p className="store-eyebrow">Một chút Mộc sắp đến với bạn</p>
+      <h1 className="store-page-title mb-10">Gửi thương, nhận Mộc.</h1>
       <CheckoutScreen
         shippingFee={settings.shipping_fee}
         shippingZones={settings.shipping_zones}
@@ -29,6 +25,6 @@ export default async function CheckoutPage() {
         initialPhone={profile?.phone || ""}
         signedIn={!!user}
       />
-    </main>
+    </div>
   );
 }

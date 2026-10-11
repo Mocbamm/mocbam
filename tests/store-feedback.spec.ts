@@ -29,7 +29,7 @@ test("home categories precede products and its carousel browses beyond the first
 }) => {
   await page.goto("/");
   const category = page.getByRole("heading", {
-    name: "Dòng nhân vật",
+    name: "Nhân vật gỗ",
     exact: true,
   });
   const products = page.getByRole("heading", {

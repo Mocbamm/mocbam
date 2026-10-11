@@ -8,13 +8,11 @@ export default async function AboutPage() {
   const about = content.about;
   const media = content["about-media"];
   return (
-    <main className="mx-auto max-w-7xl px-5 pt-14 sm:px-8">
-      <div className="grid items-center gap-10 md:grid-cols-2 md:gap-20">
+    <div className="store-page store-about-page">
+      <div className="store-about-intro">
         <div>
-          <p className="mb-5 text-[10px] uppercase tracking-[0.22em] text-[#889777]">
-            Câu chuyện của chúng mình
-          </p>
-          <h1 className="font-serif text-5xl leading-tight tracking-[-0.04em] text-[#29412d] sm:text-6xl">
+          <p className="store-eyebrow">Câu chuyện của chúng mình</p>
+          <h1 className="store-page-title">
             {about?.title || "Nhỏ thôi, nhưng có câu chuyện."}
           </h1>
           <div className="mt-7">
@@ -27,13 +25,16 @@ export default async function AboutPage() {
           </div>
         </div>
         {media.content !== "none" ? (
-          <div className="relative aspect-square overflow-hidden rounded-t-[40%] bg-[#e4e8d9]">
+          <div className="store-about-media relative aspect-square overflow-hidden">
             <ContentVisual url={media.content} alt={media.title} preload />
           </div>
         ) : null}
       </div>
-      <section className="mt-16 border-y border-[#dde1d0] py-10">
-        <div className="grid gap-10 sm:grid-cols-3">
+      <section
+        className="store-about-values"
+        aria-label="Những điều Mộc trân trọng"
+      >
+        <div className="grid gap-5 sm:grid-cols-3">
           {[
             {
               icon: Leaf,
@@ -48,11 +49,9 @@ export default async function AboutPage() {
               ...content["about-warmth"],
             },
           ].map(({ icon: Icon, title, content: text }) => (
-            <div key={title}>
+            <div key={title} className="store-value-panel">
               <Icon size={24} strokeWidth={1.2} className="text-[#8c9d7a]" />
-              <h2 className="mt-5 font-serif text-2xl text-[#29412d]">
-                {title}
-              </h2>
+              <h2 className="store-panel-title mt-5">{title}</h2>
               <div className="mt-3 max-w-xs">
                 <Prose content={text} />
               </div>
@@ -60,17 +59,14 @@ export default async function AboutPage() {
           ))}
         </div>
       </section>
-      <div className="py-14 text-center">
-        <p className="font-serif text-3xl italic text-[#7c906b]">
+      <div className="store-about-invitation">
+        <p className="store-section-title">
           {content["about-invitation"].title}
         </p>
-        <Link
-          href="/lien-he"
-          className="mt-6 inline-flex items-center gap-3 border-b border-[#aab79c] pb-2 text-xs"
-        >
+        <Link href="/lien-he" className="store-outline-link mt-6">
           {content["about-invitation"].content} <ArrowUpRight size={14} />
         </Link>
       </div>
-    </main>
+    </div>
   );
 }

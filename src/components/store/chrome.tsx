@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,202 +9,416 @@ import {
   UserRound,
   ArrowUpRight,
   ChevronDown,
+  Minus,
+  Plus,
+  Trash2,
+  ArrowRight,
+  Leaf,
 } from "lucide-react";
 import { useRef, useState } from "react";
-import { useCart } from "@/lib/cart";
+import { formatPrice, useCart } from "@/lib/cart";
 import type { SiteSettings } from "@/lib/types";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { StoreSearch } from "./search-dialog";
+import StoreImage from "./image";
 import { policyHref, policyLinks } from "./policies";
+
 const navigation = [
   { href: "/", text: "Trang chủ" },
   { href: "/san-pham", text: "Sản phẩm" },
   { href: "/chung-toi", text: "Chúng tôi" },
   { href: "/blog", text: "Nhật ký Mộc Bàm" },
 ];
+
+function Brand({ footer = false }: { footer?: boolean }) {
+  return (
+    <Link
+      href="/"
+      aria-label={footer ? "Mộc Bàm" : "Mộc Bàm - Trang chủ"}
+      className={`store-brand${footer ? " store-brand-footer" : ""}`}
+    >
+      <span>MỘC BÀM</span>
+      <small>Gom nét mộc, tạo góc xinh.</small>
+    </Link>
+  );
+}
+
+function CartDrawer() {
+  const { items, count, subtotal, ready, update, remove } = useCart();
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Giỏ hàng, ${count} sản phẩm`}
+          className="store-icon-button store-cart-trigger"
+          disabled={!ready}
+        >
+          <ShoppingBag size={22} strokeWidth={1.5} />
+          {count > 0 ? <span className="store-cart-count">{count}</span> : null}
+        </button>
+      </SheetTrigger>
+      <SheetContent
+        className="storefront-overlay store-cart-drawer"
+        showCloseButton={false}
+      >
+        <div className="store-drawer-heading">
+          <SheetTitle>
+            Giỏ hàng <span>({count})</span>
+          </SheetTitle>
+          <SheetClose asChild>
+            <button
+              type="button"
+              className="store-icon-button"
+              aria-label="Đóng giỏ hàng"
+            >
+              <X size={22} />
+            </button>
+          </SheetClose>
+        </div>
+        <SheetDescription className="sr-only">
+          Kiểm tra sản phẩm và số lượng trước khi thanh toán.
+        </SheetDescription>
+        {items.length ? (
+          <>
+            <div className="store-drawer-items">
+              {items.map(({ product, quantity, key }) => (
+                <article key={key} className="store-drawer-item">
+                  <SheetClose asChild>
+                    <Link
+                      href={`/san-pham/${product.slug}`}
+                      className="store-drawer-image"
+                      aria-label={`Xem ${product.name}`}
+                    >
+                      <StoreImage
+                        src={product.image_url}
+                        alt={product.name}
+                        fill
+                        sizes="90px"
+                        className="object-cover"
+                      />
+                    </Link>
+                  </SheetClose>
+                  <div className="store-drawer-item-info">
+                    <SheetClose asChild>
+                      <Link
+                        href={`/san-pham/${product.slug}`}
+                        className="store-drawer-product-name"
+                      >
+                        {product.name}
+                      </Link>
+                    </SheetClose>
+                    <p>{formatPrice(product.price)}</p>
+                    <div className="store-drawer-item-controls">
+                      <div className="store-quantity-control">
+                        <button
+                          type="button"
+                          aria-label={`Giảm số lượng ${product.name}`}
+                          onClick={() => update(key, quantity - 1)}
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span aria-label={`Số lượng ${product.name}`}>
+                          {quantity}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Tăng số lượng ${product.name}`}
+                          disabled={quantity >= Math.min(10, product.stock)}
+                          onClick={() => update(key, quantity + 1)}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        className="store-icon-button"
+                        aria-label={`Xóa ${product.name}`}
+                        onClick={() => remove(key)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="store-drawer-summary">
+              <div>
+                <span>Tạm tính</span>
+                <strong>{formatPrice(subtotal)}</strong>
+              </div>
+              <p>Phí giao hàng và ưu đãi được tính ở bước thanh toán.</p>
+              <SheetClose asChild>
+                <Link
+                  href="/thanh-toan"
+                  className="store-button store-button-primary"
+                >
+                  Thanh toán <ArrowRight size={17} />
+                </Link>
+              </SheetClose>
+              <SheetClose asChild>
+                <Link
+                  href="/gio-hang"
+                  className="store-button store-button-outline"
+                >
+                  Xem giỏ hàng
+                </Link>
+              </SheetClose>
+            </div>
+          </>
+        ) : (
+          <div className="store-drawer-empty">
+            <ShoppingBag size={42} strokeWidth={1} />
+            <h3>Giỏ hàng đang chờ bạn.</h3>
+            <p>Ghé một vòng, tìm món nhỏ mình thương.</p>
+            <SheetClose asChild>
+              <Link
+                href="/san-pham"
+                className="store-button store-button-primary"
+              >
+                Khám phá sản phẩm <ArrowRight size={16} />
+              </Link>
+            </SheetClose>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 export function StoreHeader() {
   const pathname = usePathname();
-  const { count } = useCart();
   const [open, setOpen] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
   const policyTrigger = useRef<HTMLButtonElement>(null);
   return (
-    <>
-      <header className="sticky top-0 z-40 border-b border-[#dfe2d4] bg-[#faf9f3]/95 backdrop-blur-md">
-        <div className="mx-auto flex h-24 max-w-7xl items-center justify-between px-5 sm:px-8">
-          <nav
-            className="hidden items-center gap-4 lg:order-2 lg:flex"
-            aria-label="Điều hướng chính"
-          >
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-[12px] transition-colors hover:text-[#406344] ${(item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)) ? "text-[#29412d] underline underline-offset-8" : "text-[#62685d]"}`}
-              >
-                {item.text}
-              </Link>
-            ))}
-            <div
-              className="relative text-[12px] text-[#62685d]"
-              onMouseEnter={() => setPolicyOpen(true)}
-              onMouseLeave={() => setPolicyOpen(false)}
-              onBlur={(event) => {
-                if (
-                  !event.currentTarget.contains(
-                    event.relatedTarget as Node | null,
-                  )
-                )
-                  setPolicyOpen(false);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  setPolicyOpen(false);
-                  policyTrigger.current?.focus();
-                }
-              }}
-            >
+    <header className="store-header">
+      <div className="store-header-inner">
+        <div className="store-mobile-menu-trigger">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
               <button
-                ref={policyTrigger}
                 type="button"
-                className="flex cursor-pointer items-center gap-1 py-3 hover:text-[#406344]"
-                aria-expanded={policyOpen}
-                aria-controls="desktop-policy-links"
-                onClick={(event) =>
-                  setPolicyOpen((previous) =>
-                    event.detail === 0 ? !previous : true,
-                  )
-                }
+                className="store-icon-button"
+                aria-label={open ? "Đóng menu" : "Mở menu"}
               >
-                Chính sách <ChevronDown size={13} />
+                <Menu size={22} strokeWidth={1.5} />
               </button>
-              {policyOpen ? (
-                <div
-                  id="desktop-policy-links"
-                  className="absolute left-0 top-full w-56 pt-2"
-                >
-                  <div className="border border-[#dfe2d4] bg-[#faf9f3] p-2 shadow-lg">
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="storefront-overlay store-mobile-menu"
+              showCloseButton={false}
+            >
+              <div className="store-drawer-heading">
+                <SheetTitle>MỘC BÀM</SheetTitle>
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    className="store-icon-button"
+                    aria-label="Đóng menu"
+                  >
+                    <X size={22} />
+                  </button>
+                </SheetClose>
+              </div>
+              <SheetDescription>Gom nét mộc, tạo góc xinh.</SheetDescription>
+              <nav aria-label="Menu di động">
+                {navigation.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    aria-current={
+                      (
+                        item.href === "/"
+                          ? pathname === "/"
+                          : pathname.startsWith(item.href)
+                      )
+                        ? "page"
+                        : undefined
+                    }
+                  >
+                    {item.text}
+                    <ArrowUpRight size={17} strokeWidth={1.3} />
+                  </Link>
+                ))}
+                <details>
+                  <summary>
+                    Chính sách <ChevronDown size={18} />
+                  </summary>
+                  <div>
                     {policyLinks.map((policy) => (
                       <Link
                         key={policy.id}
                         href={policyHref(policy.id)}
-                        className="block px-3 py-2 text-xs hover:bg-[#edf0e5] focus-visible:bg-[#edf0e5]"
-                        onClick={() => setPolicyOpen(false)}
+                        onClick={() => setOpen(false)}
                       >
                         {policy.title}
                       </Link>
                     ))}
                   </div>
-                </div>
-              ) : null}
-            </div>
-          </nav>
-          <button
-            className="p-2 lg:hidden"
-            type="button"
-            onClick={() => setOpen(!open)}
-            aria-label={open ? "Đóng menu" : "Mở menu"}
-            aria-expanded={open}
-          >
-            {open ? <X size={22} /> : <Menu size={22} />}
-          </button>
-          <Link
-            href="/"
-            aria-label="Mộc Bàm - Trang chủ"
-            className="min-w-0 flex-1 px-2 text-center lg:order-1 lg:flex-none lg:px-0 lg:text-left"
-          >
-            <span className="block whitespace-nowrap font-serif text-[22px] sm:text-[30px] leading-none tracking-[-0.04em] text-[#29412d]">
-              MỘC BÀM
-            </span>
-            <span className="mt-2 block text-[7px] tracking-[0.03em] text-[#7b826e] sm:text-[9px] sm:tracking-[0.08em]">
-              Gom nét mộc, tạo góc xinh.
-            </span>
-          </Link>
-          <div className="flex items-center gap-3 sm:gap-5 lg:order-3">
-            <StoreSearch />
-            <Link href="/tai-khoan" aria-label="Tài khoản" className="p-1">
-              <UserRound size={20} strokeWidth={1.5} />
-            </Link>
-            <Link
-              href="/gio-hang"
-              aria-label={`Giỏ hàng, ${count} sản phẩm`}
-              className="relative p-1"
-            >
-              <ShoppingBag size={20} strokeWidth={1.5} />
-              {count > 0 ? (
-                <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#29412d] px-1 text-[9px] text-white">
-                  {count}
-                </span>
-              ) : null}
-            </Link>
-          </div>
-        </div>
-        {open ? (
-          <nav
-            className="border-t border-[#dfe2d4] px-6 pb-5 pt-3 lg:hidden"
-            aria-label="Menu di động"
-          >
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="block border-b border-[#e6e6dc] py-3 text-sm"
-              >
-                {item.text}
-              </Link>
-            ))}
-            <details className="border-b border-[#e6e6dc] py-3 text-sm">
-              <summary className="flex cursor-pointer list-none items-center justify-between">
-                Chính sách <ChevronDown size={15} />
-              </summary>
-              <div className="space-y-1 pl-3 pt-3">
-                {policyLinks.map((policy) => (
-                  <Link
-                    key={policy.id}
-                    href={policyHref(policy.id)}
-                    onClick={() => setOpen(false)}
-                    className="block py-2 text-xs text-[#68775e]"
-                  >
-                    {policy.title}
-                  </Link>
-                ))}
+                </details>
+              </nav>
+              <div className="store-mobile-collections">
+                <p className="store-eyebrow">Một chút mộc mỗi ngày</p>
+                <Link
+                  href="/san-pham?danh-muc=nhan-vat"
+                  onClick={() => setOpen(false)}
+                >
+                  <StoreImage
+                    src="/images/verdant/characters.webp"
+                    alt=""
+                    width={96}
+                    height={96}
+                  />
+                  <span>
+                    Nhân vật gỗ <ArrowRight size={16} />
+                  </span>
+                </Link>
+                <Link
+                  href="/san-pham?danh-muc=chuoi"
+                  onClick={() => setOpen(false)}
+                >
+                  <StoreImage
+                    src="/images/verdant/accessories.webp"
+                    alt=""
+                    width={96}
+                    height={96}
+                  />
+                  <span>
+                    Chuỗi & phụ kiện <ArrowRight size={16} />
+                  </span>
+                </Link>
               </div>
-            </details>
-            <div className="flex gap-5 pt-4 text-xs text-[#68775e]">
               <Link
-                href="/san-pham?danh-muc=nhan-vat"
+                href="/lien-he"
                 onClick={() => setOpen(false)}
+                className="store-menu-contact"
               >
-                Dòng nhân vật
+                Mộc luôn sẵn lòng nghe bạn <ArrowUpRight size={16} />
               </Link>
-              <Link
-                href="/san-pham?danh-muc=chuoi"
-                onClick={() => setOpen(false)}
-              >
-                Dòng chuỗi
-              </Link>
-            </div>
-          </nav>
-        ) : null}
-      </header>
-    </>
+            </SheetContent>
+          </Sheet>
+        </div>
+        <nav className="store-desktop-nav" aria-label="Điều hướng chính">
+          {navigation.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={
+                (
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname.startsWith(item.href)
+                )
+                  ? "page"
+                  : undefined
+              }
+            >
+              {item.text}
+            </Link>
+          ))}
+          <div
+            className="store-policy-menu"
+            onMouseEnter={() => setPolicyOpen(true)}
+            onMouseLeave={() => setPolicyOpen(false)}
+            onBlur={(event) => {
+              if (
+                !event.currentTarget.contains(
+                  event.relatedTarget as Node | null,
+                )
+              )
+                setPolicyOpen(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setPolicyOpen(false);
+                policyTrigger.current?.focus();
+              }
+            }}
+          >
+            <button
+              ref={policyTrigger}
+              type="button"
+              aria-expanded={policyOpen}
+              aria-controls="desktop-policy-links"
+              onClick={(event) =>
+                setPolicyOpen((previous) =>
+                  event.detail === 0 ? !previous : true,
+                )
+              }
+            >
+              Chính sách <ChevronDown size={12} />
+            </button>
+            {policyOpen ? (
+              <div id="desktop-policy-links" className="store-policy-dropdown">
+                <div>
+                  <p className="store-eyebrow">Cùng Mộc an tâm mua sắm</p>
+                  {policyLinks.map((policy) => (
+                    <Link
+                      key={policy.id}
+                      href={policyHref(policy.id)}
+                      onClick={() => setPolicyOpen(false)}
+                    >
+                      {policy.title}
+                      <ArrowUpRight size={15} />
+                    </Link>
+                  ))}
+                </div>
+                <Link
+                  href="/lien-he"
+                  onClick={() => setPolicyOpen(false)}
+                  className="store-policy-help"
+                >
+                  <Leaf size={28} strokeWidth={1.2} />
+                  <strong>Cần Mộc giúp một chút?</strong>
+                  <span>Chúng mình luôn ở đây, cùng bạn.</span>
+                  <span>
+                    Gửi lời nhắn <ArrowRight size={16} />
+                  </span>
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        </nav>
+        <Brand />
+        <div className="store-header-actions">
+          <StoreSearch />
+          <Link
+            href="/tai-khoan"
+            aria-label="Tài khoản"
+            className="store-icon-button"
+          >
+            <UserRound size={22} strokeWidth={1.5} />
+          </Link>
+          <CartDrawer />
+        </div>
+      </div>
+    </header>
   );
 }
+
 export function StoreFooter({ settings }: { settings?: SiteSettings }) {
   return (
-    <footer className="mt-20 bg-[#243b29] text-[#e4e8d6]">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
-        <div>
-          <Link
-            href="/"
-            className="font-serif text-4xl tracking-[-0.05em] text-[#f4f0dc]"
-          >
-            MỘC BÀM
-          </Link>
-          <p className="mt-5 max-w-xs text-sm leading-7 text-[#acbaa2]">
-            Gom nét mộc, tạo góc xinh.
+    <footer className="store-footer">
+      <div className="store-footer-inner">
+        <div className="store-footer-brand">
+          <Brand footer />
+          <p>
+            Những món đồ nhỏ từ gỗ.
+            <br />
+            Một chút mộc mạc, một chút thương yêu.
           </p>
-          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-xs">
+          <div className="store-social-links">
             {[
               { text: "Facebook", url: settings?.facebook_url },
               { text: "Instagram", url: settings?.instagram_url },
@@ -217,72 +432,56 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex gap-1"
                 >
                   {s.text}
-                  <ArrowUpRight size={12} />
+                  <ArrowUpRight size={13} />
                 </a>
               ) : null,
             )}
           </div>
         </div>
-        <div>
-          <p className="mb-5 text-xs uppercase tracking-[0.2em] text-[#f4f0dc]">
-            Khám phá
-          </p>
-          <div className="flex flex-col gap-3 text-sm text-[#acbaa2]">
-            <Link href="/san-pham">Tất cả sản phẩm</Link>
-            <Link href="/san-pham?danh-muc=nhan-vat">Dòng nhân vật</Link>
-            <Link href="/san-pham?danh-muc=chuoi">Dòng chuỗi</Link>
-            <Link href="/chung-toi">Câu chuyện Mộc Bàm</Link>
-            <Link href="/blog">Nhật ký Mộc Bàm</Link>
-          </div>
+        <div className="store-footer-column">
+          <h2>Khám phá</h2>
+          <Link href="/san-pham">Tất cả sản phẩm</Link>
+          <Link href="/san-pham?danh-muc=nhan-vat">Nhân vật gỗ</Link>
+          <Link href="/san-pham?danh-muc=chuoi">Chuỗi & phụ kiện</Link>
+          <Link href="/chung-toi">Câu chuyện Mộc Bàm</Link>
+          <Link href="/blog">Nhật ký Mộc Bàm</Link>
         </div>
-        <div>
-          <p className="mb-5 text-xs uppercase tracking-[0.2em] text-[#f4f0dc]">
-            Đồng hành
-          </p>
-          <div className="flex flex-col gap-3 text-sm text-[#acbaa2]">
-            <details>
-              <summary className="flex cursor-pointer list-none items-center gap-2">
-                Chính sách & hướng dẫn <ChevronDown size={13} />
-              </summary>
-              <div className="mt-3 flex flex-col gap-3 border-l border-[#667a5e] pl-3 text-xs">
-                {policyLinks.map((policy) => (
-                  <Link key={policy.id} href={policyHref(policy.id)}>
-                    {policy.title}
-                  </Link>
-                ))}
-              </div>
-            </details>
-            <Link href="/lien-he">Liên hệ với chúng tôi</Link>
-            <Link href="/tai-khoan">Đơn hàng của tôi</Link>
-          </div>
+        <div className="store-footer-column">
+          <h2>Đồng hành</h2>
+          <details>
+            <summary>
+              Chính sách & hướng dẫn <ChevronDown size={14} />
+            </summary>
+            <div>
+              {policyLinks.map((policy) => (
+                <Link key={policy.id} href={policyHref(policy.id)}>
+                  {policy.title}
+                </Link>
+              ))}
+            </div>
+          </details>
+          <Link href="/lien-he">Liên hệ với chúng tôi</Link>
+          <Link href="/tai-khoan">Tài khoản & đơn hàng</Link>
         </div>
-        <div>
-          <p className="mb-5 text-xs uppercase tracking-[0.2em] text-[#f4f0dc]">
-            Ghé Mộc một chút
-          </p>
-          <p className="text-sm leading-7 text-[#acbaa2]">
-            {settings?.shop_address || "Mộc Bàm · Việt Nam"}
-          </p>
-          {settings?.shop_hours ? (
-            <p className="mt-2 text-xs leading-6 text-[#acbaa2]">
-              {settings.shop_hours}
-            </p>
+        <div className="store-footer-column store-footer-contact">
+          <h2>Ghé Mộc một chút</h2>
+          <p>{settings?.shop_address || "Mộc Bàm · Việt Nam"}</p>
+          {settings?.shop_hours ? <p>{settings.shop_hours}</p> : null}
+          {settings?.shop_email ? (
+            <a href={`mailto:${settings.shop_email}`}>{settings.shop_email}</a>
           ) : null}
-          <Link
-            href="/lien-he"
-            className="mt-4 inline-flex items-center gap-3 border-b border-[#809174] pb-2 text-sm"
-          >
-            Gửi lời nhắn <ArrowUpRight size={15} />
+          <Link href="/lien-he" className="store-footer-message">
+            Gửi Mộc lời nhắn <ArrowUpRight size={16} />
           </Link>
         </div>
       </div>
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-[#4d6048] px-6 py-5 text-[10px] tracking-wider text-[#acbaa2]">
+      <div className="store-footer-bottom">
         <span>
           © {new Date().getFullYear()} Mộc Bàm. Từ gỗ, với thương yêu.
         </span>
+        <Link href={policyHref("bao-mat")}>Quyền riêng tư</Link>
       </div>
     </footer>
   );

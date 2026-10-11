@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
+import Image from "@/components/store/image";
 import { ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -139,7 +139,7 @@ export function ImageField({
   return (
     <div className="space-y-2">
       <Label>Ảnh</Label>
-      <div className="flex items-start gap-4">
+      <div className="flex flex-col items-start gap-4 sm:flex-row">
         {value && (/^https:\/\//.test(value) || value.startsWith("/")) && (
           <Image
             src={value}
@@ -150,16 +150,7 @@ export function ImageField({
             className="size-22 rounded-xl border border-[#dfe5d8] object-cover"
           />
         )}
-        <div className="flex-1 space-y-2">
-          <Input
-            type="text"
-            placeholder="URL ảnh Supabase hoặc đường dẫn ảnh đã tải"
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            disabled={disabled || uploading}
-            required
-            aria-label="URL ảnh"
-          />
+        <div className="min-w-0 flex-1 space-y-3">
           <input
             ref={fileInput}
             type="file"
@@ -171,8 +162,7 @@ export function ImageField({
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              variant="outline"
-              size="sm"
+              className="min-h-11"
               onClick={() => fileInput.current?.click()}
               disabled={disabled || uploading}
             >
@@ -186,7 +176,7 @@ export function ImageField({
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              className="min-h-11"
               onClick={() => onChange("/images/product-placeholder.svg")}
               disabled={
                 disabled ||
@@ -206,9 +196,24 @@ export function ImageField({
             </p>
           )}
           <p className="text-xs text-[#788273]">
-            URL HTTPS từ Supabase, /images/... hoặc ảnh đã tải. Tải JPG, PNG
-            hoặc WebP · tối đa 4 MB.
+            Chọn ảnh từ thiết bị · JPG, PNG, WebP · tối đa 4 MB. Gợi ý ảnh
+            vuông, rộng ít nhất 1200 px. Lưu sản phẩm để áp dụng.
           </p>
+          <details className="rounded-lg border border-[#dfe5d8] px-3">
+            <summary className="cursor-pointer py-3 text-sm text-[#6b7867]">
+              Dùng đường dẫn có sẵn (nâng cao)
+            </summary>
+            <div className="pb-3">
+              <Input
+                type="text"
+                placeholder="URL ảnh đã tải lên"
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                disabled={disabled || uploading}
+                aria-label="URL ảnh"
+              />
+            </div>
+          </details>
         </div>
       </div>
     </div>

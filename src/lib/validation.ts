@@ -10,7 +10,7 @@ const image = z
   .max(500)
   .refine((v) => {
     if (
-      /^\/images\/[a-zA-Z0-9._-]+$/.test(v) ||
+      /^\/images\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(v) ||
       /^\/api\/media\/[a-f0-9-]+\.(jpg|png|webp)$/.test(v)
     )
       return true;

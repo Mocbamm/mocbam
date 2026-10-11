@@ -8,7 +8,7 @@ export function isContentMediaUrl(url: string, kind: ContentMedia["kind"]) {
   if (kind === "video")
     return /^\/api\/media\/[a-f0-9-]{36}\.(mp4|webm)$/.test(url);
   if (
-    /^\/images\/[a-zA-Z0-9._-]+$/.test(url) ||
+    /^\/images\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(url) ||
     /^\/api\/media\/[a-f0-9-]{36}\.(jpg|png|webp)$/.test(url)
   )
     return true;

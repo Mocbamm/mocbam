@@ -2,12 +2,14 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function StoreSearch() {
   const dialog = useRef<HTMLDialogElement>(null);
+  const input = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const router = useRouter();
   return (
@@ -16,15 +18,18 @@ export function StoreSearch() {
         type="button"
         aria-label="Tìm kiếm sản phẩm và bài viết"
         aria-haspopup="dialog"
-        onClick={() => dialog.current?.showModal()}
-        className="p-1"
+        onClick={() => {
+          dialog.current?.showModal();
+          input.current?.focus();
+        }}
+        className="store-search-trigger p-1"
       >
         <Search size={20} strokeWidth={1.5} />
       </button>
       <dialog
         ref={dialog}
         aria-labelledby="store-search-title"
-        className="fixed inset-0 m-auto w-[calc(100%_-_2rem)] max-w-xl border border-[#d9ddce] bg-[#faf9f3] p-6 text-[#29412d] shadow-xl backdrop:bg-black/35 sm:p-8"
+        className="store-search-dialog fixed inset-0 m-auto border border-[#d9ddce] bg-[#faf9f3] text-[#29412d] shadow-xl backdrop:bg-black/35"
         onClick={(event) => {
           if (event.target === event.currentTarget) {
             const rect = event.currentTarget.getBoundingClientRect();
@@ -39,14 +44,14 @@ export function StoreSearch() {
         }}
       >
         <div className="flex items-center justify-between gap-4">
-          <h2 id="store-search-title" className="font-serif text-3xl">
+          <h2 id="store-search-title" className="store-section-title">
             Tìm một điều nhỏ xinh
           </h2>
           <button
             type="button"
             aria-label="Đóng tìm kiếm"
             onClick={() => dialog.current?.close()}
-            className="p-2"
+            className="store-dialog-close p-2"
           >
             <X size={20} />
           </button>
@@ -68,6 +73,7 @@ export function StoreSearch() {
             Từ khóa tìm kiếm
           </label>
           <Input
+            ref={input}
             id="store-search-query"
             name="q"
             type="search"
@@ -82,6 +88,14 @@ export function StoreSearch() {
             <Search size={16} /> Tìm kiếm
           </Button>
         </form>
+        <nav className="store-search-shortcuts" aria-label="Khám phá Mộc Bàm">
+          <Link href="/san-pham" onClick={() => dialog.current?.close()}>
+            Tất cả sản phẩm
+          </Link>
+          <Link href="/blog" onClick={() => dialog.current?.close()}>
+            Nhật ký Mộc Bàm
+          </Link>
+        </nav>
       </dialog>
     </>
   );

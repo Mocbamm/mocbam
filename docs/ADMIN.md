@@ -13,7 +13,7 @@ Nếu chưa cấu hình Supabase, trang quản trị hiển thị hướng dẫn
 ## Sản phẩm và bài viết
 
 - **Sản phẩm:** chọn “Thêm sản phẩm”, nhập tên, đường dẫn không dấu dạng `ten-san-pham`, danh mục, giá VNĐ, tồn kho, ảnh và mô tả. “Hiển thị trên cửa hàng” cho phép ẩn sản phẩm; “Sản phẩm nổi bật” chọn sản phẩm cho trang chủ. Khi hết hàng, cập nhật tồn kho về 0.
-- **Ảnh:** tải ảnh JPG/PNG/WebP tối đa 4 MB, dùng ảnh mẫu tại `/images/...`, hoặc nhập URL ảnh công khai HTTPS từ host `<project>.supabase.co`. Host ảnh bên ngoài khác không được hỗ trợ. Tệp tải lên được lưu trong Supabase Storage đã cấu hình theo README và dùng đường dẫn `/api/media/...` do ứng dụng cung cấp.
+- **Ảnh:** chọn **Tải ảnh lên** hoặc **Thay ảnh** để lấy ảnh từ máy tính/điện thoại, xem trước rồi **Lưu sản phẩm**. JPG/PNG/WebP tối đa 4 MB mỗi ảnh; gợi ý ảnh vuông rộng 1200 px. Ảnh bổ sung cho phép nhiều góc chụp; ảnh riêng của từng phân loại cũng có nút tải lên. Bỏ ảnh riêng để dùng ảnh chung. Trường đường dẫn nằm trong **Dùng đường dẫn có sẵn (nâng cao)** và không cần dùng khi tải tệp. Tệp được lưu trong Supabase Storage đã cấu hình theo README.
 - **Bài viết:** nhập tiêu đề, đường dẫn, mô tả ngắn, ảnh và nội dung. Nội dung là văn bản thuần, ngăn các đoạn bằng một dòng trống. Bỏ chọn “Xuất bản trên cửa hàng” để giữ bản nháp hoặc ẩn bài viết.
 
 ## Xử lý đơn hàng
@@ -34,7 +34,22 @@ Trạng thái xử lý đơn và thanh toán được hiển thị riêng. Khác
 
 ## Nội dung, liên hệ và cài đặt
 
-- **Nội dung:** chỉnh sửa giới thiệu trang chủ, Về Mộc Bàm, chính sách giao hàng/đổi trả/bảo mật và điều khoản. Nhập văn bản thuần rồi lưu từng mục.
+- **Nội dung:** quản lý banner, ảnh danh mục, khối giới thiệu trang chủ, trang Chúng tôi và chính sách. Chọn nhóm và mục cần đổi; mỗi mục được lưu riêng. Nhãn **Chưa lưu** giúp nhận biết bản nháp, **Hủy thay đổi** khôi phục lần lưu gần nhất.
+
+### Thay ảnh / video trang chủ (không cần lập trình)
+
+1. Mở **Quản trị → Nội dung → Trang chủ**.
+2. Chọn **Ảnh / video banner chính**, ảnh bộ sưu tập hoặc **Ảnh / video giới thiệu**. Trên điện thoại, dùng danh sách **Chọn nội dung**.
+3. Chọn **Ảnh** hoặc **Video**, bấm **Thay ảnh / Tải ảnh lên** hay **Tải video lên**, rồi chọn tệp từ thiết bị. Không cần nhập URL. JPG/PNG/WebP tối đa 4 MB; MP4/WebM tối đa 20 MB.
+4. Xem trước, nhập mô tả ngắn đúng nội dung ảnh và bấm **Lưu nội dung**. Chỉ tải tệp lên chưa cập nhật cửa hàng.
+5. Bấm **Mở trang cửa hàng** để kiểm tra kết quả đã lưu. Mở cửa hàng ở cả máy tính và điện thoại.
+
+**Banner trên điện thoại** cho phép ảnh/video riêng khi màn hình rộng tối đa 640 px. Gợi ý ảnh dọc 900 × 1200 px; banner chính dùng ảnh ngang 2400 × 1050 px. Đặt chủ thể gần giữa, chừa khoảng trống cho chữ. Nếu không chọn tệp riêng, điện thoại dùng banner chính; banner mẫu đi kèm ảnh dọc. Gỡ banner chính sẽ ẩn toàn bộ hình banner ở mọi thiết bị.
+
+Ảnh danh mục nên dùng PNG/WebP trong suốt rộng ít nhất 600 px. Các vị trí đều có hướng dẫn ngay trong biểu mẫu. **Gỡ ảnh/video → Lưu nội dung** ẩn hình tại vị trí đó. **Dùng ảnh mẫu** khôi phục ảnh thiết kế ban đầu và cũng cần lưu. Ảnh/video bài viết nằm ở **Nhật ký**; ảnh, thư viện và video sản phẩm nằm ở **Sản phẩm**. Banner danh sách sản phẩm tự lấy ảnh từ sản phẩm của danh mục đang chọn.
+
+Tài khoản đã được cấp quyền quản trị có thể tự thực hiện các thao tác này sau khi cửa hàng được kết nối và triển khai. Kết nối Supabase, chạy migration và cấp quyền quản trị là bước thiết lập ban đầu dành cho người vận hành kỹ thuật.
+
 - **Liên hệ:** đọc lời nhắn, dùng email hoặc số điện thoại được khách cung cấp để phản hồi bên ngoài website, sau đó đánh dấu “Đã xử lý”. Có thể mở lại yêu cầu. Trang quản trị không tự gửi email.
 - **Cài đặt:** cập nhật phí giao hàng cố định, thông tin liên lạc, giờ mở cửa và URL Facebook/Instagram/TikTok. Phí mới áp dụng cho đơn đặt sau khi lưu; đơn cũ giữ nguyên phí đã tính.
 - **Chuyển khoản ngân hàng:** chọn ngân hàng trong danh sách, nhập số tài khoản và tên chủ tài khoản, kiểm tra đúng thông tin rồi bật **Cho phép khách hàng chọn chuyển khoản** và lưu. Mã BIN được điền theo ngân hàng đã chọn. Số tài khoản nhận tiền gồm 5–19 chữ cái hoặc chữ số; giữ nguyên số 0 ở đầu. Các thông tin này sẽ hiển thị cho khách, chỉ nhập thông tin nhận tiền và không cần PIN, mật khẩu hay OTP. Thay đổi áp dụng cho đơn mới; thông tin ngân hàng của đơn cũ giữ nguyên tại thời điểm đặt. Khi tắt chuyển khoản, khách đặt đơn mới vẫn dùng được COD.

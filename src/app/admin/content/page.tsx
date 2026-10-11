@@ -8,7 +8,7 @@ export default async function AdminContentPage() {
     <>
       <AdminHeading
         title="Nội dung cửa hàng"
-        description="Cập nhật lời giới thiệu và các chính sách được hiển thị trên website."
+        description="Thay ảnh, video, banner điện thoại và nội dung cửa hàng mà không cần sửa mã."
       />
       <ContentManager entries={await getAdminContent()} />
     </>

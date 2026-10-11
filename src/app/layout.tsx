@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { Analytics } from "@/components/analytics";
+import { storeBody, storeHeading } from "@/components/store/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body>
+      <body className={`${storeHeading.variable} ${storeBody.variable}`}>
         {children}
         <Toaster richColors position="top-center" />
         <Suspense fallback={null}>

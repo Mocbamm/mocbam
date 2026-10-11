@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import Image from "@/components/store/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -31,7 +31,7 @@ import {
 
 function EmptyCart() {
   return (
-    <div className="mx-auto max-w-lg py-20 text-center">
+    <div className="store-empty-state store-empty-cart mx-auto max-w-lg py-20 text-center">
       <ShoppingBag
         size={42}
         strokeWidth={1}
@@ -61,16 +61,16 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
     );
   if (!items.length) return <EmptyCart />;
   return (
-    <div className="grid gap-12 md:grid-cols-[1.6fr_1fr]">
+    <div className="store-cart-layout grid gap-12 md:grid-cols-[1.6fr_1fr]">
       <div>
         {items.map(({ product, quantity, key }) => (
           <article
             key={key}
-            className="flex gap-5 border-b border-[#dde1d0] py-6 first:pt-0"
+            className="store-cart-line flex gap-5 border-b border-[#dde1d0] py-6 first:pt-0"
           >
             <Link
               href={`/san-pham/${product.slug}`}
-              className="relative h-28 w-28 shrink-0 bg-[#e9ecdf]"
+              className="store-cart-line-media relative h-28 w-28 shrink-0 bg-[#e9ecdf]"
             >
               <Image
                 src={product.image_url}
@@ -80,11 +80,11 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
                 className="object-cover"
               />
             </Link>
-            <div className="flex flex-1 flex-col">
+            <div className="store-cart-line-info flex flex-1 flex-col">
               <div className="flex justify-between gap-4">
                 <Link
                   href={`/san-pham/${product.slug}`}
-                  className="font-serif text-xl text-[#29412d]"
+                  className="store-cart-line-title font-serif text-xl text-[#29412d]"
                 >
                   {product.name}
                 </Link>
@@ -92,7 +92,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
                   type="button"
                   onClick={() => remove(key)}
                   aria-label={`Xóa ${product.name}`}
-                  className="self-start text-[#8c947e]"
+                  className="store-cart-remove self-start text-[#8c947e]"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -100,8 +100,8 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
               <p className="mt-2 text-xs text-[#7c866b]">
                 {money(product.price)}
               </p>
-              <div className="mt-auto flex items-end justify-between gap-3 pt-3">
-                <div className="flex items-center border border-[#d8ddce]">
+              <div className="store-cart-line-actions mt-auto flex items-end justify-between gap-3 pt-3">
+                <div className="store-cart-quantity flex items-center border border-[#d8ddce]">
                   <button
                     type="button"
                     onClick={() => update(key, quantity - 1)}
@@ -137,7 +137,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
           Chọn thêm điều nhỏ xinh <ArrowUpRight size={13} />
         </Link>
       </div>
-      <aside className="self-start bg-[#edf0e5] p-7">
+      <aside className="store-order-summary self-start bg-[#edf0e5] p-7">
         <h2 className="font-serif text-2xl text-[#29412d]">
           Một chút tổng kết
         </h2>
@@ -463,7 +463,7 @@ export function CheckoutScreen({
   return (
     <form
       onSubmit={submit}
-      className="grid gap-12 md:grid-cols-[1.4fr_1fr]"
+      className="store-checkout-layout grid gap-12 md:grid-cols-[1.4fr_1fr]"
     >
       <div>
         {!configured ? (
@@ -551,7 +551,7 @@ export function CheckoutScreen({
           </legend>
           <div className="mt-4 space-y-3">
             <label
-              className={`flex cursor-pointer items-start gap-3 border p-5 ${paymentMethod === "cod" ? "border-[#70865c] bg-[#edf0e5]" : "border-[#dde1d0]"}`}
+              className={`store-payment-option flex cursor-pointer items-start gap-3 border p-5 ${paymentMethod === "cod" ? "border-[#70865c] bg-[#edf0e5]" : "border-[#dde1d0]"}`}
             >
               <input
                 type="radio"
@@ -574,7 +574,7 @@ export function CheckoutScreen({
             </label>
             {bankTransferAvailable ? (
               <label
-                className={`flex cursor-pointer items-start gap-3 border p-5 ${paymentMethod === "bank_transfer" ? "border-[#70865c] bg-[#edf0e5]" : "border-[#dde1d0]"}`}
+                className={`store-payment-option flex cursor-pointer items-start gap-3 border p-5 ${paymentMethod === "bank_transfer" ? "border-[#70865c] bg-[#edf0e5]" : "border-[#dde1d0]"}`}
               >
                 <input
                   type="radio"
@@ -608,14 +608,14 @@ export function CheckoutScreen({
           </p>
         </fieldset>
       </div>
-      <aside className="self-start bg-[#edf0e5] p-7">
+      <aside className="store-order-summary self-start bg-[#edf0e5] p-7">
         <h2 className="font-serif text-2xl text-[#29412d]">
           Những điều bạn chọn
         </h2>
         <div className="mt-5 space-y-4">
           {items.map(({ product, quantity, key }) => (
             <div key={key} className="flex items-center gap-3">
-              <div className="relative h-14 w-14 shrink-0">
+              <div className="store-checkout-line-media relative h-14 w-14 shrink-0">
                 <Image
                   src={product.image_url}
                   alt={product.name}
@@ -624,7 +624,7 @@ export function CheckoutScreen({
                   className="object-cover"
                 />
               </div>
-              <div className="flex-1 text-xs">
+              <div className="min-w-0 flex-1 text-xs">
                 <p>{product.name}</p>
                 <p className="mt-1 text-[#8b947d]">Số lượng: {quantity}</p>
               </div>
@@ -634,7 +634,7 @@ export function CheckoutScreen({
         </div>
         <div className="mt-7 border-t border-[#d1d9c2] pt-5">
           <Label htmlFor="checkout-discount">Mã ưu đãi</Label>
-          <div className="mt-2 flex gap-2">
+          <div className="store-voucher-controls mt-2 flex gap-2">
             <Input
               id="checkout-discount"
               value={discountCode}
@@ -700,9 +700,11 @@ export function CheckoutScreen({
                 : " (chọn địa chỉ để tính)"}
             </span>
             <span>
-              {shippingDistanceEnabled && !distanceQuote
-                ? "Chờ tính phí"
-                : money(shipping.fee)}
+              {!destination.province || !destination.ward
+                ? "Chưa tính"
+                : shippingDistanceEnabled && !distanceQuote
+                  ? "Chờ tính phí"
+                  : money(shipping.fee)}
             </span>
           </p>
           {shippingDistanceEnabled ? (

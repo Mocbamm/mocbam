@@ -98,7 +98,7 @@ export function AccountForm({
   if (confirmationEmail)
     return (
       <section
-        className="mt-8 border-t border-[#d1d9c2] pt-7 text-left"
+        className="store-account-form mt-8 border-t border-[#d1d9c2] pt-7 text-left"
         aria-label="Xác nhận email"
       >
         <div className="border border-[#d1d9c2] bg-[#fafbf6] p-6">
@@ -161,8 +161,11 @@ export function AccountForm({
       </section>
     );
   return (
-    <div className="mt-8 border-t border-[#d1d9c2] pt-7 text-left">
-      <div className="mb-5 flex gap-3" aria-label="Chọn đăng nhập hoặc đăng ký">
+    <div className="store-account-form mt-8 border-t border-[#d1d9c2] pt-7 text-left">
+      <div
+        className="store-account-tabs mb-5 flex gap-3"
+        aria-label="Chọn đăng nhập hoặc đăng ký"
+      >
         {(["login", "register"] as const).map((value) => (
           <button
             key={value}
@@ -303,7 +306,7 @@ export function ProfileForm({
     }
   }
   return (
-    <details className="mb-8 border border-[#dde1d0] p-5">
+    <details className="store-profile-panel mb-8 border border-[#dde1d0] p-5">
       <summary className="cursor-pointer text-sm">Thông tin của bạn</summary>
       <form onSubmit={submit} className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>

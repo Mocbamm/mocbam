@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/store/image";
 import { useRef, useState } from "react";
 import { ImagePlus, LoaderCircle, Video, X } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +25,9 @@ export function MediaField({
   onChange,
   disabled,
   onUploadingChange,
+  aspectRatio,
+  fit = "contain",
+  removeLabel,
 }: {
   id: string;
   label: string;
@@ -33,6 +36,9 @@ export function MediaField({
   onChange: (value: string) => void;
   disabled?: boolean;
   onUploadingChange?: (uploading: boolean) => void;
+  aspectRatio?: string;
+  fit?: "cover" | "contain";
+  removeLabel?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -69,38 +75,51 @@ export function MediaField({
     }
   }
   return (
-    <div className="space-y-3">
-      <Label htmlFor={id}>{label}</Label>
+    <div className="min-w-0 space-y-3" aria-busy={uploading}>
+      <p id={`${id}-label`} className="text-sm font-medium">
+        {label}
+      </p>
       {value && isContentMediaUrl(value, kind) ? (
-        kind === "video" ? (
-          <video
-            src={value}
-            controls
-            preload="metadata"
-            className="max-h-48 w-full rounded-xl bg-[#e8ecdf]"
-          />
-        ) : (
-          <Image
-            src={value}
-            alt="Ảnh xem trước"
-            width={240}
-            height={160}
-            unoptimized
-            className="max-h-48 w-auto rounded-xl border border-[#dfe5d8] object-contain"
-          />
-        )
-      ) : null}
-      <Input
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled || uploading}
-        placeholder={
-          kind === "image"
-            ? "URL ảnh hoặc /images/..."
-            : "Đường dẫn video đã tải lên"
-        }
-      />
+        <div
+          className="relative overflow-hidden rounded-xl border border-[#dfe5d8] bg-[#f2f4ed]"
+          style={
+            aspectRatio
+              ? { aspectRatio, maxWidth: aspectRatio === "3 / 4" ? 270 : 560 }
+              : undefined
+          }
+        >
+          {kind === "video" ? (
+            <video
+              src={value}
+              aria-label={`Xem trước: ${label}`}
+              controls
+              preload="metadata"
+              className={
+                aspectRatio
+                  ? "absolute inset-0 h-full w-full object-cover"
+                  : "max-h-64 w-full"
+              }
+            />
+          ) : (
+            <Image
+              src={value}
+              alt={`Xem trước: ${label}`}
+              width={960}
+              height={640}
+              unoptimized
+              className={
+                aspectRatio
+                  ? `absolute inset-0 h-full w-full ${fit === "cover" ? "object-cover" : "object-contain"}`
+                  : "max-h-64 w-full object-contain"
+              }
+            />
+          )}
+        </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-[#cfd9c8] p-5 text-sm text-[#6b7867]">
+          Chưa chọn {kind === "image" ? "ảnh" : "video"}.
+        </p>
+      )}
       <input
         ref={input}
         type="file"
@@ -117,8 +136,8 @@ export function MediaField({
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
-          variant="outline"
-          size="sm"
+          className="min-h-11 whitespace-normal"
+          aria-describedby={`${id}-label`}
           disabled={disabled || uploading}
           onClick={() => input.current?.click()}
         >
@@ -132,7 +151,7 @@ export function MediaField({
           {uploading
             ? "Đang tải..."
             : value
-              ? "Thay tệp"
+              ? `Thay ${kind === "image" ? "ảnh" : "video"}`
               : kind === "image"
                 ? "Tải ảnh lên"
                 : "Tải video lên"}
@@ -140,20 +159,55 @@ export function MediaField({
         {value ? (
           <Button
             type="button"
-            variant="ghost"
-            size="sm"
+            variant="outline"
+            className="min-h-11 whitespace-normal"
             disabled={disabled || uploading}
             onClick={() => onChange("")}
           >
-            <X className="size-4" /> Gỡ {kind === "image" ? "ảnh" : "video"}
+            <X className="size-4" />{" "}
+            {removeLabel || `Gỡ ${kind === "image" ? "ảnh" : "video"}`}
           </Button>
         ) : null}
       </div>
-      <p className="text-xs leading-5 text-[#788273]">
-        {kind === "image"
-          ? "JPG, PNG, WebP · tối đa 4 MB. Có thể dùng ảnh đã tải hoặc URL HTTPS từ Supabase."
-          : "MP4, WebM · tối đa 20 MB. Video hiển thị với nút phát và điều khiển âm thanh."}
+      <p className="text-xs leading-5 text-[#6b7867]" role="status">
+        {uploading
+          ? "Đang tải tệp lên, vui lòng đợi trước khi lưu."
+          : kind === "image"
+            ? "Chọn ảnh từ máy tính hoặc điện thoại · JPG, PNG, WebP · tối đa 4 MB."
+            : "MP4, WebM · tối đa 20 MB. Video có nút phát và điều khiển âm thanh."}
       </p>
+      <details className="rounded-lg border border-[#dfe5d8] px-3">
+        <summary className="cursor-pointer py-3 text-sm text-[#6b7867]">
+          Dùng đường dẫn có sẵn (nâng cao)
+        </summary>
+        <div className="space-y-2 pb-3">
+          <Label htmlFor={id}>
+            Đường dẫn {kind === "image" ? "ảnh" : "video"}
+          </Label>
+          <Input
+            id={id}
+            className="min-h-11 text-base md:text-sm"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            disabled={disabled || uploading}
+            placeholder={
+              kind === "image"
+                ? "URL ảnh đã tải lên"
+                : "Đường dẫn video đã tải lên"
+            }
+            aria-invalid={Boolean(value && !isContentMediaUrl(value, kind))}
+            aria-describedby={`${id}-help`}
+          />
+          <p
+            id={`${id}-help`}
+            className="break-words text-xs leading-5 text-[#6b7867]"
+          >
+            {value && !isContentMediaUrl(value, kind)
+              ? "Đường dẫn chưa hợp lệ. Hãy tải tệp lên bằng nút phía trên."
+              : "Dùng đường dẫn tệp đã tải lên cửa hàng hoặc ảnh HTTPS từ Supabase. Không cần nhập đường dẫn khi chọn tệp từ thiết bị."}
+          </p>
+        </div>
+      </details>
     </div>
   );
 }
@@ -208,6 +262,7 @@ export function ContentEditor({
     <div className="space-y-4">
       <Textarea
         ref={textarea}
+        className="text-base md:text-sm"
         id={id}
         value={value}
         rows={14}

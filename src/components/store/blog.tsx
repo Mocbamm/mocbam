@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/store/image";
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import type { BlogPost } from "@/lib/types";
@@ -14,21 +14,27 @@ const subscribeHydration = () => () => {};
 export function BlogCard({
   post,
   compact = false,
+  eager = false,
 }: {
   post: BlogPost;
   compact?: boolean;
+  eager?: boolean;
 }) {
   const Heading = compact ? "h3" : "h2";
   return (
-    <Link href={`/blog/${post.slug}`} className="group block h-full">
+    <Link
+      href={`/blog/${post.slug}`}
+      className="store-blog-card group block h-full"
+    >
       <div
-        className={`relative overflow-hidden bg-[#e8ecdf] ${compact ? "aspect-[1.7]" : "aspect-[1.5]"}`}
+        className={`store-blog-media relative overflow-hidden bg-[#e8ecdf] ${compact ? "aspect-[1.7]" : "aspect-[1.5]"}`}
       >
         {post.image_url ? (
           <Image
             src={post.image_url}
             alt={post.title}
             fill
+            loading={eager ? "eager" : "lazy"}
             sizes="(max-width: 768px) 95vw, 45vw"
             className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
           />
@@ -51,16 +57,14 @@ export function BlogCard({
           </span>
         ) : null}
       </div>
-      <p className="mt-5 text-[10px] text-[#8b947d]">
-        {dateLabel(post.created_at)}
-      </p>
+      <p className="store-blog-date mt-5">{dateLabel(post.created_at)}</p>
       <Heading
-        className={`mt-2 font-serif text-[#29412d] ${compact ? "text-2xl" : "text-3xl"}`}
+        className={`store-blog-title mt-2 font-serif text-[#29412d] ${compact ? "text-2xl" : "text-3xl"}`}
       >
         {post.title}
       </Heading>
       <p
-        className={`mt-3 leading-7 text-[#7c866b] ${compact ? "text-xs" : "text-sm"}`}
+        className={`store-blog-excerpt mt-3 leading-7 text-[#7c866b] ${compact ? "text-xs" : "text-sm"}`}
       >
         {post.excerpt}
       </p>
@@ -94,8 +98,8 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
     );
   return (
     <>
-      <div className="mt-10 flex flex-wrap items-end gap-4 border-y border-[#dde1d0] py-5">
-        <div className="min-w-48 flex-1">
+      <div className="store-blog-filters">
+        <div className="store-blog-search-field">
           <label
             htmlFor="blog-search"
             className="mb-2 block text-xs text-[#66715c]"
@@ -173,7 +177,10 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
             Xóa bộ lọc ngày
           </button>
         ) : null}
-        <p aria-live="polite" className="ml-auto py-2 text-xs text-[#7a826e]">
+        <p
+          aria-live="polite"
+          className="store-blog-count py-2 text-xs text-[#7a826e]"
+        >
           {filtered.length} bài viết
         </p>
       </div>
@@ -183,9 +190,9 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
         </p>
       ) : null}
       {filtered.length ? (
-        <div className="mt-10 grid gap-10 md:grid-cols-2">
-          {filtered.map((post) => (
-            <BlogCard key={post.id} post={post} />
+        <div className="store-blog-grid">
+          {filtered.map((post, index) => (
+            <BlogCard key={post.id} post={post} eager={index < 2} />
           ))}
         </div>
       ) : (

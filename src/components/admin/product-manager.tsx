@@ -1,13 +1,14 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import Image from "@/components/store/image";
 import { Copy, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaField } from "./media-editor";
 import type { Product, ProductVariant } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -490,19 +491,22 @@ export function ProductManager({
                     />
                   </div>
                   <div className="sm:col-span-3">
-                    <Label htmlFor={`variant-image-${variant.id}`}>
-                      URL ảnh riêng (bỏ trống để dùng ảnh chung)
-                    </Label>
-                    <Input
+                    <MediaField
                       id={`variant-image-${variant.id}`}
+                      label="Ảnh riêng của phân loại (không bắt buộc)"
+                      kind="image"
                       value={variant.image_url}
-                      onChange={(event) =>
-                        updateVariant(variant.id, {
-                          image_url: event.target.value,
-                        })
+                      onChange={(image_url) =>
+                        updateVariant(variant.id, { image_url })
                       }
-                      className="mt-2"
+                      disabled={saving || uploading}
+                      onUploadingChange={setUploading}
+                      removeLabel="Dùng ảnh chung"
                     />
+                    <p className="mt-2 text-xs leading-5 text-[#6b7867]">
+                      Không chọn ảnh riêng: khách hàng sẽ thấy ảnh chung của sản
+                      phẩm.
+                    </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 sm:col-span-3">
                     <CheckField

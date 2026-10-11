@@ -1,5 +1,5 @@
 "use client";
-import Image from "next/image";
+import Image from "@/components/store/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Check, Package, ArrowUpRight, RefreshCw, X } from "lucide-react";
@@ -53,7 +53,7 @@ function PaymentDetails({
         : null)
     : null;
   return (
-    <section className="bg-[#edf0e5] p-5 sm:p-7">
+    <section className="store-order-panel store-payment-panel bg-[#edf0e5] p-5 sm:p-7">
       <h2 className="font-serif text-2xl text-[#29412d]">
         Thanh toán đơn hàng
       </h2>
@@ -184,11 +184,11 @@ function PaymentDetails({
 function OrderLines({ order }: { order: Order }) {
   return (
     <>
-      <div className="divide-y divide-[#dde1d0]">
+      <div className="store-order-lines divide-y divide-[#dde1d0]">
         {order.items?.map((item) => (
           <div
             key={item.id || item.product_id}
-            className="flex justify-between gap-5 py-4 text-sm"
+            className="store-order-line flex justify-between gap-5 py-4 text-sm"
           >
             <span>
               {item.name}
@@ -197,7 +197,9 @@ function OrderLines({ order }: { order: Order }) {
                 × {item.quantity}
               </span>
             </span>
-            <span>{money(item.price * item.quantity)}</span>
+            <span className="shrink-0 whitespace-nowrap">
+              {money(item.price * item.quantity)}
+            </span>
           </div>
         ))}
       </div>
@@ -270,7 +272,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
     );
   if (error || !order)
     return (
-      <div className="mx-auto max-w-lg border border-[#dde1d0] p-8 text-center">
+      <div className="store-empty-state mx-auto max-w-lg border border-[#dde1d0] p-8 text-center">
         <h1 className="font-serif text-3xl text-[#29412d]">
           Chưa mở được đơn hàng
         </h1>
@@ -295,7 +297,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
     );
   return (
     <>
-      <div className="mb-10 text-center">
+      <div className="store-receipt-heading mb-10 text-center">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e5ecda] text-[#456237]">
           {["cancelled", "returned"].includes(order.status) ? (
             <X size={24} strokeWidth={1.5} />
@@ -324,7 +326,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
         </p>
       </div>
       <div className="grid gap-7 md:grid-cols-2">
-        <section className="border border-[#dde1d0] p-7">
+        <section className="store-order-panel border border-[#dde1d0] p-7">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="font-serif text-2xl text-[#29412d]">
               Những điều đã chọn
@@ -333,7 +335,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
           </div>
           <OrderLines order={order} />
         </section>
-        <section className="bg-[#edf0e5] p-7">
+        <section className="store-order-panel bg-[#edf0e5] p-7">
           <h2 className="font-serif text-2xl text-[#29412d]">
             Hành trình của đơn
           </h2>
@@ -463,7 +465,7 @@ export function AccountOrders({ signedIn = true }: { signedIn?: boolean }) {
     );
   if (!orders.length)
     return (
-      <div className="bg-[#edf0e5] p-8">
+      <div className="store-empty-state bg-[#edf0e5] p-8">
         <p className="font-serif text-2xl text-[#29412d]">
           Bạn chưa có đơn hàng nào.
         </p>
@@ -480,7 +482,7 @@ export function AccountOrders({ signedIn = true }: { signedIn?: boolean }) {
       </div>
     );
   return (
-    <div className="space-y-4">
+    <div className="store-account-orders space-y-4">
       <button
         type="button"
         onClick={() => {
@@ -494,7 +496,10 @@ export function AccountOrders({ signedIn = true }: { signedIn?: boolean }) {
         Cập nhật đơn hàng
       </button>
       {orders.map((order) => (
-        <details key={order.id} className="border border-[#dde1d0] p-5">
+        <details
+          key={order.id}
+          className="store-order-details border border-[#dde1d0] p-5"
+        >
           <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-4 text-sm">
             <span>
               <strong className="font-medium">{order.reference}</strong>
@@ -545,7 +550,7 @@ export function OrderProgress({ status }: { status: OrderStatus }) {
   return (
     <ol
       aria-label="Tiến trình đơn hàng"
-      className="my-6 grid gap-3 sm:grid-cols-5"
+      className="store-order-progress my-6 grid gap-3 sm:grid-cols-5"
     >
       {steps.map((step, i) => (
         <li

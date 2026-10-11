@@ -79,13 +79,13 @@ export function FaqChat({
     }
   }
   return (
-    <div className="fixed bottom-6 right-5 z-40 sm:right-7">
+    <div className="store-support fixed bottom-6 right-5 z-40 sm:right-7">
       {open ? (
         <section
           aria-label="Trò chuyện với Mộc Bàm"
-          className="mb-3 flex h-[480px] max-h-[75dvh] w-[calc(100vw-40px)] max-w-[360px] flex-col border border-[#d7ddcd] bg-[#faf9f3] shadow-2xl"
+          className="store-support-panel mb-3 flex h-[480px] max-h-[75dvh] w-[calc(100vw-40px)] max-w-[360px] flex-col border border-[#d7ddcd] bg-[#faf9f3] shadow-2xl"
         >
-          <div className="flex items-center justify-between bg-[#29412d] px-5 py-4 text-white">
+          <div className="store-support-heading flex items-center justify-between bg-[#29412d] px-5 py-4 text-white">
             <div>
               <p className="flex items-center gap-2 text-sm">
                 <Leaf size={15} /> Mộc luôn lắng nghe
@@ -174,7 +174,7 @@ export function FaqChat({
                   event.preventDefault();
                   void send();
                 }}
-                className="flex border-t border-[#d7ddcd] p-3"
+                className="store-support-compose flex border-t border-[#d7ddcd] p-3"
               >
                 <label htmlFor="chat-message" className="sr-only">
                   Câu hỏi của bạn
@@ -209,7 +209,7 @@ export function FaqChat({
         }}
         aria-label={open ? "Đóng trợ lý" : "Trò chuyện với Mộc"}
         aria-expanded={open}
-        className="ml-auto flex h-12 items-center gap-2 rounded-full bg-[#29412d] px-4 text-xs text-[#f1f1df] shadow-lg"
+        className="store-support-trigger ml-auto flex h-12 items-center gap-2 rounded-full bg-[#29412d] px-4 text-xs text-[#f1f1df] shadow-lg"
       >
         {open ? <X size={18} /> : <MessageCircle size={18} />}
         <span className="hidden sm:inline">Hỏi Mộc nhé</span>

@@ -1,7 +1,7 @@
 "use client";
-import Image from "next/image";
+import Image from "./image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
@@ -10,7 +10,13 @@ import {
   ShoppingBag,
   Search,
   SlidersHorizontal,
+  ChevronDown,
+  ChevronRight,
+  X,
+  PackageCheck,
+  Leaf,
 } from "lucide-react";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import type { Product, Category } from "@/lib/types";
 import { useCart } from "@/lib/cart";
 import { productOption } from "@/lib/product-options";
@@ -18,7 +24,9 @@ import { trackStoreEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { money } from "./format";
-import { productImages } from "./product-media";
+import { ProductGallery, productImages } from "./product-media";
+import { policyHref } from "./policies";
+import "./catalog.css";
 
 export function ProductCard({
   product,
@@ -31,18 +39,19 @@ export function ProductCard({
   const router = useRouter();
   const images = productImages(product);
   const [imageIndex, setImageIndex] = useState(0);
+  const photoHintId = useId();
   const image = (
     <Image
       src={images[imageIndex] || product.image_url}
       alt={`${product.name}${images.length > 1 ? ` — ảnh ${imageIndex + 1}` : ""}`}
       fill
-      sizes="(max-width: 640px) 48vw, (max-width: 1024px) 32vw, 24vw"
-      className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+      sizes="(max-width: 640px) 46vw, (max-width: 1024px) 31vw, 23vw"
+      className="store-product-card-image"
     />
   );
   return (
-    <article className="group">
-      <div className="relative aspect-square overflow-hidden bg-[#eceee3]">
+    <article className="store-product-card">
+      <div className="store-product-card-media">
         {images.length > 1 ? (
           <button
             type="button"
@@ -50,7 +59,8 @@ export function ProductCard({
               setImageIndex((index) => (index + 1) % images.length)
             }
             aria-label={`Xem ảnh tiếp theo của ${product.name}`}
-            className="relative block h-full w-full"
+            aria-describedby={photoHintId}
+            className="store-product-image-link"
           >
             {image}
           </button>
@@ -58,50 +68,53 @@ export function ProductCard({
           <Link
             href={`/san-pham/${product.slug}`}
             aria-label={`Xem chi tiết ${product.name}`}
-            className="relative block h-full w-full"
+            className="store-product-image-link"
           >
             {image}
           </Link>
         )}
-        {product.stock < 1 ? (
-          <span className="pointer-events-none absolute left-3 top-3 bg-[#faf9f3]/90 px-3 py-1 text-[10px] uppercase tracking-widest">
-            Tạm hết hàng
+        <div className="store-product-badges">
+          {product.stock < 1 ? (
+            <span className="store-product-badge">Tạm hết hàng</span>
+          ) : (
+            <>
+              {product.featured ? (
+                <span className="store-product-badge">Nổi bật</span>
+              ) : null}
+              {product.is_new ? (
+                <span className="store-product-badge store-product-badge-new">
+                  Mới
+                </span>
+              ) : null}
+            </>
+          )}
+        </div>
+        {images.length > 1 ? (
+          <span className="store-product-image-count" aria-live="polite">
+            Ảnh {imageIndex + 1}/{images.length}
           </span>
-        ) : (
-          <div className="pointer-events-none absolute left-3 top-3 flex flex-wrap gap-1.5">
-            {product.featured ? (
-              <span className="bg-[#faf9f3]/90 px-3 py-1 text-[10px] uppercase tracking-widest">
-                Nổi bật
-              </span>
-            ) : null}
-            {product.is_new ? (
-              <span className="bg-[#29412d]/90 px-3 py-1 text-[10px] uppercase tracking-widest text-white">
-                Mới
-              </span>
-            ) : null}
-          </div>
-        )}
+        ) : null}
       </div>
-      <div className="pt-4">
-        <p className="mb-1 text-[9px] uppercase tracking-[0.18em] text-[#848b79]">
-          {category || "Gỗ & những điều nhỏ xinh"}
-        </p>
+      <div className="store-product-card-copy">
+        {category ? (
+          <p className="store-product-card-category">{category}</p>
+        ) : null}
         <Link
           href={`/san-pham/${product.slug}`}
-          className="text-sm font-medium text-[#2e3f2c] hover:underline"
+          className="store-product-card-title"
         >
           {product.name}
         </Link>
-        <p className="mt-2 text-sm text-[#65705c]">
+        <p className="store-product-card-price">
           {product.variants?.length ? "Từ " : ""}
           {money(product.price)}
         </p>
         {images.length > 1 ? (
-          <p aria-live="polite" className="mt-2 text-[10px] text-[#848b79]">
-            Ảnh {imageIndex + 1}/{images.length} · Bấm ảnh để xem thêm
+          <p id={photoHintId} className="store-product-photo-hint">
+            Bấm ảnh để xem góc khác
           </p>
         ) : null}
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="store-product-card-actions">
           <button
             type="button"
             disabled={product.stock < 1}
@@ -111,9 +124,8 @@ export function ProductCard({
                 : add(product)
             }
             aria-label={`Thêm ${product.name} vào giỏ hàng`}
-            className="flex min-h-9 items-center justify-center gap-1.5 border border-[#c5d0b9] px-2 py-2 text-[10px] uppercase tracking-wider text-[#29412d] disabled:opacity-40"
+            className="store-card-button store-card-button-outline"
           >
-            <Plus size={14} />{" "}
             {product.variants?.length ? "Chọn mẫu" : "Bỏ giỏ"}
           </button>
           <button
@@ -125,7 +137,7 @@ export function ProductCard({
               else if (add(product)) router.push("/thanh-toan");
             }}
             aria-label={`Mua ngay ${product.name}`}
-            className="min-h-9 bg-[#29412d] px-2 py-2 text-[10px] uppercase tracking-wider text-white disabled:opacity-40"
+            className="store-card-button store-card-button-primary"
           >
             Mua ngay
           </button>
@@ -134,6 +146,13 @@ export function ProductCard({
     </article>
   );
 }
+
+type CatalogFilterValues = {
+  category: string;
+  search: string;
+  maximum: number;
+};
+
 export function Catalog({
   products,
   categories,
@@ -153,7 +172,21 @@ export function Catalog({
   const [search, setSearch] = useState(initialSearch);
   const [maximum, setMaximum] = useState(ceiling);
   const [sort, setSort] = useState("featured");
-  const categoryId = categories.find((c) => c.slug === category)?.id;
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [draft, setDraft] = useState<CatalogFilterValues>({
+    category,
+    search,
+    maximum,
+  });
+  const selectedCategory = categories.find((c) => c.slug === category);
+  const categoryId = selectedCategory?.id;
+  const bannerProduct =
+    products.find((product) =>
+      selectedCategory
+        ? product.category_id === selectedCategory.id
+        : product.featured,
+    ) || products[0];
+  const hasFilters = Boolean(category || search.trim() || maximum < ceiling);
   const filtered = products
     .filter(
       (p) =>
@@ -172,128 +205,333 @@ export function Catalog({
             ? b.created_at.localeCompare(a.created_at)
             : Number(b.featured) - Number(a.featured),
     );
+  function resetFilters() {
+    setCategory("");
+    setSearch("");
+    setMaximum(ceiling);
+    setSort("featured");
+  }
   return (
-    <div className="mx-auto max-w-7xl px-5 sm:px-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#dde1d0] py-6">
-        <div className="flex flex-wrap gap-2">
-          {[{ slug: "", name: "Tất cả" }, ...categories].map((c) => (
-            <button
-              key={c.slug}
-              onClick={() => setCategory(c.slug)}
-              className={`rounded-full px-5 py-2 text-xs transition-colors ${category === c.slug ? "bg-[#29412d] text-white" : "border border-[#d7ddcd] hover:bg-[#edf0e5]"}`}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-[#7a826e]">
-          {filtered.length} điều nhỏ xinh
-        </p>
-      </div>
-      <div className="grid gap-8 pb-12 pt-8 lg:grid-cols-[210px_1fr]">
-        <aside className="space-y-6">
-          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest">
-            <SlidersHorizontal size={14} /> Tìm điều bạn thích
+    <section className="store-catalog" aria-label="Danh sách sản phẩm">
+      <header className="store-collection-banner">
+        <div className="store-collection-banner-copy">
+          <p className="store-collection-eyebrow">Gom một chút niềm vui</p>
+          <h1>{selectedCategory?.name || "Nhỏ xinh, đủ thương."}</h1>
+          <p>
+            {selectedCategory?.description ||
+              "Những người bạn nhỏ, những đường vân riêng. Chọn một chút Mộc để đồng hành, hay gửi thương đến người bạn quý."}
           </p>
-          <div className="relative">
+        </div>
+        {bannerProduct ? (
+          <div className="store-collection-banner-media">
+            <Image
+              src={bannerProduct.image_url}
+              alt={bannerProduct.name}
+              fill
+              preload
+              sizes="35vw"
+              className="object-cover"
+            />
+          </div>
+        ) : null}
+      </header>
+      <div className="store-catalog-categories" aria-label="Danh mục sản phẩm">
+        {[{ slug: "", name: "Tất cả" }, ...categories].map((c) => (
+          <button
+            key={c.slug}
+            type="button"
+            onClick={() => setCategory(c.slug)}
+            aria-pressed={category === c.slug}
+            className="store-category-tab"
+          >
+            {c.name}
+          </button>
+        ))}
+      </div>
+      <div className="store-catalog-toolbar">
+        <DialogPrimitive.Root
+          open={filtersOpen}
+          onOpenChange={(open) => {
+            if (open) setDraft({ category, search, maximum });
+            setFiltersOpen(open);
+          }}
+        >
+          <DialogPrimitive.Trigger className="store-mobile-filter-trigger">
+            <SlidersHorizontal size={17} /> Bộ lọc
+            {hasFilters ? (
+              <span
+                className="store-filter-dot"
+                aria-label="Đang áp dụng bộ lọc"
+              />
+            ) : null}
+          </DialogPrimitive.Trigger>
+          <DialogPrimitive.Portal>
+            <DialogPrimitive.Overlay className="store-filter-overlay" />
+            <DialogPrimitive.Content className="store-filter-sheet">
+              <div className="store-filter-sheet-heading">
+                <DialogPrimitive.Title>Bộ lọc sản phẩm</DialogPrimitive.Title>
+                <DialogPrimitive.Close aria-label="Đóng bộ lọc">
+                  <X size={21} />
+                </DialogPrimitive.Close>
+              </div>
+              <DialogPrimitive.Description className="store-filter-description">
+                Tìm một chút Mộc vừa ý bạn.
+              </DialogPrimitive.Description>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  setCategory(draft.category);
+                  setSearch(draft.search);
+                  setMaximum(draft.maximum);
+                  setFiltersOpen(false);
+                }}
+              >
+                <div className="store-filter-sheet-fields">
+                  <div className="store-filter-field">
+                    <label htmlFor="mobile-product-search">Tìm sản phẩm</label>
+                    <Input
+                      id="mobile-product-search"
+                      value={draft.search}
+                      onChange={(event) =>
+                        setDraft({ ...draft, search: event.target.value })
+                      }
+                      placeholder="Tên sản phẩm..."
+                    />
+                  </div>
+                  <div className="store-filter-field">
+                    <label htmlFor="mobile-product-category">Danh mục</label>
+                    <select
+                      id="mobile-product-category"
+                      value={draft.category}
+                      onChange={(event) =>
+                        setDraft({ ...draft, category: event.target.value })
+                      }
+                    >
+                      <option value="">Tất cả sản phẩm</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.slug}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="store-filter-field">
+                    <label htmlFor="mobile-product-price">
+                      Giá tối đa · {money(draft.maximum)}
+                    </label>
+                    <input
+                      id="mobile-product-price"
+                      type="range"
+                      min="0"
+                      max={ceiling}
+                      step="10000"
+                      value={draft.maximum}
+                      onChange={(event) =>
+                        setDraft({
+                          ...draft,
+                          maximum: Number(event.target.value),
+                        })
+                      }
+                    />
+                    <div className="store-price-range-labels">
+                      <span>0đ</span>
+                      <span>{money(ceiling)}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="store-filter-sheet-footer">
+                  <button
+                    type="button"
+                    className="store-card-button store-card-button-outline"
+                    onClick={() =>
+                      setDraft({ category: "", search: "", maximum: ceiling })
+                    }
+                  >
+                    Đặt lại
+                  </button>
+                  <button
+                    type="submit"
+                    className="store-card-button store-card-button-primary"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+              </form>
+            </DialogPrimitive.Content>
+          </DialogPrimitive.Portal>
+        </DialogPrimitive.Root>
+        <div className="store-catalog-desktop-filters">
+          <div className="store-catalog-search">
             <label htmlFor="product-search" className="sr-only">
               Tìm sản phẩm
             </label>
+            <Search size={17} />
             <Input
               id="product-search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tên sản phẩm..."
-              className="pr-8"
-            />
-            <Search
-              size={15}
-              className="absolute right-3 top-3 text-[#89917c]"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Tìm sản phẩm..."
             />
           </div>
-          <div>
-            <label
-              htmlFor="product-price"
-              className="block text-xs text-[#66715c]"
-            >
-              Khoảng giá · đến {money(maximum)}
-            </label>
-            <input
-              id="product-price"
-              type="range"
-              min="0"
-              max={ceiling}
-              step="10000"
-              value={maximum}
-              onChange={(e) => setMaximum(Number(e.target.value))}
-              className="mt-4 w-full accent-[#29412d]"
-            />
-            <div className="mt-1 flex justify-between text-[10px] text-[#8a927c]">
-              <span>0đ</span>
-              <span>{money(ceiling)}</span>
+          <details className="store-catalog-price-filter">
+            <summary>
+              Khoảng giá <ChevronDown size={15} />
+            </summary>
+            <div className="store-catalog-price-popover">
+              <label htmlFor="product-price">
+                Giá tối đa · {money(maximum)}
+              </label>
+              <input
+                id="product-price"
+                type="range"
+                min="0"
+                max={ceiling}
+                step="10000"
+                value={maximum}
+                onChange={(event) => setMaximum(Number(event.target.value))}
+              />
+              <div className="store-price-range-labels">
+                <span>0đ</span>
+                <span>{money(ceiling)}</span>
+              </div>
             </div>
-          </div>
-          <div>
-            <label
-              htmlFor="product-sort"
-              className="mb-2 block text-xs text-[#66715c]"
-            >
-              Sắp xếp theo
-            </label>
-            <select
-              id="product-sort"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="w-full border border-[#d7ddcd] bg-transparent px-3 py-2 text-xs"
-            >
-              <option value="featured">Mộc gợi ý</option>
-              <option value="newest">Mới nhất</option>
-              <option value="price-asc">Giá thấp đến cao</option>
-              <option value="price-desc">Giá cao đến thấp</option>
-            </select>
-          </div>
+          </details>
+        </div>
+        <p className="store-catalog-count" aria-live="polite">
+          {filtered.length} sản phẩm
+        </p>
+        <div className="store-catalog-sort">
+          <label htmlFor="product-sort" className="sr-only">
+            Sắp xếp theo
+          </label>
+          <select
+            id="product-sort"
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
+            <option value="featured">Mộc gợi ý</option>
+            <option value="newest">Mới nhất</option>
+            <option value="price-asc">Giá thấp đến cao</option>
+            <option value="price-desc">Giá cao đến thấp</option>
+          </select>
+        </div>
+      </div>
+      {hasFilters ? (
+        <div className="store-active-filters">
+          {search.trim() ? <span>Từ khóa: “{search.trim()}”</span> : null}
+          {maximum < ceiling ? <span>Đến {money(maximum)}</span> : null}
+          <button type="button" onClick={resetFilters}>
+            Xóa bộ lọc <X size={13} />
+          </button>
+        </div>
+      ) : null}
+      {filtered.length ? (
+        <div className="store-product-grid">
+          {filtered.map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              category={categories.find((c) => c.id === p.category_id)?.name}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="store-catalog-empty">
+          <Search size={28} strokeWidth={1.4} />
+          <h2>Chưa tìm thấy điều bạn thích</h2>
+          <p>Thử một từ khóa khác hoặc nới rộng khoảng giá nhé.</p>
           <button
             type="button"
-            onClick={() => {
-              setCategory("");
-              setSearch("");
-              setMaximum(ceiling);
-              setSort("featured");
-            }}
-            className="text-xs underline underline-offset-4"
+            className="store-card-button store-card-button-outline"
+            onClick={resetFilters}
           >
-            Xóa bộ lọc
+            Xem tất cả sản phẩm
           </button>
-        </aside>
-        <div>
-          {filtered.length ? (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3">
-              {filtered.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  category={
-                    categories.find((c) => c.id === p.category_id)?.name
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="flex min-h-64 flex-col items-center justify-center border border-dashed border-[#d7ddcd] px-6 text-center">
-              <p className="font-serif text-2xl">
-                Chưa tìm thấy điều bạn thích
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function ProductDetails({
+  product,
+  category,
+}: {
+  product: Product;
+  category?: Category;
+}) {
+  const [variantImage, setVariantImage] = useState(
+    product.variants?.find((variant) => variant.active && variant.stock > 0)
+      ?.image_url || "",
+  );
+  return (
+    <div className="store-product-detail-grid">
+      <ProductGallery
+        key={variantImage || product.id}
+        product={product}
+        variantImage={variantImage}
+      />
+      <div className="store-product-purchase-panel">
+        {category ? (
+          <Link
+            className="store-product-detail-category"
+            href={`/san-pham?danh-muc=${category.slug}`}
+          >
+            {category.name}
+          </Link>
+        ) : null}
+        <h1>{product.name}</h1>
+        <ProductActions product={product} onVariantChange={setVariantImage} />
+        <div className="store-product-reassurance">
+          <p>
+            <Leaf size={17} /> Mỗi đường vân gỗ có nét riêng, như bạn vậy.
+          </p>
+          <p>
+            <PackageCheck size={17} /> Phí giao hàng được hiển thị trước khi gửi
+            đơn.
+          </p>
+        </div>
+        <div className="store-product-accordions">
+          <details>
+            <summary>
+              Giao hàng & thanh toán <ChevronDown size={17} />
+            </summary>
+            <div>
+              <p>
+                Chọn địa chỉ nhận hàng để xem phí vận chuyển và phương thức
+                thanh toán đang áp dụng trước khi gửi đơn.
               </p>
-              <p className="mt-3 text-sm text-[#7a826e]">
-                Thử một từ khóa khác hoặc nới rộng khoảng giá nhé.
-              </p>
+              <Link href={policyHref("van-chuyen")}>
+                Xem chính sách giao hàng <ChevronRight size={14} />
+              </Link>
             </div>
-          )}
+          </details>
+          <details>
+            <summary>
+              Đổi trả & chăm sóc <ChevronDown size={17} />
+            </summary>
+            <div>
+              <p>
+                Mộc luôn sẵn lòng hỗ trợ bạn khi cần thông tin về sản phẩm, cách
+                chăm sóc hoặc đổi trả.
+              </p>
+              <Link href={policyHref("doi-tra")}>
+                Xem hướng dẫn đổi trả & chăm sóc <ChevronRight size={14} />
+              </Link>
+            </div>
+          </details>
         </div>
       </div>
     </div>
   );
 }
-export function ProductActions({ product }: { product: Product }) {
+export function ProductActions({
+  product,
+  onVariantChange,
+}: {
+  product: Product;
+  onVariantChange?: (image: string) => void;
+}) {
   const [quantity, setQuantity] = useState(1);
   const [variantId, setVariantId] = useState(
     product.variants?.find((variant) => variant.active && variant.stock > 0)
@@ -329,12 +567,16 @@ export function ProductActions({ product }: { product: Product }) {
     return () => window.removeEventListener("mocbam:analytics-ready", sendView);
   }, [product]);
   return (
-    <div>
+    <div className="store-product-actions">
+      <p className="store-product-detail-price" aria-live="polite">
+        {money(option?.price ?? product.price)}
+      </p>
+      <p className="store-product-description">{product.description}</p>
       {product.variants?.length ? (
-        <div className="mt-6 space-y-3">
+        <div className="store-product-variant">
           <label
             htmlFor={`variant-${product.id}`}
-            className="block text-xs text-[#6c765e]"
+            className="store-product-control-label"
           >
             Chọn màu / phân loại
           </label>
@@ -344,8 +586,13 @@ export function ProductActions({ product }: { product: Product }) {
             onChange={(event) => {
               setVariantId(event.target.value);
               setQuantity(1);
+              onVariantChange?.(
+                product.variants?.find(
+                  (variant) => variant.id === event.target.value,
+                )?.image_url || "",
+              );
             }}
-            className="w-full rounded-lg border border-[#d8ddce] bg-white px-3 py-3 text-sm"
+            className="store-product-variant-select"
           >
             <option value="" disabled>
               Chọn phân loại
@@ -363,35 +610,21 @@ export function ProductActions({ product }: { product: Product }) {
                 </option>
               ))}
           </select>
-          {option && (
-            <div className="flex items-center gap-3">
-              {option.image_url !== product.image_url && (
-                <Image
-                  src={option.image_url}
-                  alt={option.name}
-                  width={64}
-                  height={64}
-                  className="size-16 rounded-lg object-cover"
-                />
-              )}
-              <p className="text-lg text-[#617654]">{money(option.price)}</p>
-            </div>
-          )}
         </div>
       ) : null}
-      <div className="mt-6 flex items-center gap-4">
-        <span className="text-xs text-[#6c765e]">Số lượng</span>
-        <div className="flex items-center border border-[#d8ddce]">
+      <div className="store-product-quantity-row">
+        <span className="store-product-control-label">Số lượng</span>
+        <div className="store-product-quantity">
           <button
             type="button"
             aria-label="Giảm số lượng"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             disabled={quantity <= 1}
-            className="p-3 disabled:opacity-30"
+            className="store-product-quantity-button"
           >
             <Minus size={14} />
           </button>
-          <span className="min-w-8 text-center text-sm">{quantity}</span>
+          <span className="store-product-quantity-value">{quantity}</span>
           <button
             type="button"
             aria-label="Tăng số lượng"
@@ -399,23 +632,23 @@ export function ProductActions({ product }: { product: Product }) {
               setQuantity((q) => Math.min(10, availableStock, q + 1))
             }
             disabled={quantity >= Math.min(10, availableStock)}
-            className="p-3 disabled:opacity-30"
+            className="store-product-quantity-button"
           >
             <Plus size={14} />
           </button>
         </div>
-        <span className="text-[11px] text-[#87917c]">
+        <span className="store-product-stock">
           {availableStock > 0
             ? `Còn ${availableStock} sản phẩm`
             : "Tạm hết hàng"}
         </span>
       </div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="store-product-purchase-buttons">
         <Button
           disabled={availableStock < 1}
           onClick={() => add(product, quantity, variantId || undefined)}
           variant="outline"
-          className="h-12"
+          className="store-purchase-button-outline"
         >
           <ShoppingBag size={16} /> Bỏ vào giỏ
         </Button>
@@ -425,7 +658,7 @@ export function ProductActions({ product }: { product: Product }) {
             if (add(product, quantity, variantId || undefined))
               router.push("/thanh-toan");
           }}
-          className="h-12"
+          className="store-purchase-button-primary"
         >
           Mua ngay <ArrowUpRight size={16} />
         </Button>

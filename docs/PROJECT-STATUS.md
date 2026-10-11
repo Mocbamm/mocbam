@@ -1,6 +1,6 @@
 # Project status
 
-Last verified: 5 October 2026. Dạ Thảo's video-feedback changes are live. Hosted storefront, account, discount, media, guest-order recovery and staff-inquiry checks passed; exact temporary-data cleanup is complete. Public email registration delivery is verified through custom Gmail SMTP. Real bank activation/provider verification and Meta setup remain deferred; revocation of the previous Supabase server key has not been confirmed.
+Last verified: 5 October 2026. Dạ Thảo's video-feedback changes are live. Hosted storefront, account, discount, media, guest-order recovery and staff-inquiry checks passed; exact temporary-data cleanup is complete. Public email registration delivery is verified through custom Gmail SMTP. Real bank activation/provider verification remains deferred; Meta setup has resumed but is blocked by a portfolio restriction. Revocation of the previous Supabase server key has not been confirmed.
 
 ## Deployment
 
@@ -9,9 +9,10 @@ Last verified: 5 October 2026. Dạ Thảo's video-feedback changes are live. Ho
 - Vercel: project `mocbam`, Hobby plan, functions in Singapore (`sin1`). Video-feedback source `c8a7636` was verified Ready/Current in the [deployment UI](https://vercel.com/mocbam/mocbam/CisRKTwoTDd3Csu9vNDVNYaKELn1).
 - Supabase: Mộc Bàm organization, Free plan, Singapore; project reference `ciyhftqiwbmbvnybygxy`. Migrations 001–004 are applied. Existing catalog: 8 products, 2 posts and 6 editable content records; shipping fee is 0₫. The two existing orders were preserved by acceptance checks.
 - GA4: account `410553554`, property `557218756`, Web stream `16000604251`, Measurement ID `G-PV2R92QXC7`, configured on production. Enhanced Measurement is off; email and URL parameters `token`, `code`, `email`, `phone` and `address` have redaction enabled. Actual event delivery was verified through Tag Assistant and GA4 Realtime.
+- Meta: verified-email business portfolio **Mộc Bàm** (`3533394066834013`) and dataset **Moc Bam Website Pixel** were created using the Mộc Bàm Chrome profile. Meta immediately restricted the portfolio on 5 October 2026 for suspected automation under Account Integrity rules. Events Manager blocks collecting/viewing events; the numeric Pixel ID and production delivery are unverified. See [Business Support Home](https://business.facebook.com/business-support-home/3533394066834013/?source=actor_spoke) for the restriction and review option. Reuse this dataset after the restriction is resolved.
 - Google Cloud: project `mocbam`, app branding and Web OAuth client configured; Supabase's Google provider is enabled. The verified owner `mocbamm@gmail.com` is permanently enrolled in `admin_members`.
 
-The initial catalog, artwork, contact information and policies remain demonstration content. The selected payment approach is COD plus manual bank transfer/QR. Bank transfer remains disabled with blank receiving settings because the owner has deferred account setup. Orders begin `awaiting_payment`; an admin independently verifies money received/refunded and records `paid`/`refunded` with audit entries. The application does not move money or confirm settlement automatically. Historical orders retain method `unconfigured`. Meta Pixel setup is explicitly deferred by the project owner; no Pixel ID is configured.
+The initial catalog, artwork, contact information and policies remain demonstration content. The selected payment approach is COD plus manual bank transfer/QR. Bank transfer remains disabled with blank receiving settings because the owner has deferred account setup. Orders begin `awaiting_payment`; an admin independently verifies money received/refunded and records `paid`/`refunded` with audit entries. The application does not move money or confirm settlement automatically. Historical orders retain method `unconfigured`. No Meta Pixel ID is configured while the portfolio restriction blocks activation.
 
 ## Verified
 
@@ -52,6 +53,7 @@ The following production checks apply to the earlier storefront revision:
 ## Remaining owner action and deferred work
 
 - The owner still needs to revoke the previous Supabase `SECRET default` server key. The replacement is active; revocation of the old key has not been confirmed.
-- Real receiving-bank details/transfer activation, actual bank/provider settlement verification and Meta Pixel setup/provider verification remain explicitly deferred by the project owner. Automatic payment gateways/bank confirmation are outside this implementation.
+- Real receiving-bank details/transfer activation and actual bank/provider settlement verification remain explicitly deferred by the project owner. Automatic payment gateways/bank confirmation are outside this implementation.
+- Resolve the Meta portfolio restriction through Business Support Home, then configure the existing dataset's numeric Pixel ID in Vercel Production, rebuild and verify consent-controlled browser event delivery. Conversions API integration was left unchecked during dataset creation. The existing analytics suite passed all 17 tests on 5 October 2026; this does not verify Meta delivery.
 
 Check the Supabase Free project is active before the graduation presentation. The [verification checklist](VERIFICATION.md) documents the flows to rehearse after future changes.

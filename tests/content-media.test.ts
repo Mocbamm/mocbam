@@ -83,6 +83,6 @@ describe("editable content media", () => {
     );
     expect(
       contentSections.filter((section) => section.kind === "media"),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
   });
 });

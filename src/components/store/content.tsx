@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "./image";
 import {
   contentBlocks,
   isContentMediaUrl,
@@ -12,6 +12,7 @@ export function ContentVisual({
   sizes = "(max-width: 768px) 95vw, 45vw",
   preload = false,
   controls = true,
+  fallbackSrc,
 }: {
   url: string;
   alt: string;
@@ -19,6 +20,7 @@ export function ContentVisual({
   sizes?: string;
   preload?: boolean;
   controls?: boolean;
+  fallbackSrc?: string;
 }) {
   if (isContentMediaUrl(url, "video"))
     return (
@@ -30,10 +32,11 @@ export function ContentVisual({
         className={`absolute inset-0 h-full w-full ${className}`}
       />
     );
-  if (!isContentMediaUrl(url, "image")) return null;
+  if (!isContentMediaUrl(url, "image") && !fallbackSrc) return null;
   return (
     <Image
-      src={url}
+      src={isContentMediaUrl(url, "image") ? url : fallbackSrc!}
+      fallbackSrc={fallbackSrc}
       alt={alt}
       fill
       sizes={sizes}
@@ -45,7 +48,7 @@ export function ContentVisual({
 
 export function Prose({ content }: { content: string }) {
   return (
-    <div className="space-y-5 text-sm leading-8 text-[#737e65]">
+    <div className="store-prose space-y-5 text-sm leading-8 text-[#737e65]">
       {contentBlocks(content).map((paragraph, index) => {
         const media = parseContentMedia(paragraph);
         if (media)

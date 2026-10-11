@@ -7,7 +7,7 @@
 Previously deferred setup:
 
 - [ ] Supply and verify the receiving bank/account details, then enable bank transfer in Admin → Settings.
-- [ ] Resume Meta Pixel setup if needed; GA4 is already configured.
+- [ ] Resolve Meta's restriction on portfolio Mộc Bàm (`3533394066834013`), then finish setup using the existing **Moc Bam Website Pixel** dataset. Set its numeric ID in Vercel Production, rebuild and verify Test Events; GA4 is already configured. See [project status](docs/PROJECT-STATUS.md) for the restriction details.
 
 Release setup still waiting for credentials:
 

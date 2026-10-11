@@ -2,17 +2,22 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import "./catalog.css";
 
 export function StoreCarousel({
   label,
   children,
   itemCount,
   itemClassName,
+  heading,
+  action,
 }: {
   label: string;
   children: React.ReactNode[];
   itemCount: number;
   itemClassName: string;
+  heading?: React.ReactNode;
+  action?: React.ReactNode;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -53,41 +58,47 @@ export function StoreCarousel({
     });
   }
   return (
-    <div role="region" aria-label={label} aria-roledescription="băng chuyền">
-      {position.overflow ? (
-        <div className="mb-4 flex justify-end gap-2">
-          <button
-            type="button"
-            aria-label={`${label}: xem trước`}
-            aria-controls={id}
-            disabled={!position.previous}
-            onClick={() => scroll(-1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#c3cdb7] text-[#29412d] disabled:opacity-30"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            type="button"
-            aria-label={`${label}: xem tiếp`}
-            aria-controls={id}
-            disabled={!position.next}
-            onClick={() => scroll(1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#c3cdb7] text-[#29412d] disabled:opacity-30"
-          >
-            <ChevronRight size={18} />
-          </button>
+    <div
+      className="store-carousel"
+      role="region"
+      aria-label={label}
+      aria-roledescription="băng chuyền"
+    >
+      {heading || action || position.overflow ? (
+        <div className="store-carousel-header">
+          {heading}
+          <div className="store-carousel-controls">
+            {action ? (
+              <div className="store-carousel-action">{action}</div>
+            ) : null}
+            {position.overflow ? (
+              <>
+                <button
+                  type="button"
+                  aria-label={`${label}: xem trước`}
+                  aria-controls={id}
+                  disabled={!position.previous}
+                  onClick={() => scroll(-1)}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`${label}: xem tiếp`}
+                  aria-controls={id}
+                  disabled={!position.next}
+                  onClick={() => scroll(1)}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </>
+            ) : null}
+          </div>
         </div>
       ) : null}
-      <div
-        ref={viewport}
-        id={id}
-        className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-3 [scrollbar-width:thin]"
-      >
+      <div ref={viewport} id={id} className="store-carousel-viewport">
         {children.map((child, index) => (
-          <div
-            key={index}
-            className={`min-w-0 shrink-0 snap-start ${itemClassName}`}
-          >
+          <div key={index} className={`store-carousel-item ${itemClassName}`}>
             {child}
           </div>
         ))}

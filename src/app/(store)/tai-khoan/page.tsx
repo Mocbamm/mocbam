@@ -21,7 +21,7 @@ export default async function AccountPage({
   const profile = user ? await getCustomerProfile() : null;
   const next = safeNext(typeof query.next === "string" ? query.next : null);
   return (
-    <main className="mx-auto max-w-4xl px-5 pt-14 sm:px-8">
+    <div className="store-page store-account-page">
       {user ? (
         <>
           {query.confirmed === "1" ? (
@@ -32,14 +32,10 @@ export default async function AccountPage({
               Email đã được xác nhận. Chào bạn đến với Mộc Bàm.
             </p>
           ) : null}
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
+          <div className="store-account-heading">
             <div>
-              <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-[#889777]">
-                Rất vui gặp lại bạn
-              </p>
-              <h1 className="font-serif text-5xl tracking-tight text-[#29412d]">
-                Góc nhỏ của bạn.
-              </h1>
+              <p className="store-eyebrow">Rất vui gặp lại bạn</p>
+              <h1 className="store-page-title">Góc nhỏ của bạn.</h1>
               <p className="mt-4 text-xs text-[#7c866b]">{user.email}</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -56,13 +52,11 @@ export default async function AccountPage({
             </div>
           </div>
           {profile ? <ProfileForm profile={profile} /> : null}
-          <h2 className="mb-5 font-serif text-2xl text-[#29412d]">
-            Những đơn hàng đã gửi
-          </h2>
+          <h2 className="store-section-title mb-5">Những đơn hàng đã gửi</h2>
           <AccountOrders />
         </>
       ) : (
-        <section className="mx-auto max-w-lg border border-[#dde1d0] bg-[#edf0e5] px-8 py-12 text-center">
+        <section className="store-account-entry">
           {query.error ? (
             <p
               role="alert"
@@ -78,13 +72,9 @@ export default async function AccountPage({
             strokeWidth={1.2}
             className="mx-auto text-[#8b9b79]"
           />
-          <p className="mt-7 text-[10px] uppercase tracking-[0.2em] text-[#889777]">
-            Chào bạn đến với Mộc
-          </p>
-          <h1 className="mt-4 font-serif text-4xl tracking-tight text-[#29412d]">
-            Một góc nhỏ dành riêng.
-          </h1>
-          <p className="mt-5 text-sm leading-7 text-[#7c866b]">
+          <p className="store-eyebrow mt-6">Chào bạn đến với Mộc</p>
+          <h1 className="store-page-title mt-4">Một góc nhỏ dành riêng.</h1>
+          <p className="store-page-description mx-auto">
             Đăng nhập bằng Google hoặc email để lưu đơn hàng và theo dõi hành
             trình những điều bạn chọn.
           </p>
@@ -112,12 +102,12 @@ export default async function AccountPage({
       )}
       {!user ? (
         <section className="mt-10">
-          <h2 className="mb-5 font-serif text-2xl">
+          <h2 className="store-section-title mb-5">
             Đơn hàng trên thiết bị này
           </h2>
           <AccountOrders signedIn={false} />
         </section>
       ) : null}
-    </main>
+    </div>
   );
 }

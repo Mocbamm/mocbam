@@ -1,4 +1,5 @@
 import type { SiteContent } from "./types";
+import { contentMediaSource } from "./storefront-media";
 
 export const contentGroups = [
   { id: "home", title: "Trang chủ" },
@@ -11,6 +12,9 @@ type ContentSection = SiteContent & {
   group: ContentGroup;
   label: string;
   kind?: "media";
+  hint?: string;
+  aspectRatio?: string;
+  fit?: "cover" | "contain";
 };
 
 export const contentSections: ContentSection[] = [
@@ -25,10 +29,22 @@ export const contentSections: ContentSection[] = [
   {
     key: "home-hero-media",
     group: "home",
-    label: "Ảnh / video đầu trang",
+    label: "Ảnh / video banner chính",
+    hint: "Banner lớn trên trang chủ. Gợi ý ảnh ngang 2400 × 1050 px; giữ chủ thể ở giữa và chừa khoảng trống bên trái cho chữ. Có thể thêm ảnh dọc riêng ở mục Banner trên điện thoại.",
+    aspectRatio: "16 / 7",
     kind: "media",
     title: "Những món đồ gỗ nhỏ xinh trong không gian xanh của Mộc Bàm",
-    content: "/images/story.svg",
+    content: "/images/verdant/hero.webp",
+  },
+  {
+    key: "home-hero-mobile-media",
+    group: "home",
+    label: "Banner trên điện thoại",
+    kind: "media",
+    title: "Không gian nhỏ xinh của Mộc Bàm trên điện thoại",
+    content: "none",
+    hint: "Không bắt buộc. Gợi ý ảnh dọc 900 × 1200 px, chừa khoảng trống phía dưới bên trái cho chữ. Nếu không chọn tệp, điện thoại dùng banner chính; banner mẫu có sẵn ảnh dọc phù hợp. Banner chính phải được bật.",
+    aspectRatio: "3 / 4",
   },
   {
     key: "home-hero-note",
@@ -48,9 +64,12 @@ export const contentSections: ContentSection[] = [
     key: "home-category-characters-media",
     group: "home",
     label: "Ảnh bộ sưu tập nhân vật",
+    hint: "Lối tắt danh mục ở đầu trang chủ. Gợi ý PNG hoặc WebP nền trong suốt, rộng ít nhất 600 px. Giữ toàn bộ sản phẩm trong khung.",
+    aspectRatio: "3 / 2",
+    fit: "contain",
     kind: "media",
     title: "Dòng nhân vật",
-    content: "/images/product-02.svg",
+    content: "/images/verdant/characters-cutout.webp",
   },
   {
     key: "home-category-beads",
@@ -63,9 +82,12 @@ export const contentSections: ContentSection[] = [
     key: "home-category-beads-media",
     group: "home",
     label: "Ảnh bộ sưu tập chuỗi",
+    hint: "Lối tắt danh mục ở đầu trang chủ. Gợi ý PNG hoặc WebP nền trong suốt, rộng ít nhất 600 px. Giữ toàn bộ sản phẩm trong khung.",
+    aspectRatio: "3 / 2",
+    fit: "contain",
     kind: "media",
     title: "Dòng chuỗi",
-    content: "/images/product-06.svg",
+    content: "/images/verdant/accessories-cutout.webp",
   },
   {
     key: "home-featured",
@@ -86,9 +108,11 @@ export const contentSections: ContentSection[] = [
     key: "home-intro-media",
     group: "home",
     label: "Ảnh / video giới thiệu",
+    hint: "Khối giới thiệu màu xanh trên trang chủ. Gợi ý ảnh gần vuông, rộng ít nhất 1200 px, chủ thể ở giữa.",
+    aspectRatio: "6 / 5",
     kind: "media",
     title: "Một người bạn gỗ, được Mộc nâng niu",
-    content: "/images/product-03.svg",
+    content: "/images/verdant/bear-photo.webp",
   },
   {
     key: "home-journal",
@@ -117,9 +141,11 @@ export const contentSections: ContentSection[] = [
     key: "about-media",
     group: "about",
     label: "Ảnh / video câu chuyện",
+    hint: "Ảnh mở đầu trang Chúng tôi. Gợi ý ảnh ngang 1200 × 1000 px, giữ chủ thể ở giữa.",
+    aspectRatio: "6 / 5",
     kind: "media",
     title: "Thế giới nhỏ của Mộc Bàm",
-    content: "/images/story.svg",
+    content: "/images/verdant/story.webp",
   },
   {
     key: "about-natural",
@@ -210,7 +236,10 @@ export const contentSections: ContentSection[] = [
 export function contentEntry(entries: SiteContent[], key: string): SiteContent {
   const fallback = contentSections.find((section) => section.key === key);
   const entry = entries.find((item) => item.key === key);
-  if (entry) return entry;
+  if (entry)
+    return fallback?.kind === "media"
+      ? { ...entry, content: contentMediaSource(key, entry.content) }
+      : entry;
   if (!fallback) throw new Error(`Unknown content section: ${key}`);
   return { key, title: fallback.title, content: fallback.content };
 }
