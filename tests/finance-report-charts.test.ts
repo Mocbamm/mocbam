@@ -254,8 +254,9 @@ describe("payment revenue shares", () => {
     const html = renderToStaticMarkup(
       createElement(PaymentShareChart, { report }),
     );
-    expect(html).toContain("25.0%");
-    expect(html).toContain("75.0%");
+    // Vietnamese percentage format, shared with the traffic report.
+    expect(html).toContain("25%");
+    expect(html).toContain("75%");
     expect(html).toContain("Không gồm phí giao hàng");
     const csv = reportCsv(report);
     expect(csv).toContain('"cod","2","90000","25"');
@@ -322,9 +323,14 @@ describe("finance chart rendering", () => {
     )?.[1];
     expect(profitPath?.match(/M/g)).toHaveLength(2);
     expect(profitPath).not.toContain("L");
-    expect(profitPath).toContain(",230");
-    expect(html).toContain("Lợi nhuận âm được vẽ dưới đường 0");
+    const zeroY = Number(html.match(/data-zero-y="([^"]+)"/)?.[1]);
+    const lossY = Number(profitPath?.split(",").at(-1));
+    expect(lossY).toBeGreaterThan(zeroY);
+    expect(html).toContain("lãi âm được vẽ dưới đường 0");
     expect(html).not.toMatch(/NaN|Infinity/);
     expect(html).toContain("chưa đủ giá vốn");
+    // The newest period is read out by default instead of being scrolled away.
+    expect(html).toContain("Thứ Bảy, 03/10/2026");
+    expect(html).toContain("Đơn vị: đồng (₫)");
   });
 });

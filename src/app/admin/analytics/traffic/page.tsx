@@ -1,19 +1,27 @@
 import { canRenderAdmin } from "@/components/admin/admin-access";
 import { AdminHeading } from "@/components/admin/admin-shell";
-import { ReportModules } from "@/components/admin/analytics-manager";
 import { TrafficManager } from "@/components/admin/traffic-manager";
-import { reportPeriodRange } from "@/lib/store-reports";
+import { parseReportRange } from "@/lib/report-periods";
+import { reportDateRange } from "@/lib/store-reports";
 
-export default async function AdminTrafficPage() {
+export default async function AdminTrafficPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   if (!(await canRenderAdmin())) return null;
   return (
     <>
       <AdminHeading
         title="Lưu lượng website"
-        description="Đọc người dùng, nguồn truy cập, trang đích và phễu mua hàng thực tế từ Google Analytics 4."
+        description="Bao nhiêu người ghé website, họ đến từ đâu, xem trang nào và bao nhiêu người đi đến bước đặt hàng. Số liệu lấy từ Google Analytics."
       />
-      <ReportModules traffic />
-      <TrafficManager initialRange={reportPeriodRange(new Date(), "month")} />
+      <TrafficManager
+        initialRange={
+          parseReportRange(await searchParams) ??
+          reportDateRange(new Date(), 30)
+        }
+      />
     </>
   );
 }

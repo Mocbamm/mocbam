@@ -4,175 +4,158 @@ import type {
   ReportTrendRow,
   StoreReport,
 } from "@/lib/store-reports";
+import { formatDay, weekdayLabel } from "@/lib/report-periods";
 import { formatPrice } from "@/lib/utils";
+import { formatCompactMoney, formatCount, formatPercent } from "./report-ui";
+import { ChartLegend, TimeChart } from "./report-time-chart";
 
 export const financePaymentLabels = {
-  cod: "Tiền mặt / COD",
+  cod: "Tiền mặt khi nhận hàng (COD)",
   bank_transfer: "Chuyển khoản",
   unconfigured: "Chưa xác định",
 };
+/** Validated pair (CVD ΔE ≥ 11); unknown legacy methods stay neutral gray. */
+export const financeColors = {
+  revenue: "#3b6b26",
+  profit: "#c27c2c",
+  orders: "#3b6b26",
+};
 const paymentColors = {
-  cod: "#426533",
-  bank_transfer: "#b58246",
-  unconfigured: "#788273",
+  cod: "#3b6b26",
+  bank_transfer: "#c27c2c",
+  unconfigured: "#8a8f86",
 };
 
+/** Full label for tables and the chart readout, in Vietnamese date order. */
 export function trendPeriodLabel(
-  row: ReportTrendRow,
+  row: Pick<ReportTrendRow, "date" | "end_date">,
   grouping: ReportGrouping,
 ) {
-  if (grouping === "month") return row.date.slice(0, 7);
-  if (grouping === "week") return `${row.date} – ${row.end_date}`;
-  return row.date;
+  if (grouping === "month")
+    return `Tháng ${row.date.slice(5, 7)}/${row.date.slice(0, 4)}`;
+  if (grouping === "week")
+    return `Tuần ${formatDay(row.date, false)} – ${formatDay(row.end_date)}`;
+  return `${weekdayLabel(row.date)}, ${formatDay(row.date)}`;
+}
+function axisLabel(row: ReportTrendRow, grouping: ReportGrouping) {
+  if (grouping === "month")
+    return `T${Number(row.date.slice(5, 7))}/${row.date.slice(2, 4)}`;
+  return formatDay(row.date, false);
 }
 
 export function FinanceTrendChart({
   rows,
   grouping,
+  metric = "revenue",
 }: {
   rows: ReportTrendRow[];
   grouping: ReportGrouping;
+  metric?: "revenue" | "orders";
 }) {
-  const id = useId();
-  const width = Math.max(680, rows.length * 58 + 100);
-  const height = 285;
-  const left = 80;
-  const right = width - 24;
-  const top = 20;
-  const bottom = 230;
-  const values = rows.flatMap((row) => [row.net_sales, row.gross_profit ?? 0]);
-  const min = Math.min(0, ...values);
-  const max = Math.max(1, ...values);
-  const y = (value: number) =>
-    bottom - ((value - min) / (max - min)) * (bottom - top);
-  const x = (index: number) =>
-    rows.length === 1
-      ? (left + right) / 2
-      : left + (index / (rows.length - 1)) * (right - left);
-  function line(key: "net_sales" | "gross_profit") {
-    let continuing = false;
-    return rows
-      .map((row, index) => {
-        const value = row[key];
-        if (value === null) {
-          continuing = false;
-          return "";
-        }
-        const command = continuing ? "L" : "M";
-        continuing = true;
-        return `${command}${x(index)},${y(value)}`;
-      })
-      .join(" ");
-  }
-  const tickFormat = new Intl.NumberFormat("vi-VN", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  });
-  const labelEvery = Math.max(1, Math.ceil(rows.length / 12));
-  const ticks = [
-    ...new Set([
-      0,
-      ...[0, 1, 2, 3, 4].map((index) => min + ((max - min) * index) / 4),
-    ]),
-  ];
+  const profit = (value: number | null) =>
+    value === null ? "chưa đủ giá vốn" : formatPrice(value);
+  const pointTitle = (index: number) => {
+    const row = rows[index];
+    return `${trendPeriodLabel(row, grouping)}: doanh thu ${formatPrice(row.net_sales)}; lãi gộp ${profit(row.gross_profit)}; ${row.order_count} đơn`;
+  };
+  const readout = (index: number) => {
+    const row = rows[index];
+    return (
+      <>
+        <p className="text-xs font-medium text-[#6b7867]">
+          {trendPeriodLabel(row, grouping)}
+        </p>
+        <p className="flex flex-wrap gap-x-4 gap-y-0.5 text-[#21372b]">
+          {metric === "revenue" ? (
+            <>
+              <span>
+                Doanh thu{" "}
+                <strong className="font-semibold">
+                  {formatPrice(row.net_sales)}
+                </strong>
+              </span>
+              <span>
+                Lãi gộp{" "}
+                <strong className="font-semibold">
+                  {profit(row.gross_profit)}
+                </strong>
+              </span>
+              <span className="text-[#6b7867]">{row.order_count} đơn</span>
+            </>
+          ) : (
+            <>
+              <span>
+                <strong className="font-semibold">{row.order_count}</strong> đơn
+                được đặt
+              </span>
+              <span className="text-[#6b7867]">
+                Doanh thu {formatPrice(row.net_sales)}
+              </span>
+            </>
+          )}
+        </p>
+      </>
+    );
+  };
+  if (metric === "orders")
+    return (
+      <TimeChart
+        title={`Số đơn được đặt theo ${groupingNames[grouping]}`}
+        description="Tính mọi đơn đặt trong kỳ, kể cả đơn đã hủy. Bảng số liệu ở bên dưới."
+        axisLabels={rows.map((row) => axisLabel(row, grouping))}
+        series={[
+          {
+            key: "orders",
+            label: "Số đơn",
+            color: financeColors.orders,
+            kind: "bar",
+            values: rows.map((row) => row.order_count),
+          },
+        ]}
+        axisFormat={(value) => formatCount(value)}
+        integer
+        unit="đơn"
+        readout={readout}
+        pointTitle={pointTitle}
+      />
+    );
   return (
-    <div className="mt-5 overflow-x-auto pb-2">
-      <svg
-        role="img"
-        aria-labelledby={`${id}-title ${id}-description`}
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-72 w-full"
-        style={{ minWidth: width }}
-      >
-        <title id={`${id}-title`}>
-          Xu hướng doanh thu thuần và lợi nhuận gộp dự kiến
-        </title>
-        <desc id={`${id}-description`}>
-          Đơn vị VND. Đường lợi nhuận ngắt ở kỳ thiếu giá vốn; bảng số liệu ở
-          bên dưới. Lợi nhuận âm được vẽ dưới đường 0.
-        </desc>
-        {ticks.map((value) => {
-          return (
-            <g key={value}>
-              <line
-                x1={left}
-                x2={right}
-                y1={y(value)}
-                y2={y(value)}
-                stroke="#edf0e7"
-              />
-              <text
-                x={left - 10}
-                y={y(value) + 4}
-                textAnchor="end"
-                fontSize="11"
-                fill="#6b7867"
-              >
-                {tickFormat.format(value)}
-              </text>
-            </g>
-          );
-        })}
-        <line
-          x1={left}
-          x2={right}
-          y1={y(0)}
-          y2={y(0)}
-          stroke="#a6b39d"
-          strokeDasharray="4 4"
+    <TimeChart
+      legend={
+        <ChartLegend
+          items={[
+            { label: "Doanh thu", color: financeColors.revenue },
+            { label: "Lãi gộp ước tính", color: financeColors.profit },
+          ]}
         />
-        <path
-          data-series="net-sales"
-          d={line("net_sales")}
-          fill="none"
-          stroke="#426533"
-          strokeWidth="2.5"
-        />
-        <path
-          data-series="gross-profit"
-          d={line("gross_profit")}
-          fill="none"
-          stroke="#b58246"
-          strokeWidth="2.5"
-        />
-        {rows.map((row, index) => (
-          <g key={row.date}>
-            <title>
-              {`${trendPeriodLabel(row, grouping)}: doanh thu thuần ${formatPrice(row.net_sales)}; lợi nhuận gộp ${row.gross_profit === null ? "chưa đủ giá vốn" : formatPrice(row.gross_profit)}`}
-            </title>
-            <circle
-              cx={x(index)}
-              cy={y(row.net_sales)}
-              r="3.5"
-              fill="#426533"
-            />
-            {row.gross_profit !== null && (
-              <circle
-                cx={x(index)}
-                cy={y(row.gross_profit)}
-                r="3.5"
-                fill="#b58246"
-              />
-            )}
-            {(index % labelEvery === 0 || index === rows.length - 1) && (
-              <text
-                x={x(index)}
-                y={bottom + 24}
-                textAnchor="middle"
-                fontSize="10"
-                fill="#6b7867"
-              >
-                {grouping === "month"
-                  ? row.date.slice(0, 7)
-                  : row.date.slice(5)}
-              </text>
-            )}
-          </g>
-        ))}
-      </svg>
-    </div>
+      }
+      title="Doanh thu và lãi gộp ước tính theo thời gian"
+      description="Đơn vị: đồng. Đường lãi gộp bị ngắt ở kỳ thiếu giá vốn; lãi âm được vẽ dưới đường 0. Bảng số liệu ở bên dưới."
+      axisLabels={rows.map((row) => axisLabel(row, grouping))}
+      series={[
+        {
+          key: "net-sales",
+          label: "Doanh thu",
+          color: financeColors.revenue,
+          kind: "line",
+          values: rows.map((row) => row.net_sales),
+        },
+        {
+          key: "gross-profit",
+          label: "Lãi gộp ước tính",
+          color: financeColors.profit,
+          kind: "line",
+          values: rows.map((row) => row.gross_profit),
+        },
+      ]}
+      axisFormat={formatCompactMoney}
+      unit="đồng (₫)"
+      readout={readout}
+      pointTitle={pointTitle}
+    />
   );
 }
+const groupingNames = { day: "ngày", week: "tuần", month: "tháng" };
 
 export function PaymentShareChart({ report }: { report: StoreReport }) {
   const id = useId();
@@ -181,27 +164,26 @@ export function PaymentShareChart({ report }: { report: StoreReport }) {
   if (!total)
     return (
       <p className="mt-4 text-sm text-[#6b7867]">
-        Chưa có doanh thu sản phẩm thuần để phân bổ.
+        Chưa có doanh thu để chia theo cách thanh toán.
       </p>
     );
   const radius = 62;
   const circumference = 2 * Math.PI * radius;
+  const gap = rows.length > 1 ? 2 : 0;
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-8">
+    <div className="mt-4 flex flex-wrap items-center gap-6">
       <svg
-        className="size-48 shrink-0"
+        className="size-40 shrink-0"
         viewBox="0 0 180 180"
         role="img"
         aria-labelledby={`${id}-title ${id}-description`}
       >
-        <title id={`${id}-title`}>
-          Tỷ trọng doanh thu theo phương thức thanh toán
-        </title>
+        <title id={`${id}-title`}>Tỷ lệ doanh thu theo cách thanh toán</title>
         <desc id={`${id}-description`}>
           {rows
             .map(
               (row) =>
-                `${financePaymentLabels[row.method]}: ${((row.net_sales / total) * 100).toFixed(1)}%, ${formatPrice(row.net_sales)}`,
+                `${financePaymentLabels[row.method]}: ${formatPercent(row.net_sales / total)}, ${formatPrice(row.net_sales)}`,
             )
             .join("; ")}
           . Không gồm phí giao hàng; đơn hủy, trả hàng hoặc hoàn tiền không tạo
@@ -209,7 +191,7 @@ export function PaymentShareChart({ report }: { report: StoreReport }) {
         </desc>
         {rows.map((row, index) => {
           const length = (row.net_sales / total) * circumference;
-          const currentOffset = rows
+          const offset = rows
             .slice(0, index)
             .reduce(
               (sum, previous) =>
@@ -224,9 +206,9 @@ export function PaymentShareChart({ report }: { report: StoreReport }) {
               r={radius}
               fill="none"
               stroke={paymentColors[row.method]}
-              strokeWidth="25"
-              strokeDasharray={`${length} ${circumference - length}`}
-              strokeDashoffset={-currentOffset}
+              strokeWidth="24"
+              strokeDasharray={`${Math.max(0, length - gap)} ${circumference - Math.max(0, length - gap)}`}
+              strokeDashoffset={-offset}
               transform="rotate(-90 90 90)"
             >
               <title>
@@ -235,41 +217,38 @@ export function PaymentShareChart({ report }: { report: StoreReport }) {
             </circle>
           );
         })}
-        <text x="90" y="86" textAnchor="middle" fontSize="12" fill="#6b7867">
-          Doanh thu thuần
+        <text x="90" y="85" textAnchor="middle" fontSize="12" fill="#6b7867">
+          Doanh thu
         </text>
         <text
           x="90"
-          y="106"
+          y="104"
           textAnchor="middle"
-          fontSize="14"
+          fontSize="15"
           fontWeight="600"
-          fill="#294836"
+          fill="#21372b"
         >
-          {new Intl.NumberFormat("vi-VN", {
-            notation: "compact",
-            maximumFractionDigits: 1,
-          }).format(total)}{" "}
-          ₫
+          {formatCompactMoney(total)}
         </text>
       </svg>
-      <ul className="min-w-48 flex-1 space-y-3 text-sm">
+      <ul className="min-w-52 flex-1 space-y-3 text-sm">
         {rows.map((row) => (
-          <li
-            key={row.method}
-            className="flex flex-wrap items-center justify-between gap-2"
-          >
-            <span className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="size-3 rounded-full"
-                style={{ backgroundColor: paymentColors[row.method] }}
-              />
-              {financePaymentLabels[row.method]}
-            </span>
-            <span className="font-medium">
-              {((row.net_sales / total) * 100).toFixed(1)}% ·{" "}
-              {formatPrice(row.net_sales)}
+          <li key={row.method} className="flex items-start gap-2">
+            <span
+              aria-hidden="true"
+              className="mt-1.5 size-3 shrink-0 rounded-sm"
+              style={{ backgroundColor: paymentColors[row.method] }}
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[#21372b]">
+                {financePaymentLabels[row.method]}
+              </span>
+              <span className="text-[#6b7867]">
+                <strong className="font-semibold text-[#21372b]">
+                  {formatPercent(row.net_sales / total)}
+                </strong>{" "}
+                · {formatPrice(row.net_sales)}
+              </span>
             </span>
           </li>
         ))}

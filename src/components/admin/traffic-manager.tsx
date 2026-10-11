@@ -1,223 +1,474 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Download, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { useEffect, useState, type ReactNode } from "react";
 import {
-  reportPeriodRange,
-  type ReportPeriod,
-  type ReportRange,
-} from "@/lib/store-reports";
+  ArrowRight,
+  Download,
+  ExternalLink,
+  LoaderCircle,
+  RefreshCw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { ReportRange } from "@/lib/store-reports";
+import {
+  formatDay,
+  matchPreset,
+  periodPhrase,
+  presetRange,
+  reportRangeQuery,
+  weekdayLabel,
+  type ReportPreset,
+  type ReportSelection,
+} from "@/lib/report-periods";
+import {
+  biggestFunnelDrop,
+  deviceLabel,
+  formatDuration,
+  funnelStepLabel,
+  groupTrafficRows,
+  landingPageLabel,
+  trafficSourceLabel,
+} from "@/lib/traffic-labels";
 import {
   trafficCsv,
+  type TrafficReport,
   type TrafficRow,
   type TrafficState,
-  type TrafficReport,
 } from "@/lib/traffic-reports";
-import { fieldClass, panelClass } from "./admin-common";
+import { formatPrice } from "@/lib/utils";
+import { panelClass } from "./admin-common";
+import {
+  BarList,
+  KpiCard,
+  MoreDetails,
+  Notice,
+  PeriodPicker,
+  ReportModules,
+  ReportSection,
+  SmallStat,
+  formatCount,
+  formatPercent,
+} from "./report-ui";
+import { TimeChart } from "./report-time-chart";
 
-const periods: { value: ReportPeriod; label: string }[] = [
-  { value: "today", label: "Hôm nay" },
-  { value: "yesterday", label: "Hôm qua" },
-  { value: "week", label: "Tuần này" },
-  { value: "month", label: "Tháng này" },
-  { value: "year", label: "Năm nay" },
+const trafficPresets: ReportPreset[] = [
+  "today",
+  "yesterday",
+  "week",
+  "month",
+  "last30",
+  "year",
 ];
-const eventLabels: Record<string, string> = {
-  session_start: "Ghé thăm website",
-  view_item: "Xem sản phẩm",
-  add_to_cart: "Thêm vào giỏ",
-  begin_checkout: "Bắt đầu thanh toán",
-  order_submitted: "Gửi đơn hàng",
-  purchase: "Mua hàng thành công",
-  refund: "Đã hoàn tiền",
-};
-function percent(value: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "percent",
-    maximumFractionDigits: 1,
-  }).format(value);
+const trafficColor = "#3b6b26";
+
+function share(part: number, whole: number) {
+  return whole > 0 ? part / whole : 0;
 }
-function count(value: number) {
-  return value.toLocaleString("vi-VN", { maximumFractionDigits: 1 });
-}
+
 function TrafficTable({
   title,
   rows,
+  label,
   landing = false,
 }: {
   title: string;
   rows: TrafficRow[];
+  label: (name: string) => string;
   landing?: boolean;
 }) {
+  if (!rows.length)
+    return (
+      <p className="text-sm text-[#6b7867]">
+        Google Analytics chưa ghi nhận dữ liệu trong khoảng thời gian này.
+      </p>
+    );
   return (
-    <section className={panelClass}>
-      <h2 className="font-semibold">{title}</h2>
-      {!rows.length ? (
-        <p className="mt-4 text-sm text-[#6b7867]">
-          Nguồn GA4 chưa ghi nhận dữ liệu trong kỳ.
-        </p>
-      ) : (
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="text-[#6b7867]">
-              <tr>
-                {[
-                  title,
-                  "Người dùng",
-                  "Phiên",
-                  "Lượt xem",
-                  "Tỷ lệ thoát",
-                  ...(landing
-                    ? ["Đơn thành công", "Doanh thu (VND)"]
-                    : ["Tương tác"]),
-                ].map((label) => (
-                  <th key={label} className="py-3 pr-4 font-medium">
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.name} className="border-t border-[#edf0e7]">
-                  <th className="max-w-64 break-words py-3 pr-4 font-medium">
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-xs">
+        <caption className="sr-only">{title}</caption>
+        <thead className="text-[#6b7867]">
+          <tr>
+            {[
+              title,
+              "Người",
+              "Lượt truy cập",
+              "Lượt xem trang",
+              "Rời đi ngay",
+              ...(landing ? ["Đơn thành công", "Doanh thu"] : ["Có tương tác"]),
+            ].map((heading) => (
+              <th key={heading} scope="col" className="py-3 pr-4 font-medium">
+                {heading}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="tabular-nums">
+          {rows.map((row) => (
+            <tr key={row.name} className="border-t border-[#edf0e7]">
+              <th scope="row" className="max-w-64 py-2.5 pr-4 font-medium">
+                {label(row.name)}
+                {label(row.name) !== row.name && (
+                  <span className="block font-normal [overflow-wrap:anywhere] text-[#7a8574]">
                     {row.name}
-                  </th>
-                  <td className="pr-4">{count(row.users)}</td>
-                  <td className="pr-4">{count(row.sessions)}</td>
-                  <td className="pr-4">{count(row.views)}</td>
-                  <td className="pr-4">{percent(row.bounce_rate)}</td>
-                  {landing ? (
-                    <>
-                      <td className="pr-4">
-                        {row.successful_orders == null
-                          ? "Chưa có dữ liệu"
-                          : count(row.successful_orders)}
-                      </td>
-                      <td>
-                        {row.revenue == null
-                          ? "Chưa có dữ liệu"
-                          : count(row.revenue)}
-                      </td>
-                    </>
-                  ) : (
-                    <td>{percent(row.engagement_rate)}</td>
-                  )}
-                </tr>
+                  </span>
+                )}
+              </th>
+              <td className="pr-4">{formatCount(row.users)}</td>
+              <td className="pr-4">{formatCount(row.sessions)}</td>
+              <td className="pr-4">{formatCount(row.views)}</td>
+              <td className="pr-4">{formatPercent(row.bounce_rate)}</td>
+              {landing ? (
+                <>
+                  <td className="pr-4">
+                    {row.successful_orders == null
+                      ? "Chưa có dữ liệu"
+                      : formatCount(row.successful_orders)}
+                  </td>
+                  <td className="whitespace-nowrap">
+                    {row.revenue == null
+                      ? "Chưa có dữ liệu"
+                      : formatPrice(row.revenue)}
+                  </td>
+                </>
+              ) : (
+                <td>{formatPercent(row.engagement_rate)}</td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TrafficSummary({
+  report,
+  phrase,
+}: {
+  report: TrafficReport;
+  phrase: string;
+}) {
+  const { metrics } = report;
+  const sources = groupTrafficRows(report.sources, trafficSourceLabel).filter(
+    (group) => group.label !== "Không xác định",
+  );
+  const devices = groupTrafficRows(report.devices, deviceLabel);
+  const drop = biggestFunnelDrop(report.funnel);
+  const points: ReactNode[] = [];
+  if (metrics.sessions > 0 && sources[0])
+    points.push(
+      <>
+        Khách đến nhiều nhất từ <strong>{sources[0].label}</strong> (
+        {formatPercent(share(sources[0].sessions, metrics.sessions))} lượt truy
+        cập)
+        {sources[1] ? (
+          <>
+            , tiếp theo là <strong>{sources[1].label}</strong>
+          </>
+        ) : null}
+        .
+      </>,
+    );
+  if (metrics.sessions > 0 && devices[0])
+    points.push(
+      <>
+        {formatPercent(share(devices[0].sessions, metrics.sessions))} lượt truy
+        cập dùng <strong>{devices[0].label.toLowerCase()}</strong>.
+      </>,
+    );
+  if (report.commerce)
+    points.push(
+      report.commerce.successful_orders > 0 ? (
+        <>
+          <strong>{formatCount(report.commerce.successful_orders)} đơn</strong>{" "}
+          đã giao và thanh toán thành công
+          {metrics.sessions > 0 && (
+            <>
+              {" "}
+              — trung bình cứ khoảng{" "}
+              <strong>
+                {formatCount(
+                  Math.round(
+                    metrics.sessions / report.commerce.successful_orders,
+                  ),
+                )}{" "}
+                lượt truy cập
+              </strong>{" "}
+              có 1 đơn
+            </>
+          )}
+          .
+        </>
+      ) : (
+        <>Chưa có đơn nào vừa giao xong vừa thanh toán trong kỳ này.</>
+      ),
+    );
+  if (drop && drop.rate < 1)
+    points.push(
+      <>
+        Nhiều người dừng lại nhất ở bước{" "}
+        <strong>
+          {drop.from} → {drop.to}
+        </strong>
+        : chỉ {formatPercent(drop.rate)} đi tiếp.
+      </>,
+    );
+  return (
+    <section
+      aria-labelledby="traffic-summary-title"
+      className={`${panelClass} border-[#cfdcc4] bg-[#f6f9f1]`}
+    >
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <h2
+            id="traffic-summary-title"
+            className="text-xs font-semibold tracking-[0.12em] text-[#557a3d] uppercase"
+          >
+            Tóm tắt
+          </h2>
+          {metrics.sessions === 0 ? (
+            <p className="mt-2 text-lg leading-8 text-[#21372b]">
+              {phrase}, Google Analytics chưa ghi nhận lượt truy cập nào.
+            </p>
+          ) : (
+            <p className="mt-2 text-lg leading-8 text-[#21372b]">
+              {phrase} có{" "}
+              <strong>{formatCount(metrics.totalUsers)} người</strong> ghé
+              website qua{" "}
+              <strong>{formatCount(metrics.sessions)} lượt truy cập</strong>,
+              xem tổng cộng{" "}
+              <strong>{formatCount(metrics.screenPageViews)} trang</strong>.
+            </p>
+          )}
+          {points.length > 0 && (
+            <ul className="mt-3 space-y-1.5 text-sm leading-6 text-[#3f4f3c]">
+              {points.map((point, index) => (
+                <li key={index} className="flex gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="mt-2.5 size-1.5 shrink-0 rounded-full bg-[#7f9b6b]"
+                  />
+                  <span>{point}</span>
+                </li>
               ))}
-            </tbody>
-          </table>
+            </ul>
+          )}
+        </div>
+        <div className="shrink-0 rounded-xl border border-[#d9e3d0] bg-white px-4 py-3 md:w-56">
+          <p className="flex items-center gap-2 text-xs font-medium text-[#4f5d4b]">
+            <span className="relative flex size-2.5" aria-hidden="true">
+              {report.realtime && report.realtime.users > 0 && (
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-[#7fb35d] opacity-60" />
+              )}
+              <span className="relative inline-flex size-2.5 rounded-full bg-[#5f8a45]" />
+            </span>
+            Ngay lúc này
+          </p>
+          {report.realtime ? (
+            <>
+              <p className="mt-1 text-2xl font-semibold text-[#21372b]">
+                {formatCount(report.realtime.users)}{" "}
+                <span className="text-sm font-normal text-[#4f5d4b]">
+                  người đang xem
+                </span>
+              </p>
+              <p className="text-xs leading-5 text-[#6b7867]">
+                {formatCount(report.realtime.views)} lượt xem trang trong 30
+                phút qua (không theo khoảng ngày đã chọn)
+              </p>
+            </>
+          ) : (
+            <p className="mt-1 text-xs leading-5 text-[#6b7867]">
+              {report.realtime_error ?? "Chưa đọc được số người đang xem."}
+            </p>
+          )}
+        </div>
+      </div>
+      <p className="mt-4 text-xs leading-5 text-[#6b7867]">
+        Số liệu từ Google Analytics chỉ tính khách đồng ý cookie thống kê và có
+        thể chậm vài giờ, nên thường thấp hơn số khách thật. Số đơn lấy từ sổ
+        đơn hàng của cửa hàng.
+      </p>
+    </section>
+  );
+}
+
+function Funnel({ report }: { report: TrafficReport }) {
+  const first = report.funnel?.[0]?.users ?? 0;
+  return (
+    <ReportSection
+      title="Khách đi đến bước mua hàng như thế nào?"
+      question="Trong số người ghé website, bao nhiêu người xem sản phẩm, thêm vào giỏ, bắt đầu thanh toán và mua thành công."
+    >
+      {!report.purchase_tracking_configured && (
+        <div className="mt-4">
+          <Notice
+            tone="warning"
+            role="status"
+            title="Bước “Mua thành công” chưa được ghi nhận"
+          >
+            Website chưa bật gửi đơn thành công sang Google Analytics, nên bước
+            cuối có thể bằng 0. Đây là việc cấu hình của kỹ thuật viên; số đơn
+            thật vẫn đúng ở Báo cáo tài chính.
+          </Notice>
         </div>
       )}
-    </section>
+      {report.funnel ? (
+        <ol className="mt-5 space-y-1">
+          {report.funnel.map((step, index) => {
+            const next = report.funnel?.[index + 1];
+            return (
+              <li key={step.name}>
+                <div className="grid grid-cols-[2rem_1fr] items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="flex size-8 items-center justify-center rounded-full bg-[#e3ecda] text-sm font-semibold text-[#2f4f2c]"
+                  >
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+                      <span className="font-medium text-[#21372b]">
+                        {funnelStepLabel(step.name)}
+                      </span>
+                      <span>
+                        <strong className="text-base font-semibold">
+                          {formatCount(step.users)}
+                        </strong>{" "}
+                        người
+                        <span className="ml-2 text-xs text-[#6b7867]">
+                          {first
+                            ? `${formatPercent(step.users / first)} người ghé thăm`
+                            : "Không có lượt ghé thăm"}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-3 rounded-full bg-[#edf1e7]">
+                      <div
+                        className="h-full rounded-full bg-[#5f8a45]"
+                        style={{
+                          width: `${Math.min(100, first ? (step.users / first) * 100 : 0)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {next && (
+                  <p className="ml-11 py-2 text-xs text-[#6b7867]">
+                    ↓ {formatPercent(step.completion_rate)} đi tiếp ·{" "}
+                    {formatCount(step.abandonments)} người dừng ở bước này
+                  </p>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <p className="mt-4 text-sm text-[#6b7867]">{report.funnel_error}</p>
+      )}
+      <MoreDetails className="mt-5" summary="Số lần ghi nhận từng hành động">
+        <p className="text-xs leading-5 text-[#6b7867]">
+          Một người có thể làm một hành động nhiều lần, nên các số này không
+          dùng để tính tỷ lệ. Phễu ở trên đếm người theo đúng thứ tự các bước,
+          theo ngày diễn ra hành động. Chỉ đơn đã giao và đã thanh toán mới tính
+          là “Mua thành công”; gửi đơn hoặc mở biên nhận thì chưa.
+        </p>
+        <dl className="mt-3">
+          {report.events.map((event) => (
+            <div
+              key={event.name}
+              className="flex flex-wrap justify-between gap-3 border-b border-[#edf0e7] py-2 text-sm last:border-0"
+            >
+              <dt>{funnelStepLabel(event.name)}</dt>
+              <dd className="tabular-nums">
+                {formatCount(event.count)} lần · {formatCount(event.users)}{" "}
+                người
+              </dd>
+            </div>
+          ))}
+        </dl>
+        {!report.events.length && (
+          <p className="mt-3 text-sm text-[#6b7867]">
+            Chưa ghi nhận hành động mua hàng nào trong kỳ.
+          </p>
+        )}
+      </MoreDetails>
+    </ReportSection>
   );
 }
 
 function UserTrend({ report }: { report: TrafficReport }) {
   const points = report.trend;
-  const observedMax = Math.max(0, ...points.map((point) => point.users));
-  const max = Math.max(1, observedMax);
-  const firstDate = points.length ? Date.parse(points[0].date) : 0;
-  const dateSpan = points.length
-    ? Date.parse(points.at(-1)!.date) - firstDate
-    : 0;
-  const coords = points.map((point) => ({
-    x: dateSpan
-      ? 44 + ((Date.parse(point.date) - firstDate) / dateSpan) * 676
-      : 360,
-    y: 182 - (point.users / max) * 150,
-  }));
-  const line = coords.map((point) => `${point.x},${point.y}`).join(" ");
   return (
-    <section className={panelClass}>
-      <h2 className="font-semibold">Xu hướng người dùng theo ngày</h2>
+    <ReportSection
+      title="Mỗi ngày có bao nhiêu người ghé website?"
+      question="Rê chuột hoặc chạm vào biểu đồ để xem từng ngày."
+    >
       {report.trend_error ? (
         <p className="mt-4 text-sm text-[#6b7867]">{report.trend_error}</p>
       ) : !points.length ? (
         <p className="mt-4 text-sm text-[#6b7867]">
-          GA4 chưa ghi nhận người dùng trong kỳ.
+          Google Analytics chưa ghi nhận người ghé thăm trong kỳ.
         </p>
       ) : (
         <>
-          <div className="overflow-x-auto">
-            <svg
-              viewBox="0 0 760 224"
-              role="img"
-              aria-label={`Biểu đồ người dùng từ ${points[0].date} đến ${points.at(-1)?.date}; cao nhất ${count(observedMax)} người một ngày`}
-              className="mt-4 w-full min-w-[600px]"
-            >
-              {[0, 0.5, 1].map((fraction) => (
-                <g key={fraction}>
-                  <line
-                    x1="44"
-                    x2="720"
-                    y1={182 - fraction * 150}
-                    y2={182 - fraction * 150}
-                    stroke="#e3e8dc"
-                  />
-                  <text
-                    x="35"
-                    y={186 - fraction * 150}
-                    textAnchor="end"
-                    fontSize="11"
-                    fill="#6b7867"
-                  >
-                    {count(max * fraction)}
-                  </text>
-                </g>
-              ))}
-              <polygon
-                points={`${coords[0].x},182 ${line} ${coords.at(-1)?.x},182`}
-                fill="#dce8cd"
-              />
-              <polyline
-                points={line}
-                fill="none"
-                stroke="#557a3d"
-                strokeWidth="2.5"
-              />
-              {points.map((point, index) => (
-                <circle
-                  key={point.date}
-                  cx={coords[index].x}
-                  cy={coords[index].y}
-                  r="3"
-                  fill="#557a3d"
-                  tabIndex={0}
-                  aria-label={`${point.date}: ${count(point.users)} người dùng, ${count(point.sessions)} phiên`}
-                >
-                  <title>
-                    {point.date}: {count(point.users)} người dùng ·{" "}
-                    {count(point.sessions)} phiên
-                  </title>
-                </circle>
-              ))}
-              <text x="44" y="211" fontSize="11" fill="#6b7867">
-                {points[0].date}
-              </text>
-              <text
-                x="720"
-                y="211"
-                textAnchor="end"
-                fontSize="11"
-                fill="#6b7867"
-              >
-                {points.at(-1)?.date}
-              </text>
-            </svg>
-          </div>
-          <details className="mt-3">
-            <summary className="cursor-pointer text-sm font-medium">
-              Xem số liệu theo ngày
-            </summary>
-            <div className="mt-3 max-h-72 overflow-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
+          <TimeChart
+            title="Số người ghé website theo ngày"
+            description={`Từ ${formatDay(points[0].date)} đến ${formatDay(points.at(-1)!.date)}; cao nhất ${formatCount(Math.max(...points.map((point) => point.users)))} người một ngày. Bảng số liệu ở bên dưới.`}
+            axisLabels={points.map((point) => formatDay(point.date, false))}
+            series={[
+              {
+                key: "users",
+                label: "Người ghé thăm",
+                color: trafficColor,
+                kind: "area",
+                values: points.map((point) => point.users),
+              },
+            ]}
+            axisFormat={formatCount}
+            integer
+            unit="người"
+            pointTitle={(index) =>
+              `${formatDay(points[index].date)}: ${formatCount(points[index].users)} người, ${formatCount(points[index].sessions)} lượt truy cập`
+            }
+            readout={(index) => {
+              const point = points[index];
+              return (
+                <>
+                  <p className="text-xs font-medium text-[#6b7867]">
+                    {weekdayLabel(point.date)}, {formatDay(point.date)}
+                  </p>
+                  <p className="flex flex-wrap gap-x-4 text-[#21372b]">
+                    <span>
+                      <strong className="font-semibold">
+                        {formatCount(point.users)}
+                      </strong>{" "}
+                      người
+                    </span>
+                    <span className="text-[#4f5d4b]">
+                      {formatCount(point.sessions)} lượt truy cập
+                    </span>
+                    <span className="text-[#4f5d4b]">
+                      {formatCount(point.views)} lượt xem trang
+                    </span>
+                  </p>
+                </>
+              );
+            }}
+          />
+          <MoreDetails className="mt-4" summary="Xem bảng số liệu theo ngày">
+            <div className="max-h-72 overflow-auto">
+              <table className="w-full text-left text-xs tabular-nums">
+                <thead className="text-[#6b7867]">
                   <tr>
-                    {["Ngày", "Người dùng", "Phiên", "Lượt xem"].map(
+                    {["Ngày", "Người", "Lượt truy cập", "Lượt xem trang"].map(
                       (label) => (
-                        <th key={label} className="py-2">
+                        <th
+                          key={label}
+                          scope="col"
+                          className="py-2 font-medium"
+                        >
                           {label}
                         </th>
                       ),
@@ -227,55 +478,293 @@ function UserTrend({ report }: { report: TrafficReport }) {
                 <tbody>
                   {points.map((point) => (
                     <tr key={point.date} className="border-t border-[#edf0e7]">
-                      <th className="py-2 font-medium">{point.date}</th>
-                      <td>{count(point.users)}</td>
-                      <td>{count(point.sessions)}</td>
-                      <td>{count(point.views)}</td>
+                      <th scope="row" className="py-2 font-medium">
+                        {formatDay(point.date)}
+                      </th>
+                      <td>{formatCount(point.users)}</td>
+                      <td>{formatCount(point.sessions)}</td>
+                      <td>{formatCount(point.views)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </details>
+          </MoreDetails>
         </>
       )}
-    </section>
+    </ReportSection>
   );
 }
 
-function SourceBars({ rows }: { rows: TrafficRow[] }) {
-  const max = Math.max(1, ...rows.map((row) => row.sessions));
+function Sources({ report }: { report: TrafficReport }) {
+  const groups = groupTrafficRows(report.sources, trafficSourceLabel);
+  const top = groups.slice(0, groups.length > 8 ? 7 : 8);
+  const rest = groups.slice(top.length);
+  const rows = rest.length
+    ? [
+        ...top,
+        {
+          label: "Nguồn khác",
+          sessions: rest.reduce((sum, group) => sum + group.sessions, 0),
+          views: 0,
+          names: rest.flatMap((group) => group.names),
+        },
+      ]
+    : top;
+  const total = report.metrics.sessions;
   return (
-    <section className={panelClass}>
-      <h2 className="font-semibold">Nguồn truy cập · số phiên</h2>
-      {!rows.length ? (
-        <p className="mt-4 text-sm text-[#6b7867]">
-          GA4 chưa ghi nhận nguồn truy cập trong kỳ.
-        </p>
-      ) : (
-        <ol className="mt-5 space-y-4">
-          {[...rows]
-            .sort((a, b) => b.sessions - a.sessions)
-            .slice(0, 10)
-            .map((row) => (
-              <li key={row.name}>
-                <div className="mb-1 flex justify-between gap-3 text-xs">
-                  <span className="break-all">{row.name}</span>
-                  <span className="shrink-0">{count(row.sessions)} phiên</span>
-                </div>
-                <div className="h-3 rounded-full bg-[#edf1e7]">
-                  <div
-                    className="h-full rounded-full bg-[#739254]"
-                    style={{ width: `${(row.sessions / max) * 100}%` }}
-                  />
-                </div>
-              </li>
-            ))}
-        </ol>
-      )}
-    </section>
+    <ReportSection
+      title="Khách đến từ đâu?"
+      question="Số lượt truy cập theo nơi khách bấm vào website."
+    >
+      <div className="mt-4">
+        {!rows.length ? (
+          <p className="text-sm text-[#6b7867]">
+            Google Analytics chưa ghi nhận nguồn truy cập trong kỳ.
+          </p>
+        ) : (
+          <BarList
+            valueLabel="Lượt truy cập theo nguồn"
+            rows={rows.map((group) => ({
+              key: group.label,
+              label: group.label,
+              sublabel:
+                group.label === "Vào thẳng website"
+                  ? "Gõ địa chỉ, bấm link đã lưu hoặc link trong tin nhắn"
+                  : group.label === "Không xác định"
+                    ? "Google Analytics không biết nguồn"
+                    : undefined,
+              value: group.sessions,
+              display: (
+                <>
+                  <strong className="font-semibold">
+                    {formatCount(group.sessions)}
+                  </strong>{" "}
+                  lượt
+                  {total > 0 && (
+                    <span className="ml-1.5 text-xs text-[#6b7867]">
+                      {formatPercent(group.sessions / total)}
+                    </span>
+                  )}
+                </>
+              ),
+            }))}
+          />
+        )}
+      </div>
+      <MoreDetails className="mt-5" summary="Chi tiết từng nguồn (tối đa 100)">
+        <TrafficTable
+          title="Nguồn"
+          rows={report.sources}
+          label={trafficSourceLabel}
+        />
+      </MoreDetails>
+    </ReportSection>
   );
 }
+
+function Devices({ report }: { report: TrafficReport }) {
+  const groups = groupTrafficRows(report.devices, deviceLabel);
+  const total = report.metrics.sessions;
+  return (
+    <ReportSection
+      title="Khách dùng thiết bị gì?"
+      question="Giúp bạn biết nên ưu tiên ảnh và bố cục cho điện thoại hay máy tính."
+    >
+      <div className="mt-4">
+        {!groups.length ? (
+          <p className="text-sm text-[#6b7867]">
+            Google Analytics chưa ghi nhận thiết bị trong kỳ.
+          </p>
+        ) : (
+          <BarList
+            valueLabel="Lượt truy cập theo thiết bị"
+            rows={groups.map((group) => ({
+              key: group.label,
+              label: group.label,
+              value: group.sessions,
+              display: (
+                <>
+                  <strong className="font-semibold">
+                    {formatPercent(share(group.sessions, total))}
+                  </strong>
+                  <span className="ml-1.5 text-xs text-[#6b7867]">
+                    {formatCount(group.sessions)} lượt
+                  </span>
+                </>
+              ),
+            }))}
+          />
+        )}
+      </div>
+      <MoreDetails className="mt-5" summary="Chi tiết theo thiết bị">
+        <TrafficTable
+          title="Thiết bị"
+          rows={report.devices}
+          label={deviceLabel}
+        />
+      </MoreDetails>
+    </ReportSection>
+  );
+}
+
+function LandingPages({ report }: { report: TrafficReport }) {
+  const rows = [...report.landing_pages]
+    .sort((a, b) => b.sessions - a.sessions)
+    .slice(0, 6);
+  return (
+    <ReportSection
+      title="Khách vào website từ trang nào?"
+      question="Trang đầu tiên khách mở, khách có xem tiếp không và trang nào mang về đơn hàng."
+    >
+      {!rows.length ? (
+        <p className="mt-4 text-sm text-[#6b7867]">
+          Google Analytics chưa ghi nhận trang đích trong kỳ.
+        </p>
+      ) : (
+        <ul className="mt-4 divide-y divide-[#edf0e7]">
+          {rows.map((row) => {
+            const label = landingPageLabel(row.name);
+            return (
+              <li key={row.name} className="py-3 first:pt-0">
+                <p className="text-sm font-medium text-[#21372b]">
+                  {label}
+                  {label !== row.name && (
+                    <span className="ml-2 text-xs font-normal [overflow-wrap:anywhere] text-[#7a8574]">
+                      {row.name}
+                    </span>
+                  )}
+                </p>
+                <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs sm:grid-cols-5">
+                  <div>
+                    <dt className="text-[#6b7867]">Lượt truy cập</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatCount(row.sessions)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#6b7867]">Lượt xem trang</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatCount(row.views)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#6b7867]">Rời đi ngay</dt>
+                    <dd className="font-medium tabular-nums">
+                      {formatPercent(row.bounce_rate)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#6b7867]">Đơn thành công</dt>
+                    <dd className="font-medium tabular-nums">
+                      {row.successful_orders == null
+                        ? "Chưa có dữ liệu"
+                        : formatCount(row.successful_orders)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#6b7867]">Doanh thu</dt>
+                    <dd className="font-medium tabular-nums">
+                      {row.revenue == null
+                        ? "Chưa có dữ liệu"
+                        : formatPrice(row.revenue)}
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <MoreDetails
+        className="mt-4"
+        summary={`Xem tất cả ${report.landing_pages.length} trang đích (tối đa 100)`}
+      >
+        <TrafficTable
+          title="Trang đích"
+          rows={report.landing_pages}
+          label={landingPageLabel}
+          landing
+        />
+        <p className="mt-3 text-xs leading-5 text-[#6b7867]">
+          Doanh thu là tiền hàng sau voucher của đơn đã giao và đã thanh toán,
+          không gồm phí giao hàng, gán cho trang khách vào đầu tiên (chỉ khi
+          khách đồng ý cookie thống kê). Đơn hủy, trả hàng hoặc hoàn tiền không
+          được tính. File CSV có đủ mọi trang có doanh thu.
+        </p>
+      </MoreDetails>
+    </ReportSection>
+  );
+}
+
+function TechnicalNotes({ report }: { report: TrafficReport }) {
+  const commerce = report.commerce;
+  return (
+    <MoreDetails className="bg-white" summary="Cách tính và ghi chú kỹ thuật">
+      <ul className="list-disc space-y-2 pl-5 text-sm leading-6 text-[#3f4f3c]">
+        <li>
+          <strong>Người ghé thăm</strong>: số người (thiết bị) khác nhau.{" "}
+          <strong>Lượt truy cập</strong> (phiên): mỗi lần mở website; một người
+          có thể ghé nhiều lần. <strong>Lượt xem trang</strong>: số trang đã mở.
+        </li>
+        <li>
+          <strong>Rời đi ngay</strong> (tỷ lệ thoát của Google Analytics 4):
+          phần trăm lượt truy cập không có tương tác — ở lại dưới 10 giây, chỉ
+          xem 1 trang và không thao tác mua hàng. Khác cách tính “chỉ xem một
+          trang” của báo cáo cũ.
+        </li>
+        <li>
+          <strong>Tỷ lệ đặt hàng thành công</strong> = số đơn đã giao và đã
+          thanh toán được tạo trong khoảng ngày đã chọn (giờ Việt Nam) chia cho
+          số lượt truy cập. Sổ đơn hàng gồm cả khách từ chối cookie, còn Google
+          Analytics chỉ thấy khách đồng ý, nên tỷ lệ này có thể cao hơn thực tế
+          hoặc vượt 100%.
+        </li>
+        {commerce ? (
+          <li>
+            {formatCount(commerce.successful_orders)} đơn đã giao và đã thanh
+            toán; {formatCount(commerce.attributed_orders)} đơn có lưu trang
+            khách vào đầu tiên (khi khách đồng ý cookie thống kê). Trang không
+            có nguồn lưu không được gán doanh thu tùy ý.
+          </li>
+        ) : (
+          <li role="status">{report.commerce_error}</li>
+        )}
+        {Boolean(commerce?.pending_events) && (
+          <li>
+            {formatCount(commerce!.pending_events)} đơn thành công đang chờ gửi
+            sang Google Analytics; hệ thống tự thử lại khi cập nhật đơn hoặc làm
+            mới báo cáo.
+          </li>
+        )}
+        {Boolean(commerce?.expired_events) && (
+          <li className="text-amber-800">
+            {formatCount(commerce!.expired_events)} sự kiện quá giới hạn gửi bù
+            72 giờ của Google Analytics. Số liệu sổ đơn hàng vẫn đầy đủ.
+          </li>
+        )}
+        <li>
+          Ngày theo múi giờ của Google Analytics ({report.timezone}); số liệu
+          theo ngày có độ trễ xử lý của Google. “Ngay lúc này” luôn là 30 phút
+          gần nhất.
+        </li>
+        {report.truncated && (
+          <li>
+            Bảng chi tiết đã giới hạn số dòng; các con số tổng vẫn lấy toàn bộ
+            dữ liệu.
+          </li>
+        )}
+        {report.sampled && (
+          <li>Google lấy mẫu một phần dữ liệu cho báo cáo/phễu này.</li>
+        )}
+        {report.thresholded && (
+          <li>Google áp dụng ngưỡng bảo vệ dữ liệu cho báo cáo này.</li>
+        )}
+      </ul>
+    </MoreDetails>
+  );
+}
+
 export function TrafficManager({
   initialRange,
   initialState,
@@ -284,6 +773,9 @@ export function TrafficManager({
   initialState?: TrafficState;
 }) {
   const [range, setRange] = useState(initialRange);
+  const [selection, setSelection] = useState<ReportSelection>(() =>
+    matchPreset(initialRange, new Date(), trafficPresets),
+  );
   const [result, setResult] = useState<TrafficState | null>(
     initialState ?? null,
   );
@@ -329,11 +821,27 @@ export function TrafficManager({
     }, 30_000);
     return () => window.clearInterval(interval);
   }, [live]);
+  useEffect(() => {
+    if (invalidRange) return;
+    const query = reportRangeQuery(range);
+    if (query && query !== window.location.search)
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${query}`,
+      );
+  }, [invalidRange, range]);
   const current =
     result?.range.from === range.from && result.range.to === range.to
       ? result
       : null;
-  const report = current?.configured ? current : null;
+  // While a new range loads, keep the previous charts (dimmed) instead of
+  // blanking the page; every sentence still names that report's own dates.
+  const stale = !current && loading && result?.configured ? result : null;
+  const report = current?.configured ? current : stale;
+  const reportSelection = report
+    ? matchPreset(report.range, new Date(), trafficPresets)
+    : selection;
   function exportCsv() {
     const state: TrafficState = current ?? {
       configured: false,
@@ -351,342 +859,247 @@ export function TrafficManager({
     anchor.remove();
     URL.revokeObjectURL(url);
   }
-  const metrics = report
-    ? [
-        ["Người dùng", count(report.metrics.totalUsers)],
-        ["Người dùng hoạt động", count(report.metrics.activeUsers)],
-        ["Phiên truy cập", count(report.metrics.sessions)],
-        ["Lượt xem trang", count(report.metrics.screenPageViews)],
-        [
-          "Số trang / phiên",
-          report.pages_per_session == null
-            ? "Không có phiên"
-            : count(report.pages_per_session),
-        ],
-        [
-          "Đơn thành công / phiên",
-          report.successful_order_conversion_rate == null
-            ? "Chưa có dữ liệu"
-            : percent(report.successful_order_conversion_rate),
-        ],
-        ["Phiên có tương tác", count(report.metrics.engagedSessions)],
-        ["Tỷ lệ tương tác", percent(report.metrics.engagementRate)],
-        ["Tỷ lệ thoát", percent(report.metrics.bounceRate)],
-        [
-          "Thời lượng phiên trung bình",
-          `${count(report.metrics.averageSessionDuration)} giây`,
-        ],
-      ]
-    : [];
   return (
-    <div className="space-y-6">
-      <div className={panelClass}>
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="min-w-40 flex-1 text-xs text-[#6b7867]">
-            Từ ngày
-            <input
-              type="date"
-              value={range.from}
-              max={range.to || undefined}
-              onChange={(event) =>
-                setRange({ ...range, from: event.target.value })
-              }
-              className={`${fieldClass} mt-1`}
-            />
-          </label>
-          <label className="min-w-40 flex-1 text-xs text-[#6b7867]">
-            Đến ngày
-            <input
-              type="date"
-              value={range.to}
-              min={range.from || undefined}
-              onChange={(event) =>
-                setRange({ ...range, to: event.target.value })
-              }
-              className={`${fieldClass} mt-1`}
-            />
-          </label>
-          <Button
-            variant="outline"
-            disabled={loading || invalidRange}
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
-            {loading ? "Đang tải…" : "Cập nhật"}
-          </Button>
-          <Button
-            variant="outline"
-            disabled={invalidRange || loading}
-            onClick={exportCsv}
-          >
-            <Download className="size-4" />
-            Xuất CSV
-          </Button>
-        </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {periods.map((period) => (
+    <div className="space-y-5">
+      <ReportModules traffic range={invalidRange ? undefined : range} />
+      <PeriodPicker
+        range={range}
+        selection={selection}
+        presets={trafficPresets}
+        onPreset={(preset) => {
+          setSelection(preset);
+          setRange(presetRange(new Date(), preset));
+        }}
+        onCustom={(next) => {
+          setSelection("custom");
+          setRange(next);
+        }}
+        actions={
+          <>
             <Button
-              size="sm"
               variant="outline"
-              key={period.value}
-              onClick={() =>
-                setRange(reportPeriodRange(new Date(), period.value))
-              }
+              disabled={loading || invalidRange}
+              onClick={() => setRevision((value) => value + 1)}
             >
-              {period.label}
+              <RefreshCw
+                className={`size-4 ${loading ? "animate-spin" : ""}`}
+              />
+              {loading ? "Đang tải…" : "Làm mới"}
             </Button>
-          ))}
-          <label className="ml-auto flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={live}
-              onChange={(event) => setLive(event.target.checked)}
-            />
-            Tự cập nhật mỗi 30 giây
-          </label>
-        </div>
-        <p className="mt-4 text-xs leading-6 text-[#6b7867]">
-          Báo cáo dùng ngày theo múi giờ của thuộc tính GA4
-          {report ? ` (${report.timezone})` : ""}. Dữ liệu theo ngày có độ trễ
-          xử lý của Google. Thời gian thực luôn là 30 phút gần nhất và độc lập
-          với khoảng ngày đã chọn.
-        </p>
-      </div>
+            <Button
+              variant="outline"
+              disabled={invalidRange || loading}
+              onClick={exportCsv}
+              title="Tải bảng số liệu; mở được bằng Excel hoặc Google Sheets"
+            >
+              <Download className="size-4" />
+              Tải CSV
+            </Button>
+            <label className="flex min-h-9 items-center gap-2 px-1 text-xs text-[#4f5d4b]">
+              <input
+                type="checkbox"
+                checked={live}
+                onChange={(event) => setLive(event.target.checked)}
+                className="size-4 accent-[#294836]"
+              />
+              Tự làm mới mỗi 30 giây
+            </label>
+          </>
+        }
+      />
       {invalidRange && (
         <p
           role="alert"
           className="rounded-xl bg-red-50 p-4 text-sm text-red-700"
         >
-          Chọn ngày bắt đầu và kết thúc hợp lệ.
+          Chọn ngày bắt đầu và ngày kết thúc hợp lệ (ngày bắt đầu không sau ngày
+          kết thúc).
         </p>
       )}
-      {error && (
-        <p
-          role="alert"
-          className="rounded-xl bg-red-50 p-4 text-sm leading-6 text-red-700"
+      {!invalidRange && error && (
+        <section role="alert" className={`${panelClass} border-red-200`}>
+          <h2 className="font-semibold text-red-800">
+            Chưa tải được số liệu lưu lượng
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-red-800">
+            {error}
+            {current?.configured
+              ? " Đang hiển thị lần tải thành công gần nhất."
+              : ""}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[#4f5d4b]">
+            Thường chỉ là lỗi tạm thời của Google. Hãy thử lại sau ít phút; nếu
+            vẫn lỗi, nhờ kỹ thuật viên kiểm tra kết nối Google Analytics.
+          </p>
+          <Button
+            className="mt-4"
+            variant="outline"
+            onClick={() => setRevision((value) => value + 1)}
+          >
+            <RefreshCw className="size-4" />
+            Thử lại
+          </Button>
+        </section>
+      )}
+      {!invalidRange && !error && loading && !report && (
+        <div
+          role="status"
+          className={`${panelClass} flex items-center gap-3 text-sm text-[#4f5d4b]`}
         >
-          {error}
-          {report ? " Đang hiển thị lần tải thành công gần nhất." : ""}
-        </p>
+          <LoaderCircle className="size-5 animate-spin text-[#557a3d]" />
+          Đang tải số liệu từ Google Analytics…
+        </div>
       )}
       {!invalidRange && current && !current.configured && (
         <section className={`${panelClass} border-dashed`}>
           <h2 className="text-lg font-semibold">
-            Chưa có nguồn báo cáo lưu lượng được kết nối
+            Chưa kết nối Google Analytics
           </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-[#6b7867]">
-            {current.reason}
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-[#4f5d4b]">
+            Khi được kết nối, trang này sẽ cho bạn biết có bao nhiêu người ghé
+            website mỗi ngày, họ đến từ đâu (Facebook, Google, Zalo…), xem trang
+            nào và bao nhiêu người đi đến bước đặt hàng. Website vẫn bán hàng
+            bình thường trong lúc chờ.
           </p>
-          <p className="mt-3 text-sm leading-7 text-[#6b7867]">
-            Khi kết nối, trang sẽ đọc số liệu người dùng, phiên, nguồn truy cập,
-            trang đích, thiết bị, sự kiện và phễu mua hàng trực tiếp từ GA4. CSV
-            hiện chỉ ghi trạng thái nguồn, không điền số liệu giả.
-          </p>
-          <a
-            href="https://analytics.google.com/"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-5 inline-block text-sm font-medium underline underline-offset-4"
+          <div className="mt-4 max-w-3xl">
+            <Notice title="Việc cần làm">
+              Nhờ người phụ trách kỹ thuật kết nối quyền <em>đọc báo cáo</em>{" "}
+              Google Analytics cho trang quản trị (chi tiết bên dưới). Bạn không
+              cần nhập gì ở đây.
+            </Notice>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button asChild>
+              <Link href={`/admin/analytics${reportRangeQuery(range)}`}>
+                Xem doanh thu ở Báo cáo tài chính
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <a
+                href="https://analytics.google.com/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Mở Google Analytics
+                <ExternalLink className="size-4" />
+              </a>
+            </Button>
+          </div>
+          <MoreDetails
+            className="mt-5 max-w-3xl"
+            summary="Thông tin cho kỹ thuật viên"
           >
-            Mở Google Analytics
-          </a>
+            <p className="text-sm leading-6 text-[#4f5d4b]">{current.reason}</p>
+            <p className="mt-2 text-xs leading-5 text-[#6b7867]">
+              Hướng dẫn: docs/TRAFFIC-ANALYTICS.md. Cần GA_PROPERTY_ID và tài
+              khoản dịch vụ (GA_SERVICE_ACCOUNT_EMAIL,
+              GA_SERVICE_ACCOUNT_PRIVATE_KEY) có quyền Viewer trên máy chủ. File
+              CSV lúc này chỉ ghi trạng thái kết nối, không điền số liệu giả.
+            </p>
+          </MoreDetails>
         </section>
       )}
       {!invalidRange && report && (
-        <>
+        <div
+          aria-busy={Boolean(stale)}
+          className={`space-y-5 transition-opacity ${stale ? "opacity-55" : ""}`}
+        >
+          {stale && (
+            <p role="status" className="text-sm text-[#4f5d4b]">
+              Đang tải số liệu cho khoảng thời gian mới…
+            </p>
+          )}
+          <TrafficSummary
+            report={report}
+            phrase={periodPhrase(reportSelection, report.range)}
+          />
+          {Boolean(report.commerce?.uncertain_events) && (
+            <Notice
+              tone="warning"
+              role="status"
+              title="Cần kỹ thuật viên kiểm tra"
+            >
+              {formatCount(report.commerce!.uncertain_events)} lần hoàn tiền
+              chưa rõ Google Analytics đã nhận hay chưa. Cần đối soát trên
+              Google Analytics trước khi gửi lại để tránh trừ doanh thu hai lần.
+              Báo cáo tài chính không bị ảnh hưởng.
+            </Notice>
+          )}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {metrics.map(([label, value]) => (
-              <div key={label} className={panelClass}>
-                <p className="text-xs text-[#6b7867]">{label}</p>
-                <p className="mt-3 text-2xl font-semibold">{value}</p>
-              </div>
-            ))}
+            <KpiCard
+              label="Người ghé thăm"
+              value={formatCount(report.metrics.totalUsers)}
+              hint="Số người khác nhau đã vào website (mỗi điện thoại hoặc máy tính tính là 1)."
+            />
+            <KpiCard
+              label="Lượt truy cập"
+              value={formatCount(report.metrics.sessions)}
+              hint="Mỗi lần mở website là 1 lượt; một người có thể ghé nhiều lần."
+            />
+            <KpiCard
+              label="Lượt xem trang"
+              value={formatCount(report.metrics.screenPageViews)}
+              hint="Tổng số trang khách đã mở, gồm trang sản phẩm, giỏ hàng, bài viết…"
+            />
+            <KpiCard
+              label="Tỷ lệ đặt hàng thành công"
+              value={
+                report.successful_order_conversion_rate == null
+                  ? "Chưa có dữ liệu"
+                  : formatPercent(report.successful_order_conversion_rate)
+              }
+              muted={report.successful_order_conversion_rate == null}
+              hint={
+                report.commerce
+                  ? `${formatCount(report.commerce.successful_orders)} đơn đã giao & thanh toán trên ${formatCount(report.metrics.sessions)} lượt truy cập.`
+                  : "Chưa đọc được sổ đơn hàng; xem ghi chú kỹ thuật bên dưới."
+              }
+            />
           </div>
-          <section className={panelClass}>
-            <h2 className="font-semibold">Thời gian thực · 30 phút gần nhất</h2>
-            {report.realtime ? (
-              <div className="mt-4 flex flex-wrap gap-8">
-                <p>
-                  <strong className="text-3xl">
-                    {count(report.realtime.users)}
-                  </strong>
-                  <span className="ml-2 text-sm text-[#6b7867]">
-                    người dùng hoạt động
-                  </span>
-                </p>
-                <p>
-                  <strong className="text-3xl">
-                    {count(report.realtime.views)}
-                  </strong>
-                  <span className="ml-2 text-sm text-[#6b7867]">lượt xem</span>
-                </p>
-              </div>
-            ) : (
-              <p className="mt-3 text-sm text-[#6b7867]">
-                {report.realtime_error}
-              </p>
-            )}
-          </section>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <SmallStat
+              label="Thời gian xem trung bình"
+              value={formatDuration(report.metrics.averageSessionDuration)}
+              hint="Mỗi lượt truy cập"
+            />
+            <SmallStat
+              label="Số trang mỗi lượt"
+              value={
+                report.pages_per_session == null
+                  ? "Chưa có lượt truy cập"
+                  : formatCount(report.pages_per_session)
+              }
+              hint="Càng cao, khách càng xem nhiều"
+            />
+            <SmallStat
+              label="Rời đi ngay"
+              value={formatPercent(report.metrics.bounceRate)}
+              hint="Không tương tác gì; càng thấp càng tốt"
+            />
+            <SmallStat
+              label="Lượt có tương tác"
+              value={`${formatCount(report.metrics.engagedSessions)} (${formatPercent(report.metrics.engagementRate)})`}
+              hint={`Ở lại trên 10 giây hoặc xem từ 2 trang · ${formatCount(report.metrics.activeUsers)} người hoạt động`}
+            />
+          </div>
+          <Funnel report={report} />
           <UserTrend report={report} />
-          <SourceBars rows={report.sources} />
-          <section className={`${panelClass} text-sm leading-7`}>
-            <h2 className="font-semibold">
-              Chuyển đổi và doanh thu theo sổ đơn hàng
-            </h2>
-            {report.commerce ? (
-              <p className="mt-2 text-[#6b7867]">
-                {count(report.commerce.successful_orders)} đơn đã giao và đã
-                thanh toán; {count(report.commerce.attributed_orders)} đơn có
-                trang đích được lưu sau khi khách đồng ý phân tích. Doanh thu
-                trang đích là tiền hàng sau voucher của các đơn thành công,
-                không gồm phí giao hàng. Đơn hủy, hoàn hàng hoặc đã hoàn tiền
-                không được tính.
-              </p>
-            ) : (
-              <p role="status" className="mt-2 text-[#6b7867]">
-                {report.commerce_error}
-              </p>
-            )}
-            <p className="mt-2 text-xs text-[#6b7867]">
-              Tỷ lệ chuyển đổi = số đơn thành công được tạo trong khoảng ngày đã
-              chọn (giờ Việt Nam) / số phiên GA4. Sổ đơn hàng gồm cả khách từ
-              chối phân tích, còn GA4 chỉ phản ánh phiên được ghi nhận; tỷ lệ
-              này có thể cao hơn thực tế hoặc vượt 100%. Trang đích không có
-              nguồn lưu sẽ không được gán doanh thu tùy ý. GA4 dùng tỷ lệ thoát
-              theo phiên không có tương tác, khác định nghĩa chỉ xem một trang
-              của báo cáo cũ.
-            </p>
-            {!report.purchase_tracking_configured && (
-              <p
-                role="status"
-                className="mt-3 rounded-lg bg-amber-50 p-3 text-amber-900"
-              >
-                Chưa kết nối gửi sự kiện mua hàng thành công đến GA4. Phễu bước
-                cuối cần cấu hình khóa Measurement Protocol trên máy chủ; gửi
-                đơn chưa được tính là mua hàng. Sổ đơn hàng và doanh thu trang
-                đích vẫn hiển thị khi có nguồn lưu hợp lệ.
-              </p>
-            )}
-            {Boolean(report.commerce?.pending_events) && (
-              <p className="mt-2 text-xs text-[#6b7867]">
-                {count(report.commerce!.pending_events)} sự kiện đang chờ gửi;
-                hệ thống thử lại khi cập nhật đơn hoặc làm mới báo cáo.
-              </p>
-            )}
-            {Boolean(report.commerce?.expired_events) && (
-              <p className="mt-2 text-xs text-amber-800">
-                {count(report.commerce!.expired_events)} sự kiện quá giới hạn
-                gửi bù 72 giờ của GA4. Số liệu sổ đơn hàng vẫn được giữ đầy đủ.
-              </p>
-            )}
-            {Boolean(report.commerce?.uncertain_events) && (
-              <p role="status" className="mt-2 text-xs text-amber-800">
-                {count(report.commerce!.uncertain_events)} sự kiện hoàn tiền
-                chưa rõ GA4 đã nhận hay chưa. Cần đối soát GA4 trước khi gửi lại
-                để tránh trừ doanh thu hai lần; sổ đơn hàng không bị ảnh hưởng.
-              </p>
-            )}
-          </section>
-          <div className="grid gap-5 xl:grid-cols-2">
-            <TrafficTable
-              title="Nguồn / phương tiện (top 100)"
-              rows={report.sources}
-            />
-            <TrafficTable
-              title="Trang đích (top 100)"
-              rows={report.landing_pages}
-              landing
-            />
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Sources report={report} />
+            <Devices report={report} />
           </div>
-          <TrafficTable title="Thiết bị" rows={report.devices} />
-          <section className={panelClass}>
-            <h2 className="font-semibold">Phễu mua hàng tuần tự</h2>
-            <p className="mt-2 text-xs leading-6 text-[#6b7867]">
-              GA4 đếm người dùng đi theo thứ tự ghé thăm → xem sản phẩm → thêm
-              giỏ → bắt đầu thanh toán → mua hàng thành công. Chỉ đơn đã giao và
-              đã thanh toán mới phát sự kiện purchase; gửi đơn và mở biên nhận
-              không tính là mua thành công. Phễu theo ngày sự kiện, có thể khác
-              nhóm đơn được tạo trong kỳ của sổ đơn hàng.
-            </p>
-            {report.funnel ? (
-              <ol className="mt-5 space-y-3">
-                {report.funnel.map((step) => (
-                  <li key={step.name} className="rounded-xl bg-[#eef3e7] p-4">
-                    <p className="text-xs text-[#6b7867]">
-                      {eventLabels[step.name.replace(/^\d+\.\s*/, "")] ||
-                        step.name}
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {count(step.users)}
-                    </p>
-                    <div className="mt-3 h-3 rounded-full bg-[#dce4d3]">
-                      <div
-                        className="h-full rounded-full bg-[#739254]"
-                        style={{
-                          width: `${Math.min(100, report.funnel?.[0]?.users ? (step.users / report.funnel[0].users) * 100 : 0)}%`,
-                        }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs text-[#6b7867]">
-                      {report.funnel?.[0]?.users
-                        ? percent(step.users / report.funnel[0].users)
-                        : "Không có lượt ghé thăm"}{" "}
-                      của lượt ghé thăm · {percent(step.completion_rate)} hoàn
-                      thành bước · {count(step.abandonments)} rời phễu
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="mt-4 text-sm text-[#6b7867]">
-                {report.funnel_error}
-              </p>
-            )}
-            <details className="mt-5">
-              <summary className="cursor-pointer text-sm font-medium">
-                Số lần ghi nhận từng sự kiện
-              </summary>
-              <p className="mt-3 text-xs text-[#6b7867]">
-                Các sự kiện riêng có thể lặp lại; không dùng số lần sự kiện làm
-                tỷ lệ chuyển đổi.
-              </p>
-              <dl className="mt-3 space-y-2">
-                {report.events.map((event) => (
-                  <div
-                    key={event.name}
-                    className="flex flex-wrap justify-between gap-3 border-b border-[#edf0e7] py-2 text-sm"
-                  >
-                    <dt>{eventLabels[event.name] || event.name}</dt>
-                    <dd>
-                      {count(event.count)} lần · {count(event.users)} người dùng
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              {!report.events.length && (
-                <p className="mt-3 text-sm text-[#6b7867]">
-                  Chưa ghi nhận các sự kiện mua hàng trong kỳ.
-                </p>
-              )}
-            </details>
-          </section>
+          <LandingPages report={report} />
+          <TechnicalNotes report={report} />
           <p className="text-xs leading-6 text-[#6b7867]">
-            Cập nhật:{" "}
+            Cập nhật lúc{" "}
             {new Date(report.fetched_at).toLocaleString("vi-VN", {
               timeZone: "Asia/Ho_Chi_Minh",
             })}
-            . Chỉ phản ánh người dùng đồng ý phân tích và được GA4 ghi nhận.
-            {report.truncated
-              ? " Bảng chi tiết đã giới hạn số dòng; chỉ số tổng quan vẫn lấy toàn bộ dữ liệu."
-              : ""}
-            {report.sampled
-              ? " Google lấy mẫu một phần dữ liệu cho báo cáo/phễu này."
-              : ""}
-            {report.thresholded
-              ? " Google áp dụng ngưỡng bảo vệ dữ liệu cho báo cáo này."
-              : ""}
+            . Chỉ phản ánh người dùng đồng ý phân tích và được Google Analytics
+            ghi nhận.
           </p>
-        </>
+        </div>
       )}
     </div>
   );
