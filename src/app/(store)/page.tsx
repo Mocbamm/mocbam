@@ -1,9 +1,5 @@
 import Link from "next/link";
-import {
-  HandHeart,
-  Headset,
-  Leaf,
-} from "lucide-react";
+import { HandHeart, Headset, Leaf } from "lucide-react";
 import {
   getProducts,
   getCategories,
@@ -76,7 +72,7 @@ export default async function HomePage() {
         aria-labelledby="home-title"
       >
         <h1 id="home-title" className="sr-only">
-          Mộc Bàm – Gom nét mộc, tạo góc xinh.
+          Mộc Bàm – Gom nét mộc, tạo góc xinh
         </h1>
         <div
           className={`store-home-hero${heroSlides.length ? "" : " store-home-hero-text"}`}

@@ -43,7 +43,7 @@ function Brand({ footer = false }: { footer?: boolean }) {
       className={`store-brand${footer ? " store-brand-footer" : ""}`}
     >
       <span>MỘC BÀM</span>
-      <small>Gom nét mộc, tạo góc xinh.</small>
+      <small>Gom nét mộc, tạo góc xinh</small>
     </Link>
   );
 }
@@ -230,7 +230,7 @@ export function StoreHeader() {
                   </button>
                 </SheetClose>
               </div>
-              <SheetDescription>Gom nét mộc, tạo góc xinh.</SheetDescription>
+              <SheetDescription>Gom nét mộc, tạo góc xinh</SheetDescription>
               <nav aria-label="Menu di động">
                 {navigation.map((item) => (
                   <Link
@@ -279,9 +279,7 @@ export function StoreHeader() {
                     width={96}
                     height={96}
                   />
-                  <span>
-                    Nhân vật gỗ
-                  </span>
+                  <span>Nhân vật gỗ</span>
                 </Link>
                 <Link
                   href="/san-pham?danh-muc=chuoi"
@@ -293,9 +291,7 @@ export function StoreHeader() {
                     width={96}
                     height={96}
                   />
-                  <span>
-                    Chuỗi & phụ kiện
-                  </span>
+                  <span>Chuỗi & phụ kiện</span>
                 </Link>
               </div>
               <Link
@@ -380,9 +376,7 @@ export function StoreHeader() {
                   <Leaf size={28} strokeWidth={1.2} />
                   <strong>Cần Mộc giúp một chút?</strong>
                   <span>Chúng mình luôn ở đây, cùng bạn.</span>
-                  <span>
-                    Gửi lời nhắn
-                  </span>
+                  <span>Gửi lời nhắn</span>
                 </Link>
               </div>
             ) : null}

@@ -125,6 +125,10 @@ test("policy dropdown opens only the selected policy and card buy-now reaches ch
   await expect(
     page.getByRole("navigation", { name: "Mục lục chính sách" }),
   ).toHaveCount(0);
+  // No side list of other policies inside the page, whatever it is named.
+  await expect(
+    page.locator("main").getByRole("link", { name: "Giao hàng", exact: true }),
+  ).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "Xem tất cả chính sách" }),
   ).toHaveCount(0);

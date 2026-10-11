@@ -28,18 +28,9 @@ export default async function PoliciesPage({
         {entry?.title || "Chính sách & hướng dẫn."}
       </h1>
       {entry ? (
+        // Owner feedback: show only the policy the customer opened, without a
+        // side list of every policy taking up space.
         <div className="store-policy-layout">
-          <nav className="store-policy-nav" aria-label="Chính sách & hướng dẫn">
-            {policyLinks.map((policy) => (
-              <Link
-                key={policy.id}
-                href={policyHref(policy.id)}
-                aria-current={policy.id === selected?.id ? "page" : undefined}
-              >
-                {content[keys[policy.id]].title}
-              </Link>
-            ))}
-          </nav>
           <section className="store-policy-content" aria-label={entry.title}>
             <Prose content={entry.content} />
           </section>

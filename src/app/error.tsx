@@ -7,7 +7,7 @@ export default function ErrorPage({ retry }: { retry: () => void }) {
     <section className="storefront flex min-h-screen flex-col items-center justify-center px-6 py-24 text-center">
       <Link href="/" className="store-brand mb-12">
         <span>MỘC BÀM</span>
-        <small>Gom nét mộc, tạo góc xinh.</small>
+        <small>Gom nét mộc, tạo góc xinh</small>
       </Link>
       <h1 className="section-title">Chưa thể tải nội dung</h1>
       <p className="my-5 text-muted-foreground">
