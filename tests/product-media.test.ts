@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
   download: vi.fn(),
   filter: vi.fn(),
+  contains: vi.fn(),
   post: null as null | {
     image_url: string;
     video_url: string;
@@ -36,6 +37,10 @@ vi.mock("@/lib/supabase/admin", () => ({
         like: () => query,
         or: (filter: string) => {
           mocks.filter(filter);
+          return query;
+        },
+        contains: (column: string, value: unknown) => {
+          mocks.contains(column, value);
           return query;
         },
         limit: async () => ({
@@ -127,6 +132,13 @@ describe("product media privacy and seeking", () => {
     expect(mocks.filter).toHaveBeenCalledWith(
       expect.stringContaining(`video_url.eq./api/media/${path}`),
     );
+    // JSON containment inside or() is unparseable by PostgREST (live 503).
+    expect(mocks.filter).not.toHaveBeenCalledWith(
+      expect.stringContaining("variants"),
+    );
+    expect(mocks.contains).toHaveBeenCalledWith("variants", [
+      { image_url: `/api/media/${path}`, active: true },
+    ]);
   });
   it("returns bounded video ranges and suffix ranges after publication", async () => {
     mocks.published = true;

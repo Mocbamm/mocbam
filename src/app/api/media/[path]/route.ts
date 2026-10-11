@@ -13,13 +13,21 @@ export async function GET(
       throw new HttpError(404, "Không tìm thấy tệp.");
     const db = createServiceSupabase();
     const url = `/api/media/${path}`;
-    const [products, posts, content] = await Promise.all([
+    // PostgREST cannot parse JSON containment inside an or() tree, so the
+    // variant lookup runs as its own query.
+    const [products, variants, posts, content] = await Promise.all([
       db
         .from("products")
         .select("id")
         .or(
-          `image_url.eq.${url},video_url.eq.${url},image_urls.cs.{${url}},variants.cs.[{"image_url":"${url}","active":true}]`,
+          `image_url.eq.${url},video_url.eq.${url},image_urls.cs.{${url}}`,
         )
+        .eq("active", true)
+        .limit(1),
+      db
+        .from("products")
+        .select("id")
+        .contains("variants", [{ image_url: url, active: true }])
         .eq("active", true)
         .limit(1),
       db
@@ -35,6 +43,7 @@ export async function GET(
         .limit(100),
     ]);
     if (products.error) throw databaseError(products.error);
+    if (variants.error) throw databaseError(variants.error);
     if (posts.error) throw databaseError(posts.error);
     if (content.error) throw databaseError(content.error);
     const containsMedia = (text: string) =>
@@ -43,6 +52,7 @@ export async function GET(
       );
     const published = Boolean(
       products.data?.length ||
+        variants.data?.length ||
         posts.data?.some(
           (post) =>
             post.image_url === url ||
