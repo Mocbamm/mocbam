@@ -136,9 +136,11 @@ describe("product media privacy and seeking", () => {
     expect(mocks.filter).not.toHaveBeenCalledWith(
       expect.stringContaining("variants"),
     );
-    expect(mocks.contains).toHaveBeenCalledWith("variants", [
-      { image_url: `/api/media/${path}`, active: true },
-    ]);
+    // A JSON string, so supabase-js sends cs.[{...}] rather than cs.{...}.
+    expect(mocks.contains).toHaveBeenCalledWith(
+      "variants",
+      JSON.stringify([{ image_url: `/api/media/${path}`, active: true }]),
+    );
   });
   it("returns bounded video ranges and suffix ranges after publication", async () => {
     mocks.published = true;

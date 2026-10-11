@@ -14,20 +14,22 @@ export async function GET(
     const db = createServiceSupabase();
     const url = `/api/media/${path}`;
     // PostgREST cannot parse JSON containment inside an or() tree, so the
-    // variant lookup runs as its own query.
+    // variant lookup runs as its own query. The value is passed as a JSON
+    // string: supabase-js would turn an array into a Postgres array literal.
     const [products, variants, posts, content] = await Promise.all([
       db
         .from("products")
         .select("id")
-        .or(
-          `image_url.eq.${url},video_url.eq.${url},image_urls.cs.{${url}}`,
-        )
+        .or(`image_url.eq.${url},video_url.eq.${url},image_urls.cs.{${url}}`)
         .eq("active", true)
         .limit(1),
       db
         .from("products")
         .select("id")
-        .contains("variants", [{ image_url: url, active: true }])
+        .contains(
+          "variants",
+          JSON.stringify([{ image_url: url, active: true }]),
+        )
         .eq("active", true)
         .limit(1),
       db
