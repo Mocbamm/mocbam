@@ -2,7 +2,7 @@
 import Image from "@/components/store/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, Package, ArrowUpRight, RefreshCw, X } from "lucide-react";
+import { Check, Package, RefreshCw, X } from "lucide-react";
 import type { BankTransfer, Order, OrderStatus } from "@/lib/types";
 import {
   paymentMethodLabels,
@@ -176,7 +176,7 @@ function PaymentDetails({
         href="/lien-he"
         className="mt-5 inline-flex items-center gap-2 text-xs underline underline-offset-4"
       >
-        Liên hệ về đơn hàng <ArrowUpRight size={13} />
+        Liên hệ về đơn hàng
       </Link>
     </section>
   );
@@ -394,7 +394,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
         </Button>
         <Button asChild variant="outline">
           <Link href="/san-pham">
-            Ghé Mộc thêm một chút <ArrowUpRight size={15} />
+            Ghé Mộc thêm một chút
           </Link>
         </Button>
       </div>
@@ -477,7 +477,7 @@ export function AccountOrders({ signedIn = true }: { signedIn?: boolean }) {
           href="/san-pham"
           className="mt-5 inline-flex items-center gap-2 text-xs underline underline-offset-4"
         >
-          Tìm người bạn nhỏ <ArrowUpRight size={13} />
+          Tìm người bạn nhỏ
         </Link>
       </div>
     );

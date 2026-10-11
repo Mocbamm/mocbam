@@ -78,11 +78,17 @@ describe("editable content media", () => {
     expect(contentEntry([custom], "home-hero")).toEqual(custom);
     expect(contentEntry([], "returns").content).toMatch(/7 ngày/);
     expect(contentEntry([], "warranty").content).toMatch(/12 tháng/);
-    expect(contentEntry([], "returns").content).toMatch(
-      /không phải điều kiện bắt buộc/,
-    );
+    // Owner's 11/10 policy text requires an unboxing video for returns.
+    expect(contentEntry([], "returns").content).toMatch(/quay video/);
     expect(
       contentSections.filter((section) => section.kind === "media"),
-    ).toHaveLength(6);
+    ).toHaveLength(8);
+    // Rows still holding replaced seed copy show the owner's new wording.
+    expect(
+      contentEntry(
+        [{ key: "home-featured", title: "Nhỏ xinh, đủ thương.", content: "x" }],
+        "home-featured",
+      ),
+    ).toEqual({ key: "home-featured", title: "Sản phẩm nổi bật", content: "x" });
   });
 });

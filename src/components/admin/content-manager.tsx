@@ -51,6 +51,7 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
   const visible = contentSections.filter(
     (item) =>
       item.group === group &&
+      !item.hidden &&
       (!search.trim() ||
         matchesSearch(
           `${item.label} ${drafts[item.key].title} ${drafts[item.key].content}`,
@@ -60,7 +61,6 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
   const richText =
     [
       "home-hero",
-      "home-intro",
       "home-contact",
       "about",
       "about-natural",
@@ -127,8 +127,9 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
               setGroup(item.id);
               setSearch("");
               choose(
-                contentSections.find((section) => section.group === item.id)!
-                  .key,
+                contentSections.find(
+                  (section) => section.group === item.id && !section.hidden,
+                )!.key,
               );
             }}
           >

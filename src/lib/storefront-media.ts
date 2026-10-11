@@ -20,11 +20,16 @@ export function storefrontImageSource(url: string) {
 export function contentMediaSource(key: string, url: string) {
   if (key === "home-hero-media" && url === "/images/story.svg")
     return "/images/verdant/hero.webp";
-  if (/^\/images\/product-0[1-8]\.svg$/.test(url)) {
+  // Category banners are photographic now; bundled artwork and the earlier
+  // transparent cutouts resolve to the default banner photos.
+  if (
+    /^\/images\/product-0[1-8]\.svg$/.test(url) ||
+    /^\/images\/verdant\/(characters|accessories)-cutout\.webp$/.test(url)
+  ) {
     if (key === "home-category-characters-media")
-      return "/images/verdant/characters-cutout.webp";
+      return "/images/verdant/rabbit-photo.webp";
     if (key === "home-category-beads-media")
-      return "/images/verdant/accessories-cutout.webp";
+      return "/images/verdant/bracelet-photo.webp";
   }
   return storefrontImageSource(url);
 }

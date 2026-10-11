@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowUpRight,
   Minus,
   Plus,
   Trash2,
@@ -45,7 +44,7 @@ function EmptyCart() {
       </p>
       <Button asChild className="mt-7">
         <Link href="/san-pham">
-          Khám phá sản phẩm <ArrowUpRight size={15} />
+          Khám phá sản phẩm
         </Link>
       </Button>
     </div>
@@ -134,7 +133,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
           href="/san-pham"
           className="mt-6 inline-flex items-center gap-3 text-xs underline underline-offset-4"
         >
-          Chọn thêm điều nhỏ xinh <ArrowUpRight size={13} />
+          Chọn thêm điều nhỏ xinh
         </Link>
       </div>
       <aside className="store-order-summary self-start bg-[#edf0e5] p-7">
@@ -157,7 +156,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
         </div>
         <Button asChild className="mt-6 h-12 w-full">
           <Link href="/thanh-toan">
-            Tiếp tục đặt hàng <ArrowUpRight size={15} />
+            Tiếp tục đặt hàng
           </Link>
         </Button>
         <p className="mt-4 text-[11px] leading-6 text-[#8b947d]">
@@ -767,7 +766,6 @@ export function CheckoutScreen({
           className="mt-6 h-12 w-full"
         >
           {busy ? "Đang gửi đơn..." : "Gửi đơn hàng"}
-          <ArrowUpRight size={15} />
         </Button>
         <p className="mt-4 text-[10px] leading-6 text-[#8b947d]">
           Khi gửi đơn, bạn đồng ý với{" "}

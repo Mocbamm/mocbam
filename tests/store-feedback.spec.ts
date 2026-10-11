@@ -33,7 +33,7 @@ test("home categories precede products and its carousel browses beyond the first
     exact: true,
   });
   const products = page.getByRole("heading", {
-    name: "Nhỏ xinh, đủ thương.",
+    name: "Sản phẩm nổi bật",
     exact: true,
   });
   expect(
@@ -160,7 +160,7 @@ test("home navigation and hover policy dropdown remain accessible", async ({
     .getByRole("link", { name: "Giao hàng", exact: true })
     .hover();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
-  await page.getByRole("heading", { level: 1 }).hover();
+  await page.mouse.move(640, 700);
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
   await trigger.focus();
   await page.keyboard.press("Enter");

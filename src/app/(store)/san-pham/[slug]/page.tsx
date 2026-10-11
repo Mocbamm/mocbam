@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { getProduct, getProducts, getCategories } from "@/lib/catalog";
 import { ProductDetails, ProductCard } from "@/components/store/products";
 export async function generateMetadata({
@@ -42,7 +42,7 @@ export default async function ProductPage({
         <div className="store-product-section-heading">
           <h2 id="related-products-title">Có thể bạn cũng thương</h2>
           <Link href="/san-pham">
-            Xem tất cả <ArrowRight size={16} />
+            Xem tất cả
           </Link>
         </div>
         <div className="store-product-grid">

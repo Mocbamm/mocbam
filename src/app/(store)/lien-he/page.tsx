@@ -1,4 +1,4 @@
-import { ArrowUpRight, MapPin, Clock, Mail } from "lucide-react";
+import { MapPin, Clock, Mail } from "lucide-react";
 import { getSettings, isConfigured } from "@/lib/catalog";
 import { ContactForm } from "@/components/store/contact";
 export const metadata = { title: "Liên hệ với Mộc" };
@@ -65,7 +65,6 @@ export default async function ContactPage() {
                     className="flex items-center gap-1"
                   >
                     {s.name}
-                    <ArrowUpRight size={12} />
                   </a>
                 ) : null,
               )}

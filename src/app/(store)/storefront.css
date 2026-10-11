@@ -1188,3 +1188,160 @@ body:has(.storefront) [aria-label="Lựa chọn cookie"] [data-slot="button"] {
     background: linear-gradient(0deg, #102719cc, #10271900 90%);
   }
 }
+
+/* Owner feedback 11/10: image slideshow banner with two buttons, then two
+   photographic category banners (Verdant campaign pair). */
+.store-hero-slides {
+  position: absolute;
+  inset: 0;
+}
+.store-hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.8s ease,
+    visibility 0s linear 0.8s;
+}
+.store-hero-slide[data-active="true"] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.8s ease;
+}
+.store-hero-slide .store-home-hero-media {
+  inset: 0;
+}
+.store-hero-dots {
+  position: absolute;
+  z-index: 2;
+  right: clamp(16px, 3vw, 40px);
+  bottom: clamp(18px, 3vw, 40px);
+  display: flex;
+  gap: 2px;
+}
+.store-hero-dots button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 44px;
+}
+.store-hero-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid #fff;
+  background: #ffffff55;
+  box-shadow: 0 1px 6px #142d1c55;
+  transition:
+    width 0.25s,
+    background-color 0.25s;
+}
+.store-hero-dots button[aria-current="true"] span {
+  width: 26px;
+  background: #fff;
+}
+.store-home-hero-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: clamp(24px, 4vw, 56px);
+}
+.store-home-hero-actions > a {
+  min-height: 54px;
+  padding-inline: 26px;
+  font-size: 17px;
+  border-radius: 8px;
+}
+.store-home-hero-actions > .store-button-light-outline {
+  background: #142d1c38;
+  backdrop-filter: blur(2px);
+}
+.store-home-hero-text .store-home-hero-actions {
+  padding-top: 120px;
+}
+.store-category-banners {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+.store-category-banner {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: 0;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #2a472b;
+  color: #fff;
+}
+.store-category-banner-media {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  transition: transform 0.6s ease;
+}
+.store-category-banner-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, #142d1cb3 0%, #142d1c40 45%, transparent 75%);
+}
+.store-category-banner:hover .store-category-banner-media {
+  transform: scale(1.03);
+}
+.store-category-banner-copy {
+  padding: clamp(20px, 3vw, 36px);
+}
+.store-category-banner-copy p {
+  font-size: 14px;
+  margin-bottom: 6px;
+  text-shadow: 0 1px 6px #142d1c80;
+}
+.store-category-banner-copy h2 {
+  color: #fff;
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 12px #142d1c60;
+}
+.store-category-banner-copy .store-button {
+  min-height: 44px;
+  padding-inline: 20px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+.store-story-copy h2 {
+  margin-bottom: 0;
+}
+@media (max-width: 767px) {
+  .store-home-hero-actions {
+    padding: 22px 18px;
+    gap: 10px;
+  }
+  .store-home-hero-actions > a {
+    min-height: 48px;
+    padding-inline: 18px;
+    font-size: 15px;
+  }
+  .store-hero-dots {
+    top: 12px;
+    bottom: auto;
+    right: 10px;
+  }
+  .store-category-banners {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .store-category-banner {
+    aspect-ratio: 4 / 3;
+  }
+}

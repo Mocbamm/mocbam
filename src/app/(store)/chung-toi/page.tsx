@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Leaf, Heart, Hand } from "lucide-react";
+import { Leaf, Heart, Hand } from "lucide-react";
 import { getPageContent } from "@/lib/site-content-server";
 import { ContentVisual, Prose } from "@/components/store/content";
 export const metadata = { title: "Câu chuyện Mộc Bàm" };
@@ -64,7 +64,7 @@ export default async function AboutPage() {
           {content["about-invitation"].title}
         </p>
         <Link href="/lien-he" className="store-outline-link mt-6">
-          {content["about-invitation"].content} <ArrowUpRight size={14} />
+          {content["about-invitation"].content}
         </Link>
       </div>
     </div>

@@ -15,12 +15,15 @@ type ContentSection = SiteContent & {
   hint?: string;
   aspectRatio?: string;
   fit?: "cover" | "contain";
+  // Kept for saved rows but no longer shown on the storefront or in admin.
+  hidden?: boolean;
 };
 
 export const contentSections: ContentSection[] = [
   {
     key: "home-hero",
     group: "home",
+    hidden: true,
     label: "Lời chào đầu trang",
     title: "Một chút mộc.\nMột chút thương.",
     content:
@@ -29,8 +32,8 @@ export const contentSections: ContentSection[] = [
   {
     key: "home-hero-media",
     group: "home",
-    label: "Ảnh / video banner chính",
-    hint: "Banner lớn trên trang chủ. Gợi ý ảnh ngang 2400 × 1050 px; giữ chủ thể ở giữa và chừa khoảng trống bên trái cho chữ. Có thể thêm ảnh dọc riêng ở mục Banner trên điện thoại.",
+    label: "Banner trượt 1",
+    hint: "Ảnh đầu tiên của banner trượt trên trang chủ. Gợi ý ảnh ngang 2400 × 1050 px, chủ thể ở giữa; góc dưới bên trái có 2 nút bấm. Có thể thêm ảnh dọc riêng ở mục Banner trên điện thoại.",
     aspectRatio: "16 / 7",
     kind: "media",
     title: "Những món đồ gỗ nhỏ xinh trong không gian xanh của Mộc Bàm",
@@ -47,6 +50,26 @@ export const contentSections: ContentSection[] = [
     aspectRatio: "3 / 4",
   },
   {
+    key: "home-hero-slide-2-media",
+    group: "home",
+    label: "Banner trượt 2",
+    hint: "Không bắt buộc. Ảnh thứ hai của banner trượt, tự chuyển sau vài giây. Gợi ý ảnh ngang 2400 × 1050 px, chủ thể ở giữa. Chọn “Không dùng” để bỏ ảnh này.",
+    aspectRatio: "16 / 7",
+    kind: "media",
+    title: "Những người bạn gỗ nhỏ của Mộc Bàm",
+    content: "/images/verdant/story.webp",
+  },
+  {
+    key: "home-hero-slide-3-media",
+    group: "home",
+    label: "Banner trượt 3",
+    hint: "Không bắt buộc. Ảnh thứ ba của banner trượt. Gợi ý ảnh ngang 2400 × 1050 px, chủ thể ở giữa.",
+    aspectRatio: "16 / 7",
+    kind: "media",
+    title: "Góc nhỏ xinh của Mộc Bàm",
+    content: "none",
+  },
+  {
     key: "home-hero-note",
     group: "home",
     label: "Thông điệp đầu trang",
@@ -56,53 +79,50 @@ export const contentSections: ContentSection[] = [
   {
     key: "home-category-characters",
     group: "home",
-    label: "Bộ sưu tập nhân vật",
+    label: "Banner danh mục nhân vật (Tiêu đề và dòng chữ nhỏ)",
     title: "Dòng nhân vật",
     content: "Những người bạn nhỏ",
   },
   {
     key: "home-category-characters-media",
     group: "home",
-    label: "Ảnh bộ sưu tập nhân vật",
-    hint: "Lối tắt danh mục ở đầu trang chủ. Gợi ý PNG hoặc WebP nền trong suốt, rộng ít nhất 600 px. Giữ toàn bộ sản phẩm trong khung.",
+    label: "Ảnh banner danh mục nhân vật",
+    hint: "Banner ảnh của danh mục, nằm ngay dưới banner trượt. Gợi ý ảnh ngang 1500 × 1000 px; chừa khoảng trống phía dưới bên trái cho chữ và nút.",
     aspectRatio: "3 / 2",
-    fit: "contain",
     kind: "media",
     title: "Dòng nhân vật",
-    content: "/images/verdant/characters-cutout.webp",
+    content: "/images/verdant/rabbit-photo.webp",
   },
   {
     key: "home-category-beads",
     group: "home",
-    label: "Bộ sưu tập chuỗi",
+    label: "Banner danh mục chuỗi (Tiêu đề và dòng chữ nhỏ)",
     title: "Dòng chuỗi",
     content: "Giản dị theo cách riêng",
   },
   {
     key: "home-category-beads-media",
     group: "home",
-    label: "Ảnh bộ sưu tập chuỗi",
-    hint: "Lối tắt danh mục ở đầu trang chủ. Gợi ý PNG hoặc WebP nền trong suốt, rộng ít nhất 600 px. Giữ toàn bộ sản phẩm trong khung.",
+    label: "Ảnh banner danh mục chuỗi",
+    hint: "Banner ảnh của danh mục, nằm ngay dưới banner trượt. Gợi ý ảnh ngang 1500 × 1000 px; chừa khoảng trống phía dưới bên trái cho chữ và nút.",
     aspectRatio: "3 / 2",
-    fit: "contain",
     kind: "media",
     title: "Dòng chuỗi",
-    content: "/images/verdant/accessories-cutout.webp",
+    content: "/images/verdant/bracelet-photo.webp",
   },
   {
     key: "home-featured",
     group: "home",
     label: "Tiêu đề sản phẩm nổi bật",
-    title: "Nhỏ xinh, đủ thương.",
+    title: "Sản phẩm nổi bật",
     content: "Mộc chọn cho bạn",
   },
   {
     key: "home-intro",
     group: "home",
-    label: "Giới thiệu Mộc",
-    title: "Những điều nhỏ, làm nên bình yên",
-    content:
-      "Nhân vật gỗ và phụ kiện thủ công, mang một chút mộc mạc và ấm áp vào mỗi ngày.",
+    label: "Góc nhỏ Mộc Bàm (Tiêu đề và dòng chữ nhỏ phía trên)",
+    title: "Mỗi món quà nhỏ, một câu chuyện riêng",
+    content: "Góc nhỏ Mộc Bàm",
   },
   {
     key: "home-intro-media",
@@ -181,7 +201,7 @@ export const contentSections: ContentSection[] = [
     label: "Hướng dẫn mua hàng",
     title: "Hướng dẫn mua hàng",
     content:
-      "## 1. Tìm một điều nhỏ xinh\n\nDuyệt danh mục hoặc dùng ô tìm kiếm để chọn sản phẩm. Mở trang chi tiết để xem hình ảnh, mô tả, giá và tình trạng còn hàng.\n\n## 2. Chọn sản phẩm\n\nChọn số lượng, thêm vào giỏ để mua tiếp hoặc chọn Mua ngay để đến bước thanh toán.\n\n## 3. Kiểm tra thông tin nhận hàng\n\nKiểm tra sản phẩm trong giỏ. Điền họ tên, số điện thoại, email, địa chỉ và ghi chú nếu cần. Phí giao hàng và tổng tiền hiển thị trước khi gửi đơn.\n\n## 4. Thanh toán và gửi đơn\n\nChọn thanh toán khi nhận hàng (COD) hoặc chuyển khoản nếu cửa hàng đã bật phương thức này. Với chuyển khoản, dùng đúng tài khoản, số tiền và nội dung hiển thị trên đơn. Mộc xác nhận thanh toán sau khi kiểm tra giao dịch.\n\n## 5. Theo dõi đơn\n\nLưu mã đơn và liên kết xác nhận để theo dõi. Nếu đặt hàng khi đã đăng nhập, bạn cũng có thể xem đơn trong Tài khoản. Liên hệ Mộc khi cần chỉnh sửa thông tin hoặc hỗ trợ.",
+      "## Bước 1: Tìm kiếm sản phẩm\n\nKhách hàng truy cập vào website Mộc Bàm, duyệt qua các danh mục sản phẩm (hoặc sử dụng thanh tìm kiếm) để chọn mẫu sản phẩm ưng ý.\n\n## Bước 2: Xem chi tiết & Thêm vào giỏ hàng\n\nNhấp vào sản phẩm để xem các thông tin chi tiết và giá bán. Chọn số lượng cần mua, sau đó bấm “Bỏ giỏ” hoặc chọn “Mua ngay”.\n\n## Bước 3: Kiểm tra giỏ hàng & Nhập thông tin\n\nTại trang giỏ hàng, quý khách kiểm tra lại danh sách sản phẩm và tổng tiền. Nhấn “Tiếp tục đặt hàng” và điền đầy đủ các thông tin giao nhận bao gồm: Họ và tên, Số điện thoại, Email, Địa chỉ nhận hàng và Ghi chú riêng cho đơn hàng (nếu có).\n\n## Bước 4: Chọn phương thức thanh toán\n\nLựa chọn phương thức thanh toán phù hợp:\n\n- COD: Thanh toán khi nhận hàng\n- Chuyển khoản ngân hàng\n\n## Bước 5: Xác nhận đặt hàng\n\nBấm “Gửi đơn hàng”. Hệ thống sẽ hiển thị thông tin và trạng thái đơn hàng để quý khách tiện theo dõi trạng thái.",
   },
   {
     key: "shipping",
@@ -189,7 +209,7 @@ export const contentSections: ContentSection[] = [
     label: "Giao hàng",
     title: "Giao hàng",
     content:
-      "## Phạm vi và thời gian dự kiến\n\nMộc Bàm giao hàng trên toàn Việt Nam. Thời gian dự kiến kể từ khi đơn được xác nhận và bàn giao cho đơn vị vận chuyển:\n\n- Nội thành TP. Hồ Chí Minh và Hà Nội: 1–3 ngày làm việc.\n- Các khu vực khác: 3–5 ngày làm việc.\n\nThời gian có thể thay đổi theo địa chỉ, điều kiện vận chuyển hoặc dịp cao điểm. Mộc sẽ trao đổi nếu đơn cần thêm thời gian chuẩn bị.\n\n## Phí giao hàng\n\nPhí giao hàng được hiển thị trong bước thanh toán trước khi bạn gửi đơn. Mộc sẽ liên hệ để thống nhất nếu có yêu cầu giao nhận đặc biệt.\n\n## Nhận hàng\n\nVui lòng kiểm tra thông tin người nhận và giữ điện thoại liên lạc. Khi nhận hàng, kiểm tra tình trạng đóng gói và sản phẩm; ảnh hoặc video mở kiện sẽ giúp Mộc hỗ trợ nhanh hơn nếu có vấn đề.",
+      "## Phạm vi vận chuyển\n\nMộc Bàm hỗ trợ giao hàng trên toàn quốc.\n\n## Thời gian giao hàng dự kiến\n\n- Khu vực nội thành (TP. Hồ Chí Minh/Hà Nội): Từ 1 – 3 ngày làm việc kể từ khi đơn hàng được xác nhận.\n- Khu vực ngoại thành và các tỉnh thành khác: Từ 3 – 5 ngày làm việc (tùy thuộc vào địa chỉ cụ thể và đơn vị vận chuyển).\n\n## Cước phí vận chuyển\n\nPhí vận chuyển được hệ thống tự động tính toán dựa trên trọng lượng, kích thước đóng gói của sản phẩm và khoảng cách địa lý. Mức phí cụ thể sẽ hiển thị công khai ở bước thanh toán để khách hàng nắm rõ trước khi xác nhận đặt đơn.\n\n## Quy trình nhận hàng\n\nQuý khách được quyền kiểm tra tình trạng bên ngoài của kiện hàng (độ nguyên vẹn của bao bì, không móp méo) trước khi ký nhận và thanh toán với nhân viên giao nhận.",
   },
   {
     key: "payment",
@@ -197,7 +217,7 @@ export const contentSections: ContentSection[] = [
     label: "Phương thức thanh toán",
     title: "Phương thức thanh toán",
     content:
-      "## Thanh toán khi nhận hàng (COD)\n\nBạn thanh toán cho đơn vị vận chuyển khi nhận hàng theo tổng tiền trên đơn đã xác nhận. Kiểm tra số tiền và thông tin người nhận trước khi gửi đơn.\n\n## Chuyển khoản ngân hàng\n\nPhương thức chuyển khoản chỉ xuất hiện khi cửa hàng đã cấu hình và bật tài khoản nhận tiền. Sau khi gửi đơn, dùng tài khoản, số tiền và nội dung chuyển khoản hiển thị trên trang xác nhận đơn. Mã QR, nếu có, giúp bạn điền thông tin giao dịch; hãy kiểm tra lại trước khi xác nhận trên ứng dụng ngân hàng.\n\nGửi đơn hoặc mở mã QR chưa đồng nghĩa đã thanh toán. Mộc xác nhận trạng thái thanh toán sau khi kiểm tra giao dịch nhận tiền. Không chuyển tiền theo tài khoản được gửi từ nguồn không xác minh.\n\n## Cần hỗ trợ giao dịch?\n\nLiên hệ Mộc kèm mã đơn nếu chuyển sai nội dung, số tiền hoặc cần kiểm tra thanh toán. Website không tự động trích tiền hay hoàn tiền; các yêu cầu hoàn tiền được cửa hàng trao đổi và xác nhận riêng.",
+      "## Thanh toán khi nhận hàng (COD)\n\nKhách hàng thanh toán bằng tiền mặt trực tiếp cho nhân viên giao hàng sau khi đã nhận và kiểm tra sơ bộ kiện hàng.\n\n## Thanh toán chuyển khoản ngân hàng\n\nQuý khách chuyển khoản trước qua số tài khoản hoặc quét mã QR chính thức của Mộc Bàm hiển thị ở bước thanh toán.\n\nSau khi nhận được thông tin chuyển khoản thành công, hệ thống hoặc nhân viên chăm sóc sẽ liên hệ xác nhận và tiến hành đóng gói, gửi hàng cho quý khách.",
   },
   {
     key: "returns",
@@ -205,15 +225,15 @@ export const contentSections: ContentSection[] = [
     label: "Đổi trả & chăm sóc",
     title: "Đổi trả & chăm sóc",
     content:
-      "## Hỗ trợ đổi trả trong 7 ngày\n\nLiên hệ Mộc trong vòng 7 ngày kể từ khi nhận hàng nếu sản phẩm bị lỗi kỹ thuật, hư hỏng khi vận chuyển hoặc giao sai so với đơn đã xác nhận. Vui lòng cung cấp mã đơn và mô tả tình trạng; ảnh hoặc video mở kiện được khuyến khích để kiểm tra thuận tiện, không phải điều kiện bắt buộc để tiếp nhận hỗ trợ.\n\nSản phẩm đổi trả cần chưa qua sử dụng và không phát sinh hư hỏng do người dùng. Giữ bao bì, phụ kiện nếu có. Mộc sẽ kiểm tra và thống nhất cách đổi, trả hoặc hoàn tiền, cùng việc nhận lại sản phẩm và chi phí vận chuyển theo nguyên nhân thực tế.\n\n## Lưu ý với chất liệu gỗ\n\nVân gỗ, màu sắc tự nhiên có thể khác nhẹ giữa các sản phẩm và hình ảnh trên màn hình. Đây là đặc trưng của chất liệu, không mặc nhiên là lỗi sản phẩm. Nếu bạn chưa chắc về tình trạng món đồ, hãy liên hệ để Mộc cùng kiểm tra và hướng dẫn.",
+      "## Thời gian hỗ trợ đổi trả\n\nTrong vòng 07 ngày kể từ ngày quý khách nhận được sản phẩm.\n\n## Điều kiện được chấp nhận đổi trả\n\n- Quý khách vui lòng quay video làm bằng chứng.\n- Sản phẩm bị lỗi kỹ thuật nặng, nứt gãy do vận chuyển hoặc giao sai mẫu mã/kích thước so với đơn đặt hàng.\n- Sản phẩm còn nguyên vẹn, chưa qua sử dụng, chưa bị tác dụng hóa chất hoặc chịu lực va đập mạnh từ phía người dùng.\n\n## Quy trình xử lý đổi trả\n\n1. Quý khách quay video quá trình mở hộp và chụp lại hình ảnh rõ nét phần lỗi sản phẩm (bắt buộc).\n2. Liên hệ ngay với Mộc Bàm qua kênh chat trên website, fanpage hoặc số hotline trong vòng 48h kể từ khi nhận hàng.\n3. Sau khi xác nhận thông tin, Mộc Bàm sẽ hướng dẫn gửi lại sản phẩm và tiến hành đổi mới sản phẩm tương đương hoặc hoàn tiền theo thỏa thuận.",
   },
   {
     key: "warranty",
     group: "policies",
-    label: "Bảo hành & chăm sóc",
-    title: "Bảo hành & chăm sóc",
+    label: "Bảo hành & bảo dưỡng",
+    title: "Bảo hành & bảo dưỡng",
     content:
-      "## Bảo hành lỗi kỹ thuật 12 tháng\n\nMộc hỗ trợ bảo hành lỗi kỹ thuật do sản xuất trong 12 tháng kể từ khi nhận hàng. Gửi mã đơn, mô tả tình trạng và hình ảnh để chúng mình kiểm tra, tư vấn cách xử lý phù hợp và thống nhất việc nhận lại sản phẩm nếu cần.\n\n## Phạm vi loại trừ\n\nBảo hành không áp dụng cho hư hỏng do rơi vỡ, trầy xước trong sử dụng, ngâm nước, ẩm mốc, phơi nắng hoặc nhiệt độ khắc nghiệt, hay tự ý sửa đổi kết cấu sản phẩm. Vân gỗ và sắc độ khác nhau nhẹ là đặc trưng tự nhiên của chất liệu.\n\n## Tư vấn chăm sóc trọn đời\n\nMộc luôn sẵn lòng hướng dẫn chăm sóc trong suốt thời gian bạn sử dụng sản phẩm. Đặt đồ gỗ ở nơi khô thoáng, tránh nước và ánh nắng trực tiếp kéo dài. Dùng khăn mềm khô hoặc hơi ẩm rồi lau lại ngay; tránh chất tẩy mạnh, nước hoa và dung môi trên bề mặt gỗ.\n\nNếu sản phẩm cần sửa chữa ngoài phạm vi bảo hành, Mộc sẽ trao đổi khả năng hỗ trợ và chi phí thực tế trước khi thực hiện.",
+      "## Thời gian bảo hành\n\nBảo hành các lỗi kỹ thuật do nhà sản xuất trong thời gian 12 tháng kể từ ngày mua.\n\n## Các trường hợp không nằm trong diện bảo hành\n\n- Sản phẩm bị hư hỏng do tác động vật lý ngoại lực mạnh (rơi vỡ, va đập, trầy xước sâu do vật nhọn).\n- Sản phẩm bị ngập nước, ẩm mốc kéo dài hoặc đặt trực tiếp dưới ánh nắng mặt trời gay gắt gây sốc nhiệt cho gỗ.\n- Sản phẩm đã qua tự ý sửa chữa hoặc can thiệp kết cấu bởi bên thứ ba không thuộc ủy quyền của Mộc Bàm.\n\n## Hỗ trợ bảo dưỡng trọn đời\n\nMộc Bàm luôn sẵn sàng tư vấn cách vệ sinh, đánh bóng lại bề mặt gỗ và hỗ trợ bảo dưỡng kỹ thuật trọn đời cho mọi sản phẩm của khách hàng.",
   },
   {
     key: "privacy",
@@ -221,7 +241,7 @@ export const contentSections: ContentSection[] = [
     label: "Quyền riêng tư",
     title: "Quyền riêng tư",
     content:
-      "## Thông tin Mộc sử dụng\n\nTên, email, số điện thoại, địa chỉ giao hàng và thông tin đơn được sử dụng để tiếp nhận, xác nhận, giao hàng và giải quyết yêu cầu hỗ trợ. Thông tin tài khoản được dùng để đăng nhập và tra cứu đơn của bạn. Nội dung lời nhắn liên hệ và tin nhắn bạn gửi trong mục hỗ trợ được nhân viên cửa hàng xem để trả lời và xử lý yêu cầu.\n\n## Chia sẻ cần thiết\n\nMộc không bán thông tin cá nhân. Một số thông tin cần được xử lý bởi nhà cung cấp dịch vụ lưu trữ, xác thực và đơn vị vận chuyển để vận hành cửa hàng, bảo vệ tài khoản và giao đơn. Chúng mình chỉ sử dụng thông tin phù hợp với mục đích cung cấp dịch vụ.\n\n## Lựa chọn của bạn\n\nBạn có thể đồng ý hoặc từ chối công cụ phân tích và quảng cáo trong lựa chọn cookie. Mộc không đưa tên, email, số điện thoại hoặc địa chỉ vào sự kiện phân tích website.\n\n## Kiểm tra, chỉnh sửa và xóa dữ liệu\n\nLiên hệ Mộc để yêu cầu truy cập, chỉnh sửa hoặc xóa dữ liệu cá nhân. Chúng mình sẽ xác minh yêu cầu và trao đổi về dữ liệu cần lưu lại để xử lý đơn hàng, tranh chấp hoặc nghĩa vụ áp dụng.",
+      "## Cam kết bảo mật\n\nMộc Bàm cam kết không mua bán, trao đổi, chia sẻ hoặc tiết lộ thông tin cá nhân của khách hàng cho bất kỳ bên thứ ba nào khác, ngoại trừ đơn vị vận chuyển trực tiếp làm nhiệm vụ giao hàng.\n\n## Quyền của khách hàng\n\nKhách hàng có quyền yêu cầu Mộc Bàm kiểm tra, cập nhật, điều chỉnh hoặc xóa bỏ thông tin cá nhân của mình bất cứ lúc nào bằng cách liên hệ trực tiếp qua bộ phận hỗ trợ.",
   },
   {
     key: "terms",
@@ -229,13 +249,37 @@ export const contentSections: ContentSection[] = [
     label: "Điều khoản sử dụng",
     title: "Điều khoản sử dụng",
     content:
-      "## Thông tin sản phẩm và đặt hàng\n\nVui lòng cung cấp thông tin liên hệ, giao hàng chính xác và kiểm tra đơn trước khi gửi. Giá, ưu đãi và tồn kho được kiểm tra lại tại bước gửi đơn. Mộc xác nhận thông tin cần thiết trước khi thực hiện đơn hàng.\n\nGỗ tự nhiên có vân và sắc độ riêng; màu hiển thị cũng phụ thuộc màn hình và ánh sáng. Những khác biệt nhẹ này không đồng nghĩa sản phẩm có lỗi.\n\n## Thanh toán, hủy đơn và hoàn tiền\n\nBạn có thể chọn COD hoặc chuyển khoản khi phương thức này được cửa hàng bật. Gửi đơn không đồng nghĩa đã thanh toán; chuyển khoản được Mộc xác nhận sau khi kiểm tra tiền nhận. Website không tự động thu tiền hoặc hoàn tiền.\n\nNếu cần đổi thông tin hoặc hủy đơn, liên hệ Mộc sớm kèm mã đơn. Với đơn đã thanh toán, việc hủy đơn và hoàn tiền được cửa hàng trao đổi, xử lý và xác nhận riêng.\n\n## Sử dụng nội dung\n\nTên thương hiệu và nội dung do Mộc Bàm tạo thuộc quyền sử dụng của Mộc Bàm. Vui lòng liên hệ trước khi sử dụng lại cho mục đích thương mại. Các tài nguyên của bên thứ ba và phần mềm mã nguồn mở tuân theo quyền và giấy phép tương ứng.\n\n## Hỗ trợ và cập nhật\n\nCác chính sách mua hàng, giao hàng, đổi trả và quyền riêng tư là một phần thông tin sử dụng website. Mộc có thể cập nhật nội dung cho phù hợp với hoạt động cửa hàng; hãy xem thông tin hiển thị trước khi đặt hàng hoặc liên hệ khi cần làm rõ.",
+      "## Chấp thuận điều khoản\n\nBằng việc truy cập và thực hiện mua sắm trên website Mộc Bàm, quý khách đồng ý tuân thủ toàn bộ các điều khoản và điều kiện sử dụng được niêm yết công khai.\n\n## Quyền sở hữu trí tuệ\n\nToàn bộ nội dung hiển thị trên website bao gồm thiết kế, logo, hình ảnh sản phẩm, bài viết, mã nguồn đều thuộc quyền sở hữu độc quyền của Mộc Bàm. Nghiêm cấm mọi hành vi sao chép, chỉnh sửa, tái sử dụng hoặc phát tán với mục đích thương mại khi chưa có sự đồng ý bằng văn bản từ chúng tôi.\n\n## Giới hạn trách nhiệm\n\nMộc Bàm luôn nỗ lực đảm bảo tính chính xác cao nhất về hình ảnh và thông tin mô tả sản phẩm. Tuy nhiên, màu sắc thực tế của sản phẩm gỗ tự nhiên có thể có sự chênh lệch nhẹ tùy thuộc vào màn hình thiết bị hiển thị hoặc từng lô vân mộc của gỗ.",
   },
 ];
+
+// Earlier seed copy that the owner replaced in her 11/10 feedback. Saved rows
+// still holding it show the current default instead.
+const replacedSeedCopy: Record<string, { title: string; content?: string }> = {
+  "home-featured": { title: "Nhỏ xinh, đủ thương." },
+  "home-intro": {
+    title: "Những điều nhỏ, làm nên bình yên",
+    content:
+      "Nhân vật gỗ và phụ kiện thủ công, mang một chút mộc mạc và ấm áp vào mỗi ngày.",
+  },
+};
 
 export function contentEntry(entries: SiteContent[], key: string): SiteContent {
   const fallback = contentSections.find((section) => section.key === key);
   const entry = entries.find((item) => item.key === key);
+  const replaced = replacedSeedCopy[key];
+  if (
+    entry &&
+    fallback &&
+    replaced &&
+    entry.title === replaced.title &&
+    (replaced.content === undefined || entry.content === replaced.content)
+  )
+    return {
+      key,
+      title: fallback.title,
+      content: replaced.content === undefined ? entry.content : fallback.content,
+    };
   if (entry)
     return fallback?.kind === "media"
       ? { ...entry, content: contentMediaSource(key, entry.content) }

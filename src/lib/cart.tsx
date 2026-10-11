@@ -8,6 +8,18 @@ import {
 import type { Product } from "@/lib/types";
 import { trackCartQuantityChange } from "@/lib/analytics";
 import { toast } from "sonner";
+
+const OPEN_CART_EVENT = "mocbam:open-cart";
+
+// “Bỏ giỏ” slides the cart drawer open; “Mua ngay” goes straight to checkout.
+export function openCartDrawer() {
+  window.dispatchEvent(new Event(OPEN_CART_EVENT));
+}
+
+export function onOpenCartDrawer(listener: () => void) {
+  window.addEventListener(OPEN_CART_EVENT, listener);
+  return () => window.removeEventListener(OPEN_CART_EVENT, listener);
+}
 import { cartItemKey, productOption } from "./product-options";
 const STORAGE_KEY = "mocbam.cart.v1";
 const MAX_QUANTITY = 10;

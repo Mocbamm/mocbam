@@ -20,12 +20,11 @@ test("cart drawer shares quantities, totals and persistence with the header cart
   await expect(page).toHaveURL(/\/san-pham$/);
   await expect(drawer).not.toBeVisible();
 
+  // “Bỏ giỏ” opens the drawer by itself (owner feedback 11/10).
   await page
     .getByRole("button", { name: "Thêm Mèo Mộc vào giỏ hàng", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Giỏ hàng, 1 sản phẩm", exact: true })
-    .click();
+  await expect(drawer).toBeVisible();
   await expect(
     drawer.getByRole("link", { name: "Mèo Mộc", exact: true }),
   ).toBeVisible();

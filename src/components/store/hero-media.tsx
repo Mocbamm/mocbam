@@ -7,9 +7,11 @@ import StoreImage from "./image";
 export function HeroMedia({
   desktop,
   mobile,
+  priority = true,
 }: {
   desktop: SiteContent;
   mobile: SiteContent;
+  priority?: boolean;
 }) {
   if (desktop.content === "none") return null;
   const sources = heroMediaSources(desktop.content, mobile.content);
@@ -32,8 +34,8 @@ export function HeroMedia({
           src={sources.desktop}
           alt={desktop.title}
           fill
-          loading="eager"
-          fetchPriority="high"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           sizes="(max-width: 1440px) 96vw, 1392px"
           className="object-cover"
         />

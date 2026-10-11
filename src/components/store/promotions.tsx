@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Tag } from "lucide-react";
+import { Tag } from "lucide-react";
 import type { Discount, Product } from "@/lib/types";
 import { money } from "./format";
 
@@ -97,7 +97,7 @@ export function PromotionBanner({
           href="/san-pham"
           className="mt-6 inline-flex items-center gap-3 border-b border-[#93a280] pb-2 text-xs text-[#29412d]"
         >
-          Chọn món bạn thương <ArrowUpRight size={14} />
+          Chọn món bạn thương
         </Link>
       </div>
     </section>

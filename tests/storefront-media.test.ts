@@ -40,7 +40,7 @@ describe("storefront media administration", () => {
         ],
         "home-category-characters-media",
       ).content,
-    ).toBe("/images/verdant/characters-cutout.webp");
+    ).toBe("/images/verdant/rabbit-photo.webp");
     expect(storefrontImageSource(custom)).toBe(custom);
     expect(storefrontImageSource("/images/product-01.svg")).toBe(
       "/images/verdant/cat-photo.webp",

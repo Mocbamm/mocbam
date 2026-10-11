@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { getPageContent } from "@/lib/site-content-server";
 import { Prose } from "@/components/store/content";
 import { policyHref, policyLinks } from "@/components/store/policies";
@@ -38,7 +37,6 @@ export default async function PoliciesPage({
                 aria-current={policy.id === selected?.id ? "page" : undefined}
               >
                 {content[keys[policy.id]].title}
-                <ArrowUpRight size={15} aria-hidden="true" />
               </Link>
             ))}
           </nav>
@@ -59,7 +57,6 @@ export default async function PoliciesPage({
                 className="store-policy-card"
               >
                 {content[keys[policy.id]].title}
-                <ArrowUpRight size={17} />
               </Link>
             ))}
           </div>

@@ -7,16 +7,14 @@ import {
   X,
   ShoppingBag,
   UserRound,
-  ArrowUpRight,
   ChevronDown,
   Minus,
   Plus,
   Trash2,
-  ArrowRight,
   Leaf,
 } from "lucide-react";
-import { useRef, useState } from "react";
-import { formatPrice, useCart } from "@/lib/cart";
+import { useEffect, useRef, useState } from "react";
+import { formatPrice, onOpenCartDrawer, useCart } from "@/lib/cart";
 import type { SiteSettings } from "@/lib/types";
 import {
   Sheet,
@@ -52,8 +50,10 @@ function Brand({ footer = false }: { footer?: boolean }) {
 
 function CartDrawer() {
   const { items, count, subtotal, ready, update, remove } = useCart();
+  const [open, setOpen] = useState(false);
+  useEffect(() => onOpenCartDrawer(() => setOpen(true)), []);
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button
           type="button"
@@ -161,7 +161,7 @@ function CartDrawer() {
                   href="/thanh-toan"
                   className="store-button store-button-primary"
                 >
-                  Thanh toán <ArrowRight size={17} />
+                  Thanh toán
                 </Link>
               </SheetClose>
               <SheetClose asChild>
@@ -184,7 +184,7 @@ function CartDrawer() {
                 href="/san-pham"
                 className="store-button store-button-primary"
               >
-                Khám phá sản phẩm <ArrowRight size={16} />
+                Khám phá sản phẩm
               </Link>
             </SheetClose>
           </div>
@@ -248,7 +248,6 @@ export function StoreHeader() {
                     }
                   >
                     {item.text}
-                    <ArrowUpRight size={17} strokeWidth={1.3} />
                   </Link>
                 ))}
                 <details>
@@ -281,7 +280,7 @@ export function StoreHeader() {
                     height={96}
                   />
                   <span>
-                    Nhân vật gỗ <ArrowRight size={16} />
+                    Nhân vật gỗ
                   </span>
                 </Link>
                 <Link
@@ -295,7 +294,7 @@ export function StoreHeader() {
                     height={96}
                   />
                   <span>
-                    Chuỗi & phụ kiện <ArrowRight size={16} />
+                    Chuỗi & phụ kiện
                   </span>
                 </Link>
               </div>
@@ -304,7 +303,7 @@ export function StoreHeader() {
                 onClick={() => setOpen(false)}
                 className="store-menu-contact"
               >
-                Mộc luôn sẵn lòng nghe bạn <ArrowUpRight size={16} />
+                Mộc luôn sẵn lòng nghe bạn
               </Link>
             </SheetContent>
           </Sheet>
@@ -370,7 +369,6 @@ export function StoreHeader() {
                       onClick={() => setPolicyOpen(false)}
                     >
                       {policy.title}
-                      <ArrowUpRight size={15} />
                     </Link>
                   ))}
                 </div>
@@ -383,7 +381,7 @@ export function StoreHeader() {
                   <strong>Cần Mộc giúp một chút?</strong>
                   <span>Chúng mình luôn ở đây, cùng bạn.</span>
                   <span>
-                    Gửi lời nhắn <ArrowRight size={16} />
+                    Gửi lời nhắn
                   </span>
                 </Link>
               </div>
@@ -434,7 +432,6 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
                   rel="noopener noreferrer"
                 >
                   {s.text}
-                  <ArrowUpRight size={13} />
                 </a>
               ) : null,
             )}
@@ -473,7 +470,7 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
             <a href={`mailto:${settings.shop_email}`}>{settings.shop_email}</a>
           ) : null}
           <Link href="/lien-he" className="store-footer-message">
-            Gửi Mộc lời nhắn <ArrowUpRight size={16} />
+            Gửi Mộc lời nhắn
           </Link>
         </div>
       </div>

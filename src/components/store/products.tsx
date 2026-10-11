@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowUpRight,
   Plus,
   Minus,
   ShoppingBag,
@@ -18,7 +17,7 @@ import {
 } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import type { Product, Category } from "@/lib/types";
-import { useCart } from "@/lib/cart";
+import { openCartDrawer, useCart } from "@/lib/cart";
 import { productOption } from "@/lib/product-options";
 import { trackStoreEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
@@ -121,7 +120,7 @@ export function ProductCard({
             onClick={() =>
               product.variants?.length
                 ? router.push(`/san-pham/${product.slug}`)
-                : add(product)
+                : add(product) && openCartDrawer()
             }
             aria-label={`Thêm ${product.name} vào giỏ hàng`}
             className="store-card-button store-card-button-outline"
@@ -646,7 +645,10 @@ export function ProductActions({
       <div className="store-product-purchase-buttons">
         <Button
           disabled={availableStock < 1}
-          onClick={() => add(product, quantity, variantId || undefined)}
+          onClick={() => {
+            if (add(product, quantity, variantId || undefined))
+              openCartDrawer();
+          }}
           variant="outline"
           className="store-purchase-button-outline"
         >
@@ -660,7 +662,7 @@ export function ProductActions({
           }}
           className="store-purchase-button-primary"
         >
-          Mua ngay <ArrowUpRight size={16} />
+          Mua ngay
         </Button>
       </div>
     </div>
