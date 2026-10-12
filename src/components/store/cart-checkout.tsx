@@ -43,14 +43,12 @@ function EmptyCart() {
         Cùng tìm một người bạn nhỏ để mang theo nhé.
       </p>
       <Button asChild className="mt-7">
-        <Link href="/san-pham">
-          Khám phá sản phẩm
-        </Link>
+        <Link href="/san-pham">Khám phá sản phẩm</Link>
       </Button>
     </div>
   );
 }
-export function CartScreen({ shippingFee }: { shippingFee: number }) {
+export function CartScreen({ shippingFee }: { shippingFee: number | null }) {
   const { items, subtotal, ready, update, remove } = useCart();
   if (!ready)
     return (
@@ -147,17 +145,17 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
           </p>
           <p className="flex justify-between">
             <span>Phí giao hàng dự kiến</span>
-            <span>{money(shippingFee)}</span>
+            <span>
+              {shippingFee === null ? "Tính theo địa chỉ" : money(shippingFee)}
+            </span>
           </p>
           <p className="flex justify-between border-t border-[#d1d9c2] pt-5 text-base font-medium text-[#29412d]">
             <span>Tổng dự kiến</span>
-            <span>{money(subtotal + shippingFee)}</span>
+            <span>{money(subtotal + (shippingFee ?? 0))}</span>
           </p>
         </div>
         <Button asChild className="mt-6 h-12 w-full">
-          <Link href="/thanh-toan">
-            Tiếp tục đặt hàng
-          </Link>
+          <Link href="/thanh-toan">Tiếp tục đặt hàng</Link>
         </Button>
         <p className="mt-4 text-[11px] leading-6 text-[#8b947d]">
           Phí giao hàng được cập nhật theo địa chỉ ở bước đặt hàng. Giá và tồn
@@ -170,6 +168,7 @@ export function CartScreen({ shippingFee }: { shippingFee: number }) {
 export function CheckoutScreen({
   shippingFee,
   shippingZones = [],
+  shippingZonesOnly = false,
   shippingDistanceEnabled = false,
   configured,
   bankTransferAvailable,
@@ -180,6 +179,7 @@ export function CheckoutScreen({
 }: {
   shippingFee: number;
   shippingZones?: ShippingZone[];
+  shippingZonesOnly?: boolean;
   shippingDistanceEnabled?: boolean;
   configured: boolean;
   bankTransferAvailable: boolean;
@@ -269,7 +269,13 @@ export function CheckoutScreen({
       shippingZones,
       destination.province,
       destination.ward,
+      shippingZonesOnly,
     );
+  const outsideDelivery =
+    !shippingDistanceEnabled &&
+    Boolean(destination.province && destination.ward) &&
+    "available" in shipping &&
+    !shipping.available;
   const [error, setError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "bank_transfer">(
     "cod",
@@ -370,7 +376,8 @@ export function CheckoutScreen({
   if (!items.length) return <EmptyCart />;
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || quoting || !configured || !distanceReady) return;
+    if (busy || quoting || !configured || !distanceReady || outsideDelivery)
+      return;
     if (
       shippingDistanceEnabled &&
       distanceQuote &&
@@ -701,11 +708,23 @@ export function CheckoutScreen({
             <span>
               {!destination.province || !destination.ward
                 ? "Chưa tính"
-                : shippingDistanceEnabled && !distanceQuote
-                  ? "Chờ tính phí"
-                  : money(shipping.fee)}
+                : outsideDelivery
+                  ? "Chưa giao tới"
+                  : shippingDistanceEnabled && !distanceQuote
+                    ? "Chờ tính phí"
+                    : money(shipping.fee)}
             </span>
           </p>
+          {outsideDelivery ? (
+            <p
+              role="alert"
+              className="border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-800"
+            >
+              Mộc hiện chỉ giao trong khu vực gần cửa hàng, chưa giao tới{" "}
+              {destination.ward}. Bạn có thể chọn địa chỉ khác hoặc nhắn Mộc để
+              được hỗ trợ.
+            </p>
+          ) : null}
           {shippingDistanceEnabled ? (
             <div className="space-y-2" aria-live="polite">
               <p>
@@ -744,11 +763,13 @@ export function CheckoutScreen({
             <span>
               {shippingDistanceEnabled && !distanceQuote
                 ? "Chờ tính phí giao hàng"
-                : money(
-                    subtotal +
-                      shipping.fee -
-                      (effectiveDiscount?.discount_amount || 0),
-                  )}
+                : outsideDelivery
+                  ? "—"
+                  : money(
+                      subtotal +
+                        shipping.fee -
+                        (effectiveDiscount?.discount_amount || 0),
+                    )}
             </span>
           </p>
         </div>
@@ -762,7 +783,9 @@ export function CheckoutScreen({
         ) : null}
         <Button
           type="submit"
-          disabled={busy || quoting || !configured || !distanceReady}
+          disabled={
+            busy || quoting || !configured || !distanceReady || outsideDelivery
+          }
           className="mt-6 h-12 w-full"
         >
           {busy ? "Đang gửi đơn..." : "Gửi đơn hàng"}

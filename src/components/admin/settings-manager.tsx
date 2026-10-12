@@ -72,25 +72,36 @@ export function SettingsManager({
             available={distanceAvailable}
             update={update}
           />
-          <div className="max-w-sm space-y-2">
-            <Label htmlFor="shipping-fee">
-              Phí mặc định ngoài khu vực đã cài đặt (₫)
-            </Label>
-            <Input
-              id="shipping-fee"
-              type="number"
-              min={0}
-              step={1}
-              required
-              value={draft.shipping_fee}
-              onChange={(event) =>
-                update("shipping_fee", Number(event.target.value))
-              }
-            />
-            <p className="text-xs leading-5 text-[#788273]">
-              Áp dụng cho đơn đặt mới; đơn đã đặt giữ nguyên phí giao hàng.
-            </p>
-          </div>
+          <CheckField
+            label="Chỉ giao trong các khu vực đã cài đặt bên dưới"
+            checked={Boolean(draft.shipping_zones_only)}
+            onChange={(checked) => update("shipping_zones_only", checked)}
+          />
+          <p className="-mt-2 text-xs leading-5 text-[#788273]">
+            Bật: khách ở nơi khác sẽ thấy “Mộc chưa giao tới khu vực này” và
+            không đặt được đơn. Tắt: nơi khác tính theo phí mặc định.
+          </p>
+          {draft.shipping_zones_only ? null : (
+            <div className="max-w-sm space-y-2">
+              <Label htmlFor="shipping-fee">
+                Phí mặc định ngoài khu vực đã cài đặt (₫)
+              </Label>
+              <Input
+                id="shipping-fee"
+                type="number"
+                min={0}
+                step={1}
+                required
+                value={draft.shipping_fee}
+                onChange={(event) =>
+                  update("shipping_fee", Number(event.target.value))
+                }
+              />
+              <p className="text-xs leading-5 text-[#788273]">
+                Áp dụng cho đơn đặt mới; đơn đã đặt giữ nguyên phí giao hàng.
+              </p>
+            </div>
+          )}
           <p className="mt-5 text-sm leading-6 text-[#6b7867]">
             Tự đặt phí theo tỉnh/thành và phường/xã. Khách chọn địa chỉ, phí
             được tính tự động trước khi đặt đơn. Phường/xã cụ thể được ưu tiên

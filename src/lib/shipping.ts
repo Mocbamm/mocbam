@@ -53,6 +53,7 @@ export function quoteShipping(
   zones: ShippingZone[],
   province: string,
   ward: string,
+  zonesOnly = false,
 ) {
   const candidates = zones.filter(
     (zone) => normalize(zone.province) === normalize(province),
@@ -63,8 +64,11 @@ export function quoteShipping(
         zone.wards.length &&
         zone.wards.some((item) => normalize(item) === normalize(ward)),
     ) || candidates.find((zone) => !zone.wards.length);
+  // With zonesOnly the shop delivers only to its listed areas; the server
+  // refuses other addresses (SHIPPING_UNAVAILABLE) instead of charging a fee.
   return {
     fee: zone?.fee ?? fallback,
     name: zone?.name || "Phí giao hàng tiêu chuẩn",
+    available: Boolean(zone) || !zonesOnly,
   };
 }

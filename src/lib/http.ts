@@ -127,6 +127,10 @@ export function safeNext(value: string | null, fallback = "/tai-khoan") {
 
 export function databaseError(error: { message: string; code?: string }) {
   const known: Record<string, [number, string]> = {
+    SHIPPING_UNAVAILABLE: [
+      409,
+      "Mộc chưa giao tới khu vực này. Bạn vui lòng chọn địa chỉ khác hoặc nhắn Mộc để được hỗ trợ.",
+    ],
     SHIPPING_QUOTE_REQUIRED: [
       409,
       "Vui lòng tính lại phí giao hàng theo địa chỉ trước khi đặt đơn.",

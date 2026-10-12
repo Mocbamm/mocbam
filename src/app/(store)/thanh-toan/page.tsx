@@ -17,6 +17,7 @@ export default async function CheckoutPage() {
       <CheckoutScreen
         shippingFee={settings.shipping_fee}
         shippingZones={settings.shipping_zones}
+        shippingZonesOnly={settings.shipping_zones_only}
         shippingDistanceEnabled={settings.shipping_distance_enabled}
         configured={isConfigured()}
         bankTransferAvailable={isBankTransferAvailable(settings)}

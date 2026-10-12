@@ -238,6 +238,38 @@ describe("shipping source of truth", () => {
         JSON.stringify([{ ...zones[0], fee: -1 }]),
       ]),
     ).rejects.toThrow("INVALID_REQUEST");
+    // Zones-only refuses unlisted addresses instead of charging the default.
+    const wardOnly = [zones[1]];
+    await db.query(
+      "update public.site_settings set shipping_zones=$1,shipping_zones_only=true",
+      [JSON.stringify(wardOnly)],
+    );
+    const listed = await asRole("service_role", null, (tx) =>
+      tx.query<{ fee: number }>("select public.quote_shipping_fee($1) as fee", [
+        JSON.stringify({ city: "Hồ Chí Minh", ward: "Phường Bến Thành" }),
+      ]),
+    );
+    expect(Number(listed.rows[0].fee)).toBe(15000);
+    await expect(
+      asRole("service_role", null, (tx) =>
+        tx.query("select public.quote_shipping_fee($1)", [
+          JSON.stringify({ city: "Hồ Chí Minh", ward: "Other" }),
+        ]),
+      ),
+    ).rejects.toThrow("SHIPPING_UNAVAILABLE");
+    expect(
+      quoteShipping(50000, wardOnly, "Hồ Chí Minh", "Other", true).available,
+    ).toBe(false);
+    expect(
+      quoteShipping(50000, wardOnly, "Hồ Chí Minh", "Phường Bến Thành", true),
+    ).toMatchObject({ fee: 15000, available: true });
+    expect(
+      quoteShipping(50000, wardOnly, "Hồ Chí Minh", "Other").available,
+    ).toBe(true);
+    await db.query(
+      "update public.site_settings set shipping_zones=$1,shipping_zones_only=false",
+      [JSON.stringify(zones)],
+    );
   });
   it("retains atomic create_order variant and voucher logic while replacing only shipping", async () => {
     const result = await db.query<{ definition: string }>(
