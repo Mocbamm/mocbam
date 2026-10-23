@@ -199,6 +199,17 @@ export function StoreHeader() {
   const [open, setOpen] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
   const policyTrigger = useRef<HTMLButtonElement>(null);
+  // A short grace period so moving the mouse down into the menu never closes it.
+  const policyCloseTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  function openPolicy() {
+    clearTimeout(policyCloseTimer.current);
+    setPolicyOpen(true);
+  }
+  function closePolicySoon() {
+    clearTimeout(policyCloseTimer.current);
+    policyCloseTimer.current = setTimeout(() => setPolicyOpen(false), 250);
+  }
+  useEffect(() => () => clearTimeout(policyCloseTimer.current), []);
   return (
     <header className="store-header">
       <div className="store-header-inner">
@@ -324,8 +335,8 @@ export function StoreHeader() {
           ))}
           <div
             className="store-policy-menu"
-            onMouseEnter={() => setPolicyOpen(true)}
-            onMouseLeave={() => setPolicyOpen(false)}
+            onMouseEnter={openPolicy}
+            onMouseLeave={closePolicySoon}
             onBlur={(event) => {
               if (
                 !event.currentTarget.contains(
