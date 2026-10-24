@@ -169,6 +169,7 @@ export const demoContent: SiteContent[] = contentSections.map(({ key, title, con
 export const demoSettings: SiteSettings = {
   shipping_fee: 0,
   shipping_zones_only: false,
+  shipping_free_threshold: 0,
   shop_email: "hello@mocbam.vn",
   shop_phone: "090 000 0000",
   shop_address: "TP. Hồ Chí Minh, Việt Nam",

@@ -23,6 +23,7 @@ import { AddressFields } from "./address-fields";
 import { saveOrderReceipt } from "@/lib/saved-orders";
 import {
   checkoutAddress,
+  freeShipping,
   quoteShipping,
   type ShippingZone,
   type ShippingDistanceQuote,
@@ -48,8 +49,33 @@ function EmptyCart() {
     </div>
   );
 }
-export function CartScreen({ shippingFee }: { shippingFee: number | null }) {
+function FreeShippingNote({
+  offer,
+  threshold,
+}: {
+  offer: ReturnType<typeof freeShipping>;
+  threshold: number;
+}) {
+  if (!offer.active) return null;
+  return (
+    <p className="border border-[#d1d9c2] bg-[#f6f7f0] p-3 text-xs leading-6 text-[#29412d]">
+      {offer.free
+        ? `Đơn của bạn được miễn phí giao hàng (đơn từ ${money(threshold)}).`
+        : `Mua thêm ${money(offer.remaining)} để được miễn phí giao hàng (đơn từ ${money(threshold)}).`}
+    </p>
+  );
+}
+
+export function CartScreen({
+  shippingFee,
+  freeShippingThreshold = 0,
+}: {
+  shippingFee: number | null;
+  freeShippingThreshold?: number;
+}) {
   const { items, subtotal, ready, update, remove } = useCart();
+  const offer = freeShipping(subtotal, freeShippingThreshold);
+  const estimate = offer.free ? 0 : shippingFee;
   if (!ready)
     return (
       <p className="py-20 text-center text-sm text-[#7c866b]">
@@ -146,12 +172,17 @@ export function CartScreen({ shippingFee }: { shippingFee: number | null }) {
           <p className="flex justify-between">
             <span>Phí giao hàng dự kiến</span>
             <span>
-              {shippingFee === null ? "Tính theo địa chỉ" : money(shippingFee)}
+              {offer.free
+                ? "Miễn phí"
+                : estimate === null
+                  ? "Tính theo địa chỉ"
+                  : money(estimate)}
             </span>
           </p>
+          <FreeShippingNote offer={offer} threshold={freeShippingThreshold} />
           <p className="flex justify-between border-t border-[#d1d9c2] pt-5 text-base font-medium text-[#29412d]">
             <span>Tổng dự kiến</span>
-            <span>{money(subtotal + (shippingFee ?? 0))}</span>
+            <span>{money(subtotal + (estimate ?? 0))}</span>
           </p>
         </div>
         <Button asChild className="mt-6 h-12 w-full">
@@ -170,6 +201,7 @@ export function CheckoutScreen({
   shippingZones = [],
   shippingZonesOnly = false,
   shippingDistanceEnabled = false,
+  freeShippingThreshold = 0,
   configured,
   bankTransferAvailable,
   initialEmail = "",
@@ -181,6 +213,7 @@ export function CheckoutScreen({
   shippingZones?: ShippingZone[];
   shippingZonesOnly?: boolean;
   shippingDistanceEnabled?: boolean;
+  freeShippingThreshold?: number;
   configured: boolean;
   bankTransferAvailable: boolean;
   initialEmail?: string;
@@ -262,7 +295,7 @@ export function CheckoutScreen({
     );
     return () => clearTimeout(timer);
   }, [distanceQuote]);
-  const shipping =
+  const quoted =
     distanceQuote ||
     quoteShipping(
       shippingFee,
@@ -271,6 +304,10 @@ export function CheckoutScreen({
       destination.ward,
       shippingZonesOnly,
     );
+  const offer = freeShipping(subtotal, freeShippingThreshold);
+  const shipping = offer.free
+    ? { ...quoted, fee: 0, name: "Miễn phí giao hàng" }
+    : quoted;
   const outsideDelivery =
     !shippingDistanceEnabled &&
     Boolean(destination.province && destination.ward) &&
@@ -715,6 +752,9 @@ export function CheckoutScreen({
                     : money(shipping.fee)}
             </span>
           </p>
+          {outsideDelivery ? null : (
+            <FreeShippingNote offer={offer} threshold={freeShippingThreshold} />
+          )}
           {outsideDelivery ? (
             <p
               role="alert"

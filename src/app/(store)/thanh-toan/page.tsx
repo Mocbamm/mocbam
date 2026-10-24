@@ -19,6 +19,7 @@ export default async function CheckoutPage() {
         shippingZones={settings.shipping_zones}
         shippingZonesOnly={settings.shipping_zones_only}
         shippingDistanceEnabled={settings.shipping_distance_enabled}
+        freeShippingThreshold={settings.shipping_free_threshold || 0}
         configured={isConfigured()}
         bankTransferAvailable={isBankTransferAvailable(settings)}
         initialEmail={user?.email || ""}

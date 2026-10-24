@@ -18,6 +18,8 @@ import {
   reportError,
 } from "./admin-common";
 
+const numberFormat = new Intl.NumberFormat("vi-VN");
+
 export function SettingsManager({
   settings,
   distanceAvailable = false,
@@ -102,6 +104,32 @@ export function SettingsManager({
               </p>
             </div>
           )}
+          <div className="mt-5 max-w-sm space-y-2">
+            <Label htmlFor="shipping-free-threshold">
+              Miễn phí giao hàng cho đơn từ (₫)
+            </Label>
+            <Input
+              id="shipping-free-threshold"
+              type="number"
+              min={0}
+              step={1000}
+              value={draft.shipping_free_threshold ?? 0}
+              onChange={(event) =>
+                update("shipping_free_threshold", Number(event.target.value))
+              }
+              aria-describedby="shipping-free-threshold-help"
+            />
+            <p
+              id="shipping-free-threshold-help"
+              className="text-xs leading-5 text-[#788273]"
+            >
+              {draft.shipping_free_threshold
+                ? `Đơn có tiền hàng (trước mã giảm giá) từ ${numberFormat.format(draft.shipping_free_threshold)} ₫ được miễn phí giao hàng ở mọi khu vực Mộc giao tới. `
+                : "Nhập 0 để tắt. "}
+              Giỏ hàng và trang đặt hàng tự nhắc khách mua thêm bao nhiêu để
+              được miễn phí.
+            </p>
+          </div>
           <p className="mt-5 text-sm leading-6 text-[#6b7867]">
             Tự đặt phí theo tỉnh/thành và phường/xã. Khách chọn địa chỉ, phí
             được tính tự động trước khi đặt đơn. Phường/xã cụ thể được ưu tiên

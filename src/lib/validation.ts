@@ -121,6 +121,7 @@ export const settingsSchema = z
     shipping_fee: money,
     shipping_zones: z.array(shippingZoneSchema).max(50).optional(),
     shipping_zones_only: z.boolean().optional(),
+    shipping_free_threshold: money.optional(),
     shipping_distance_enabled: z.boolean().optional(),
     shipping_origin_address: z.string().trim().max(500).optional(),
     shipping_distance_bands: shippingDistanceBandsSchema.optional(),

@@ -11,6 +11,7 @@ export default async function CartPage() {
         shippingFee={
           settings.shipping_zones_only ? null : settings.shipping_fee
         }
+        freeShippingThreshold={settings.shipping_free_threshold || 0}
       />
     </div>
   );

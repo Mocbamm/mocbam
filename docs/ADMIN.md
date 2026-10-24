@@ -54,7 +54,7 @@ Trạng thái xử lý đơn và thanh toán được hiển thị riêng. Khác
 Tài khoản đã được cấp quyền quản trị có thể tự thực hiện các thao tác này sau khi cửa hàng được kết nối và triển khai. Kết nối Supabase, chạy migration và cấp quyền quản trị là bước thiết lập ban đầu dành cho người vận hành kỹ thuật.
 
 - **Liên hệ:** đọc lời nhắn, dùng email hoặc số điện thoại được khách cung cấp để phản hồi bên ngoài website, sau đó đánh dấu “Đã xử lý”. Có thể mở lại yêu cầu. Trang quản trị không tự gửi email.
-- **Cài đặt:** cập nhật phí giao hàng cố định, thông tin liên lạc, giờ mở cửa và URL Facebook/Instagram/TikTok. Phí mới áp dụng cho đơn đặt sau khi lưu; đơn cũ giữ nguyên phí đã tính.
+- **Cài đặt:** cập nhật phí giao hàng cố định, thông tin liên lạc, giờ mở cửa và URL Facebook/Instagram/TikTok. Phí mới áp dụng cho đơn đặt sau khi lưu; đơn cũ giữ nguyên phí đã tính. **Miễn phí giao hàng cho đơn từ** một mức tiền hàng (trước mã giảm giá) áp dụng ở mọi khu vực có giao; nhập 0 để tắt. Giỏ hàng và trang đặt hàng tự nhắc khách còn thiếu bao nhiêu.
 - **Chuyển khoản ngân hàng:** chọn ngân hàng trong danh sách, nhập số tài khoản và tên chủ tài khoản, kiểm tra đúng thông tin rồi bật **Cho phép khách hàng chọn chuyển khoản** và lưu. Mã BIN được điền theo ngân hàng đã chọn. Số tài khoản nhận tiền gồm 5–19 chữ cái hoặc chữ số; giữ nguyên số 0 ở đầu. Các thông tin này sẽ hiển thị cho khách, chỉ nhập thông tin nhận tiền và không cần PIN, mật khẩu hay OTP. Thay đổi áp dụng cho đơn mới; thông tin ngân hàng của đơn cũ giữ nguyên tại thời điểm đặt. Khi tắt chuyển khoản, khách đặt đơn mới vẫn dùng được COD.
 
 ## Analytics

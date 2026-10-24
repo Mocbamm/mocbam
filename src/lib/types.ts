@@ -47,6 +47,7 @@ export type SiteSettings = {
   shipping_fee: number;
   shipping_zones?: import("./shipping").ShippingZone[];
   shipping_zones_only?: boolean;
+  shipping_free_threshold?: number;
   shipping_distance_enabled?: boolean;
   shipping_origin_address?: string;
   shipping_distance_bands?: import("./shipping").ShippingDistanceBand[];

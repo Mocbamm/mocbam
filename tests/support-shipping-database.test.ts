@@ -1,8 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite, type Transaction } from "@electric-sql/pglite";
 import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { quoteShipping } from "@/lib/shipping";
+import { freeShipping, quoteShipping } from "@/lib/shipping";
+import { digest } from "@/lib/supabase/receipts";
 import { getAdminDashboard } from "@/lib/catalog";
 const auth = vi.hoisted(() => ({ requireAdmin: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ requireAdmin: auth.requireAdmin }));
@@ -276,7 +278,7 @@ describe("shipping source of truth", () => {
       "select pg_get_functiondef('public.create_order(jsonb,jsonb,uuid,text,text,uuid,text,text)'::regprocedure) as definition",
     );
     expect(result.rows[0].definition).toContain(
-      "public.quote_shipping_fee(p_customer)",
+      "public.order_shipping_fee(p_customer,subtotal)",
     );
     expect(result.rows[0].definition).toContain("chosen_variant");
     expect(result.rows[0].definition).toContain("eligible_subtotal");
@@ -433,5 +435,119 @@ describe("distance shipping quotes", () => {
       "update public.site_settings set shipping_distance_enabled=false",
     );
     expect(Number((await fee()).rows[0].fee)).toBe(30000);
+  });
+});
+
+describe("free shipping from an order value", () => {
+  const product = "33333333-3333-4333-8333-333333333331"; // Mèo Mộc, 189.000 ₫
+  const customer = {
+    name: "Khách",
+    email: "customer@example.com",
+    phone: "0901234567",
+    address: "12 Đường Mộc",
+    city: "Hồ Chí Minh",
+    ward: "Phường Bến Thành",
+    note: "",
+  };
+  async function placeOrder(quantity: number, address = customer) {
+    const key = randomUUID();
+    const { rows } = await asRole("service_role", null, (tx) =>
+      tx.query<{ receipt: { id: string } }>(
+        "select public.create_order($1::jsonb,$2::jsonb,$3::uuid,$4,$5,null,'cod','') as receipt",
+        [
+          JSON.stringify([{ product_id: product, quantity }]),
+          JSON.stringify(address),
+          key,
+          digest(key),
+          digest(`receipt:${key}`),
+        ],
+      ),
+    );
+    const order = await db.query<{
+      subtotal: string;
+      shipping_fee: string;
+      total: string;
+    }>("select subtotal,shipping_fee,total from public.orders where id=$1", [
+      rows[0].receipt.id,
+    ]);
+    return {
+      subtotal: Number(order.rows[0].subtotal),
+      shipping: Number(order.rows[0].shipping_fee),
+      total: Number(order.rows[0].total),
+    };
+  }
+  beforeAll(async () => {
+    await db.exec(
+      await readFile(new URL("../supabase/seed.sql", import.meta.url), "utf8"),
+    );
+    await db.query(
+      `update public.site_settings set shipping_fee=90000,shipping_distance_enabled=false,shipping_zones_only=false,
+       shipping_zones=$1,shipping_free_threshold=1000000`,
+      [
+        JSON.stringify([
+          {
+            name: "Gần cửa hàng",
+            province: "Hồ Chí Minh",
+            wards: ["Phường Bến Thành"],
+            fee: 30000,
+          },
+        ]),
+      ],
+    );
+  });
+
+  it("charges the zone fee below the threshold and nothing from it", async () => {
+    expect(await placeOrder(5)).toEqual({
+      subtotal: 945000,
+      shipping: 30000,
+      total: 975000,
+    });
+    expect(await placeOrder(6)).toEqual({
+      subtotal: 1134000,
+      shipping: 0,
+      total: 1134000,
+    });
+    expect(
+      await placeOrder(6, { ...customer, city: "Hà Nội", ward: "Phường X" }),
+    ).toMatchObject({ shipping: 0 });
+    expect(
+      await placeOrder(1, { ...customer, city: "Hà Nội", ward: "Phường X" }),
+    ).toMatchObject({ shipping: 90000 });
+  });
+
+  it("still refuses areas the shop does not deliver to, and can be turned off", async () => {
+    await db.query("update public.site_settings set shipping_zones_only=true");
+    await expect(
+      placeOrder(6, { ...customer, city: "Hà Nội", ward: "Phường X" }),
+    ).rejects.toThrow("SHIPPING_UNAVAILABLE");
+    await db.query(
+      "update public.site_settings set shipping_zones_only=false,shipping_free_threshold=0",
+    );
+    expect(await placeOrder(6)).toMatchObject({ shipping: 30000 });
+    await expect(
+      db.query("update public.site_settings set shipping_free_threshold=-1"),
+    ).rejects.toThrow();
+  });
+
+  it("lets only the server compute the fee", async () => {
+    await expect(
+      asRole("authenticated", owner, (tx) =>
+        tx.query("select public.order_shipping_fee('{}'::jsonb,0)"),
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("matches the storefront's free shipping message", () => {
+    expect(freeShipping(945000, 1000000)).toEqual({
+      active: true,
+      free: false,
+      remaining: 55000,
+    });
+    expect(freeShipping(1000000, 1000000)).toMatchObject({ free: true });
+    expect(freeShipping(5000000, 0)).toEqual({
+      active: false,
+      free: false,
+      remaining: 0,
+    });
   });
 });

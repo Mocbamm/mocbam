@@ -48,6 +48,17 @@ export function checkoutAddress(
 }
 const normalize = (value: string) => value.trim().toLocaleLowerCase("vi");
 
+// Free shipping from a goods subtotal (before vouchers), matching the
+// database's order_shipping_fee. 0 means the offer is off.
+export function freeShipping(subtotal: number, threshold = 0) {
+  const active = threshold > 0;
+  return {
+    active,
+    free: active && subtotal >= threshold,
+    remaining: active ? Math.max(0, threshold - subtotal) : 0,
+  };
+}
+
 export function quoteShipping(
   fallback: number,
   zones: ShippingZone[],
