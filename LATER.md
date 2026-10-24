@@ -3,6 +3,7 @@
 - [ ] Add official TikTok and Zalo URLs in **Admin → Settings**, plus Shopee if used. Facebook and Instagram are already configured in the hosted store; verify/preserve those destinations. The new footer supports all five.
 - [ ] Confirm the final blog heading. **Nhật ký Mộc Bàm** is the working title.
 - [ ] Review visual styling after the functional changes are accepted, as requested in video 23.
+- [ ] Lock blog post dates before handing in the project (owner request, 24/10/2026): set `postDateEditable = false` in `src/lib/features.ts` and redeploy. The date field disappears and the API refuses date changes.
 
 Previously deferred setup:
 

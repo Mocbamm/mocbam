@@ -15,7 +15,9 @@ import {
   parseContentMedia,
   type ContentMedia,
 } from "@/lib/content-media";
+import { Prose } from "@/components/store/content";
 import { adminRequest, reportError } from "./admin-common";
+import { FormattingToolbar, type LinkTarget } from "./formatting-toolbar";
 
 export function MediaField({
   id,
@@ -218,14 +220,17 @@ export function ContentEditor({
   onChange,
   disabled,
   onUploadingChange,
+  linkTargets,
 }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   onUploadingChange?: (uploading: boolean) => void;
+  linkTargets?: LinkTarget[];
 }) {
   const textarea = useRef<HTMLTextAreaElement>(null);
+  const [preview, setPreview] = useState(false);
   const [kind, setKind] = useState<ContentMedia["kind"]>("image");
   const [url, setUrl] = useState("");
   const [caption, setCaption] = useState("");
@@ -260,6 +265,17 @@ export function ContentEditor({
   }
   return (
     <div className="space-y-4">
+      <FormattingToolbar
+        textarea={textarea}
+        onChange={(next) => {
+          onChange(next);
+          setEditingBlock(null);
+        }}
+        disabled={disabled}
+        preview={preview}
+        onPreviewChange={setPreview}
+        linkTargets={linkTargets}
+      />
       <Textarea
         ref={textarea}
         className="text-base md:text-sm"
@@ -274,9 +290,25 @@ export function ContentEditor({
         }}
       />
       <p className="text-xs leading-5 text-[#788273]">
-        Cách các đoạn bằng dòng trống. Dùng ## cho tiêu đề, - cho gạch đầu dòng.
-        Đặt con trỏ ở vị trí cần chèn ảnh / video. HTML hiển thị như chữ.
+        Bôi đen chữ rồi bấm nút phía trên để in đậm, in nghiêng, tô đỏ, gắn liên
+        kết hoặc thụt lề. Cách các đoạn bằng một dòng trống. Đặt con trỏ ở vị
+        trí cần chèn ảnh / video. HTML hiển thị như chữ.
       </p>
+      {preview ? (
+        <section
+          aria-label="Xem trước nội dung"
+          className="rounded-xl border border-[#dfe5d8] bg-[#fbfbf8] p-5"
+        >
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-[#788273]">
+            Xem trước
+          </p>
+          {value.trim() ? (
+            <Prose content={value} />
+          ) : (
+            <p className="text-sm text-[#788273]">Chưa có nội dung.</p>
+          )}
+        </section>
+      ) : null}
       {media.length ? (
         <div className="space-y-2">
           <p className="text-sm font-medium">Ảnh và video trong nội dung</p>

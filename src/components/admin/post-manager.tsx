@@ -1,16 +1,19 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { matchesSearch } from "@/lib/store-discovery";
+import { plainText } from "@/lib/rich-text";
 import { ContentEditor, MediaField } from "./media-editor";
+import type { LinkTarget } from "./formatting-toolbar";
 import { Label } from "@/components/ui/label";
 import type { BlogPost } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { postDateEditable } from "@/lib/features";
 import {
   adminRequest,
   CheckField,
@@ -28,11 +31,29 @@ const blank: PostDraft = {
   video_url: "",
   published: false,
 };
-export function PostManager({ posts }: { posts: BlogPost[] }) {
+// The shop is in Vietnam (UTC+7, no daylight saving); the date field shows
+// and takes its local time.
+const shopOffset = 7 * 60 * 60_000;
+function toDateInput(iso: string) {
+  return new Date(Date.parse(iso) + shopOffset).toISOString().slice(0, 16);
+}
+function fromDateInput(value: string) {
+  return new Date(`${value}:00+07:00`).toISOString();
+}
+
+export function PostManager({
+  posts,
+  linkTargets,
+}: {
+  posts: BlogPost[];
+  linkTargets?: LinkTarget[];
+}) {
   const router = useRouter();
   const [editing, setEditing] = useState<BlogPost | "new" | null>(null);
   const [draft, setDraft] = useState<PostDraft>(blank);
+  const [date, setDate] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -40,13 +61,17 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
     (post) =>
       (!search.trim() ||
         matchesSearch(
-          `${post.title} ${post.excerpt} ${post.content}`,
+          `${post.title} ${post.excerpt} ${plainText(post.content)}`,
           search,
         )) &&
       (status === "all" || post.published === (status === "published")),
   );
+  const openDate =
+    editing && editing !== "new" ? toDateInput(editing.created_at) : "";
+  const busy = saving || uploading || deleting !== null;
   function open(post: BlogPost | "new") {
     setEditing(post);
+    setDate(post === "new" ? "" : toDateInput(post.created_at));
     setDraft(
       post === "new"
         ? { ...blank }
@@ -74,7 +99,11 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
           ? "/api/admin/posts"
           : `/api/admin/posts/${editing.id}`,
         editing === "new" ? "POST" : "PATCH",
-        draft,
+        // Only send the date when it was changed, so saving an untouched post
+        // never rounds its time to the minute.
+        postDateEditable && date && date !== openDate
+          ? { ...draft, created_at: fromDateInput(date) }
+          : draft,
       );
       toast.success("Đã lưu bài viết.");
       setEditing(null);
@@ -83,6 +112,25 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
       reportError(error);
     } finally {
       setSaving(false);
+    }
+  }
+  async function remove(post: BlogPost) {
+    if (
+      !window.confirm(
+        `Xóa bài viết “${post.title}”? Bài sẽ biến mất khỏi cửa hàng và không thể khôi phục. Nếu chỉ muốn tạm ẩn, hãy bỏ chọn “Xuất bản trên cửa hàng”.`,
+      )
+    )
+      return;
+    setDeleting(post.id);
+    try {
+      await adminRequest(`/api/admin/posts/${post.id}`, "DELETE");
+      if (editing !== "new" && editing?.id === post.id) setEditing(null);
+      toast.success("Đã xóa bài viết.");
+      router.refresh();
+    } catch (error) {
+      reportError(error);
+    } finally {
+      setDeleting(null);
     }
   }
   return (
@@ -112,7 +160,7 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
             <option value="draft">Bản nháp</option>
           </select>
         </div>
-        <Button onClick={() => open("new")} disabled={saving || uploading}>
+        <Button onClick={() => open("new")} disabled={busy}>
           <Plus className="size-4" />
           Viết bài mới
         </Button>
@@ -198,26 +246,62 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
                 onChange={(value) => update("content", value)}
                 disabled={saving || uploading}
                 onUploadingChange={setUploading}
+                linkTargets={linkTargets}
               />
             </div>
+            {postDateEditable ? (
+              <div className="space-y-2">
+                <Label htmlFor="post-date">Ngày đăng</Label>
+                <Input
+                  id="post-date"
+                  type="datetime-local"
+                  value={date}
+                  max={toDateInput(new Date().toISOString())}
+                  onChange={(event) => setDate(event.target.value)}
+                  aria-describedby="post-date-help"
+                />
+                <p
+                  id="post-date-help"
+                  className="text-xs leading-5 text-[#788273]"
+                >
+                  {editing === "new"
+                    ? "Để trống để lấy thời điểm lưu bài. "
+                    : ""}
+                  Bài có ngày mới hơn hiện trước trên Nhật ký. Không chọn ngày
+                  trong tương lai.
+                </p>
+              </div>
+            ) : null}
             <CheckField
               label="Xuất bản trên cửa hàng"
               checked={draft.published}
               onChange={(checked) => update("published", checked)}
             />
           </fieldset>
-          <div className="mt-6 flex gap-3">
-            <Button disabled={saving || uploading}>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button disabled={busy}>
               {saving ? "Đang lưu..." : "Lưu bài viết"}
             </Button>
             <Button
               type="button"
               variant="outline"
-              disabled={saving || uploading}
+              disabled={busy}
               onClick={() => setEditing(null)}
             >
               Hủy
             </Button>
+            {editing !== "new" ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="ml-auto text-red-700"
+                disabled={busy}
+                onClick={() => void remove(editing)}
+              >
+                <Trash2 className="size-4" />
+                {deleting === editing.id ? "Đang xóa..." : "Xóa bài viết"}
+              </Button>
+            ) : null}
           </div>
         </form>
       )}
@@ -248,16 +332,27 @@ export function PostManager({ posts }: { posts: BlogPost[] }) {
               <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#6b7867]">
                 {post.excerpt}
               </p>
-              <Button
-                className="mt-4"
-                variant="outline"
-                size="sm"
-                onClick={() => open(post)}
-                disabled={saving || uploading}
-              >
-                <Pencil className="size-3.5" />
-                Chỉnh sửa
-              </Button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => open(post)}
+                  disabled={busy}
+                >
+                  <Pencil className="size-3.5" />
+                  Chỉnh sửa
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-700"
+                  onClick={() => void remove(post)}
+                  disabled={busy}
+                >
+                  <Trash2 className="size-3.5" />
+                  {deleting === post.id ? "Đang xóa..." : "Xóa"}
+                </Button>
+              </div>
             </article>
           ))}
         </div>

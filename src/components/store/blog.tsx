@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import type { BlogPost } from "@/lib/types";
 import { filterPostsByDate, matchesSearch } from "@/lib/store-discovery";
+import { plainText } from "@/lib/rich-text";
 import { Play } from "lucide-react";
 import { dateLabel } from "./format";
 import { Input } from "@/components/ui/input";
@@ -89,7 +90,10 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
     .filter(
       (post) =>
         !query.trim() ||
-        matchesSearch(`${post.title} ${post.excerpt} ${post.content}`, query),
+        matchesSearch(
+          `${post.title} ${post.excerpt} ${plainText(post.content)}`,
+          query,
+        ),
     )
     .sort((a, b) =>
       sort === "oldest"

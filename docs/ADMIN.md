@@ -14,7 +14,9 @@ Nếu chưa cấu hình Supabase, trang quản trị hiển thị hướng dẫn
 
 - **Sản phẩm:** chọn “Thêm sản phẩm”, nhập tên, đường dẫn không dấu dạng `ten-san-pham`, danh mục, giá VNĐ, tồn kho, ảnh và mô tả. “Hiển thị trên cửa hàng” cho phép ẩn sản phẩm; “Sản phẩm nổi bật” chọn sản phẩm cho trang chủ. Khi hết hàng, cập nhật tồn kho về 0.
 - **Ảnh:** chọn **Tải ảnh lên** hoặc **Thay ảnh** để lấy ảnh từ máy tính/điện thoại, xem trước rồi **Lưu sản phẩm**. JPG/PNG/WebP tối đa 4 MB mỗi ảnh; gợi ý ảnh vuông rộng 1200 px. Ảnh bổ sung cho phép nhiều góc chụp; ảnh riêng của từng phân loại cũng có nút tải lên. Bỏ ảnh riêng để dùng ảnh chung. Trường đường dẫn nằm trong **Dùng đường dẫn có sẵn (nâng cao)** và không cần dùng khi tải tệp. Tệp được lưu trong Supabase Storage đã cấu hình theo README.
-- **Bài viết:** nhập tiêu đề, đường dẫn, mô tả ngắn, ảnh và nội dung. Nội dung là văn bản thuần, ngăn các đoạn bằng một dòng trống. Bỏ chọn “Xuất bản trên cửa hàng” để giữ bản nháp hoặc ẩn bài viết.
+- **Bài viết:** nhập tiêu đề, đường dẫn, mô tả ngắn, ảnh và nội dung. Ngăn các đoạn bằng một dòng trống. Bỏ chọn “Xuất bản trên cửa hàng” để giữ bản nháp hoặc ẩn bài viết; **Xóa** gỡ hẳn bài viết và không khôi phục được.
+  - **Định dạng:** bôi đen chữ rồi bấm nút trên thanh công cụ: in đậm (Ctrl/⌘ + B), in nghiêng (Ctrl/⌘ + I), tô chữ đỏ, gắn liên kết (Ctrl/⌘ + K), thụt vào / thụt ra (Ctrl/⌘ + ] / [), tiêu đề mục và danh sách. Trong ô nội dung các định dạng hiện dưới dạng `**đậm**`, `*nghiêng*`, `{đỏ}chữ{/đỏ}`, `[chữ](/san-pham/...)` và `> ` ở đầu dòng; bấm **Xem trước** để thấy giống trên cửa hàng. Khi gắn liên kết, gõ tên sản phẩm hoặc bài viết để chọn trang trong cửa hàng (liên kết nội bộ tốt cho SEO). Thanh công cụ cũng có ở các mục nội dung dài trong **Nội dung**.
+  - **Ngày đăng (tạm thời):** đổi ngày để sắp lại thứ tự bài trên Nhật ký; không chọn được ngày tương lai. Chức năng này sẽ được khóa khi bàn giao.
 
 ## Xử lý đơn hàng
 

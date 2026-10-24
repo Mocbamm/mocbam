@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { getProducts, getCategories, getPosts } from "@/lib/catalog";
 import { matchesSearch } from "@/lib/store-discovery";
+import { plainText } from "@/lib/rich-text";
 import { ProductCard } from "@/components/store/products";
 import { BlogCard } from "@/components/store/blog";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,10 @@ export default async function SearchPage({
     ),
   );
   const foundPosts = posts.filter((post) =>
-    matchesSearch(`${post.title} ${post.excerpt} ${post.content}`, query),
+    matchesSearch(
+      `${post.title} ${post.excerpt} ${plainText(post.content)}`,
+      query,
+    ),
   );
   const count = foundProducts.length + foundPosts.length;
   return (

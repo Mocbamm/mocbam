@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { shippingZoneSchema, shippingDistanceBandsSchema } from "./shipping";
+import { postDateEditable } from "./features";
 
 const short = (max = 200) => z.string().trim().min(1).max(max);
 const optionalText = (max = 500) => z.string().trim().max(max).default("");
@@ -86,6 +87,12 @@ export const productSchema = z
     active: z.boolean(),
   })
   .strict();
+// A post's date decides its place on the blog. It may move back in time but
+// not ahead of now, so a post never claims to be from the future.
+const postDate = z.iso.datetime({ offset: true }).refine((value) => {
+  const time = new Date(value).getTime();
+  return time >= Date.UTC(2000, 0, 1) && time <= Date.now() + 5 * 60_000;
+}, "Ngày đăng không được ở tương lai.");
 export const postSchema = z
   .object({
     slug,
@@ -95,6 +102,8 @@ export const postSchema = z
     image_url: z.union([z.literal(""), image]),
     video_url: video.optional(),
     published: z.boolean(),
+    // Without the switch, .strict() refuses a date like any unknown field.
+    ...(postDateEditable ? { created_at: postDate.optional() } : {}),
   })
   .strict();
 export const contentSchema = z

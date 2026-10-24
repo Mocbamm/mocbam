@@ -18,6 +18,7 @@ import {
   discountSchema,
 } from "@/lib/validation";
 import { deliverOrderAnalytics } from "@/lib/order-analytics-server";
+import { createServiceSupabase } from "@/lib/supabase/admin";
 
 export async function PATCH(
   request: Request,
@@ -105,6 +106,20 @@ export async function DELETE(
     assertSameOrigin(request);
     const { supabase } = await requireAdmin();
     const { collection, id } = await params;
+    if (collection === "posts") {
+      z.uuid().parse(id);
+      // The database grants no delete on posts to signed-in users, so after
+      // the administrator check the server removes the row itself.
+      const { data, error } = await createServiceSupabase()
+        .from("posts")
+        .delete()
+        .eq("id", id)
+        .select("id")
+        .maybeSingle();
+      if (error) throw databaseError(error);
+      if (!data) throw new HttpError(404, "Không tìm thấy bài viết.");
+      return json({ data });
+    }
     if (collection !== "products")
       throw new HttpError(404, "Không tìm thấy chức năng.");
     z.uuid().parse(id);
