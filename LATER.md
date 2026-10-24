@@ -3,7 +3,7 @@
 - [ ] Add official TikTok and Zalo URLs in **Admin → Settings**, plus Shopee if used. Facebook and Instagram are already configured in the hosted store; verify/preserve those destinations. The new footer supports all five.
 - [ ] Confirm the final blog heading. **Nhật ký Mộc Bàm** is the working title.
 - [ ] Review visual styling after the functional changes are accepted, as requested in video 23.
-- [ ] Google Search Console: verify `www.mocbam.com` (DNS record at the domain registrar, or put the HTML-tag code in Vercel env `GOOGLE_SITE_VERIFICATION` and redeploy), then submit `https://www.mocbam.com/sitemap.xml`. Check **Enhancements** after a few days for Product, Breadcrumb and Article results.
+- [x] Google Search Console (24/10/2026): `https://www.mocbam.com/` is verified under mocbamm@gmail.com (auto-verified through the domain's DNS record), the sitemap is resubmitted, and indexing was requested for the home page, `/san-pham`, `/blog`, both posts and 5 products. Daily quota ran out before `chuoi-hat-an-yen`, `moc-khoa-nha-go` and `chuoi-may-nho`; request those in URL inspection on another day (the sitemap covers them anyway). Check **Pages** and **Enhancements** (Product, Breadcrumb) after a few days.
 - [ ] Optionally create a Google Business Profile for Mộc Bàm and link the site.
 - [ ] Lock blog post dates before handing in the project (owner request, 24/10/2026): set `postDateEditable = false` in `src/lib/features.ts` and redeploy. The date field disappears and the API refuses date changes.
 
