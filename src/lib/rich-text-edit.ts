@@ -1,4 +1,9 @@
-import { lineIndent, maxIndent } from "./rich-text";
+import {
+  lineIndent,
+  maxIndent,
+  parseInline,
+  type MarkRange,
+} from "./rich-text";
 
 // One replacement in the editor text, plus what to select afterwards.
 export type TextEdit = {
@@ -130,4 +135,76 @@ export function togglePrefix(
     const bare = text.replace(/^(#{1,3}|-|\d+\.)\s+/, "");
     return remove ? indent + bare : indent + prefix(count++) + bare;
   });
+}
+
+export type LineFormat = "heading" | "bullets" | "numbers";
+export type Formatting = {
+  marks: MarkRange[];
+  line: LineFormat | null;
+  indent: number;
+};
+
+// The formatting around the cursor or selection, for the toolbar's pressed
+// buttons. Marks are looked up within the cursor's line.
+export function formattingAt(
+  value: string,
+  start: number,
+  end: number,
+): Formatting {
+  const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+  const found = value.indexOf("\n", start);
+  const line = value.slice(lineStart, found < 0 ? value.length : found);
+  const { level, text } = lineIndent(line);
+  const ranges: MarkRange[] = [];
+  parseInline(text, ranges, lineStart + line.length - text.length);
+  return {
+    marks: ranges.filter(
+      (range) => range.contentStart <= start && end <= range.contentEnd,
+    ),
+    line: /^#{1,3}\s/.test(text)
+      ? "heading"
+      : /^-\s/.test(text)
+        ? "bullets"
+        : /^\d+\.\s/.test(text)
+          ? "numbers"
+          : null,
+    indent: level,
+  };
+}
+
+// Word-style toggle. Inside formatted text it switches the formatting off for
+// the selection (or at the cursor, so what is typed next is plain), keeping
+// the rest formatted. Elsewhere it formats the selection, or opens an empty
+// pair at the cursor so what is typed next is formatted.
+export function toggleMark(
+  value: string,
+  start: number,
+  end: number,
+  before: string,
+  after: string,
+  active: MarkRange | undefined,
+): TextEdit {
+  if (active) {
+    const left = value.slice(active.contentStart, start);
+    const middle = value.slice(start, end);
+    const right = value.slice(end, active.contentEnd);
+    const head = left ? `${before}${left}${after}` : "";
+    const text = head + middle + (right ? `${before}${right}${after}` : "");
+    return {
+      from: active.start,
+      to: active.end,
+      text,
+      selectFrom: active.start + head.length,
+      selectTo: active.start + head.length + middle.length,
+    };
+  }
+  if (start === end)
+    return {
+      from: start,
+      to: end,
+      text: before + after,
+      selectFrom: start + before.length,
+      selectTo: start + before.length,
+    };
+  return toggleWrap(value, start, end, before, after, "");
 }

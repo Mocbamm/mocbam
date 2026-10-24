@@ -14,6 +14,18 @@ export type RichInline =
   | { type: "color"; color: RichColor; children: RichInline[] }
   | { type: "link"; href: string; external: boolean; children: RichInline[] };
 
+// Where a mark sits in the source text, so the editor knows which formatting
+// is active at the cursor. Content is [contentStart, contentEnd); the marks
+// themselves span [start, end).
+export type MarkRange = {
+  type: "strong" | "em" | "color" | "link";
+  start: number;
+  contentStart: number;
+  contentEnd: number;
+  end: number;
+  href?: string;
+};
+
 export const richColors: Record<RichColor, string> = { đỏ: "#b42318" };
 export const maxIndent = 4;
 
@@ -80,8 +92,13 @@ function unescapedIndex(text: string, mark: string, from: number) {
   return -1;
 }
 
-export function parseInline(text: string): RichInline[] {
+export function parseInline(
+  text: string,
+  ranges?: MarkRange[],
+  base = 0,
+): RichInline[] {
   const nodes: RichInline[] = [];
+  const record = (range: MarkRange) => ranges?.push(range);
   let buffer = "";
   const flush = () => {
     if (buffer) nodes.push(buffer);
@@ -96,6 +113,11 @@ export function parseInline(text: string): RichInline[] {
       index += 2;
       continue;
     }
+    // Left behind when formatting was switched on but nothing was typed.
+    if (rest.startsWith("****") && text[index + 4] !== "*") {
+      index += 4;
+      continue;
+    }
     if (rest.startsWith("**")) {
       let end = unescapedIndex(text, "**", index + 2);
       // In "**a *b***" the italic inside is still open, so the bold closes on
@@ -108,9 +130,20 @@ export function parseInline(text: string): RichInline[] {
         end++;
       if (end > index + 2) {
         flush();
+        record({
+          type: "strong",
+          start: base + index,
+          contentStart: base + index + 2,
+          contentEnd: base + end,
+          end: base + end + 2,
+        });
         nodes.push({
           type: "strong",
-          children: parseInline(text.slice(index + 2, end)),
+          children: parseInline(
+            text.slice(index + 2, end),
+            ranges,
+            base + index + 2,
+          ),
         });
         index = end + 2;
         continue;
@@ -119,9 +152,20 @@ export function parseInline(text: string): RichInline[] {
       const end = italicEnd(text, index + 1);
       if (end > index + 1) {
         flush();
+        record({
+          type: "em",
+          start: base + index,
+          contentStart: base + index + 1,
+          contentEnd: base + end,
+          end: base + end + 1,
+        });
         nodes.push({
           type: "em",
-          children: parseInline(text.slice(index + 1, end)),
+          children: parseInline(
+            text.slice(index + 1, end),
+            ranges,
+            base + index + 1,
+          ),
         });
         index = end + 1;
         continue;
@@ -131,13 +175,25 @@ export function parseInline(text: string): RichInline[] {
     if (color) {
       const name = color[1] as RichColor;
       const close = `{/${name}}`;
-      const end = unescapedIndex(text, close, index + color[0].length);
-      if (end > index + color[0].length) {
+      const open = index + color[0].length;
+      const end = unescapedIndex(text, close, open);
+      if (end === open) {
+        index = end + close.length;
+        continue;
+      }
+      if (end > open) {
         flush();
+        record({
+          type: "color",
+          start: base + index,
+          contentStart: base + open,
+          contentEnd: base + end,
+          end: base + end + close.length,
+        });
         nodes.push({
           type: "color",
           color: name,
-          children: parseInline(text.slice(index + color[0].length, end)),
+          children: parseInline(text.slice(open, end), ranges, base + open),
         });
         index = end + close.length;
         continue;
@@ -147,10 +203,18 @@ export function parseInline(text: string): RichInline[] {
     const target = link ? safeHref(link[2]) : null;
     if (link && target) {
       flush();
+      record({
+        type: "link",
+        start: base + index,
+        contentStart: base + index + 1,
+        contentEnd: base + index + 1 + link[1].length,
+        end: base + index + link[0].length,
+        href: link[2],
+      });
       nodes.push({
         type: "link",
         ...target,
-        children: parseInline(link[1]),
+        children: parseInline(link[1], ranges, base + index + 1),
       });
       index += link[0].length;
       continue;

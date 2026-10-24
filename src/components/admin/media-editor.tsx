@@ -290,9 +290,10 @@ export function ContentEditor({
         }}
       />
       <p className="text-xs leading-5 text-[#788273]">
-        Bôi đen chữ rồi bấm nút phía trên để in đậm, in nghiêng, tô đỏ, gắn liên
-        kết hoặc thụt lề. Cách các đoạn bằng một dòng trống. Đặt con trỏ ở vị
-        trí cần chèn ảnh / video. HTML hiển thị như chữ.
+        Bấm nút định dạng (in đậm, nghiêng, chữ đỏ…) rồi gõ, bấm lại để tắt —
+        hoặc bôi đen chữ có sẵn rồi bấm nút. Nút đang sáng là định dạng tại vị
+        trí con trỏ. Cách các đoạn bằng một dòng trống. Đặt con trỏ ở vị trí cần
+        chèn ảnh / video. HTML hiển thị như chữ.
       </p>
       {preview ? (
         <section

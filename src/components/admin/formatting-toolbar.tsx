@@ -22,13 +22,16 @@ import {
   normalizeHref,
   richColors,
   safeHref,
+  type MarkRange,
 } from "@/lib/rich-text";
 import {
   editLines,
+  formattingAt,
   indentLines,
   outdentLines,
-  toggleWrap,
+  toggleMark,
   togglePrefix,
+  type Formatting,
   type TextEdit,
 } from "@/lib/rich-text-edit";
 
@@ -45,6 +48,47 @@ type Action =
   | "bullets"
   | "numbers";
 
+const marks = {
+  bold: { type: "strong", before: "**", after: "**" },
+  italic: { type: "em", before: "*", after: "*" },
+  red: { type: "color", before: "{đỏ}", after: "{/đỏ}" },
+} as const;
+
+// The innermost mark of this kind around the cursor. An empty pair (switched
+// on, nothing typed yet) counts too, so a second click switches it off.
+function activeMark(
+  value: string,
+  start: number,
+  end: number,
+  formatting: Formatting,
+  mark: (typeof marks)[keyof typeof marks],
+): MarkRange | undefined {
+  const found = formatting.marks
+    .filter((range) => range.type === mark.type)
+    .sort((a, b) => b.start - a.start)[0];
+  if (found) return found;
+  const { before, after } = mark;
+  if (
+    start === end &&
+    value.slice(start - before.length, start) === before &&
+    value.slice(start, start + after.length) === after &&
+    // For italics, "*|*" inside "**|**" is an empty bold pair.
+    !(
+      mark.type === "em" &&
+      (value[start - 2] === "*" || value[start + 1] === "*")
+    )
+  )
+    return {
+      type: mark.type,
+      start: start - before.length,
+      contentStart: start,
+      contentEnd: start,
+      end: start + after.length,
+    };
+}
+
+const noFormatting: Formatting = { marks: [], line: null, indent: 0 };
+
 // Writes through the browser's editing command so Cmd/Ctrl+Z still undoes it.
 function applyEdit(
   textarea: HTMLTextAreaElement,
@@ -56,10 +100,13 @@ function applyEdit(
   const native = edit.text
     ? document.execCommand("insertText", false, edit.text)
     : document.execCommand("delete");
-  if (!native) {
-    const value = textarea.value;
-    onChange(value.slice(0, edit.from) + edit.text + value.slice(edit.to));
+  if (native) {
+    textarea.setSelectionRange(edit.selectFrom, edit.selectTo);
+    return;
   }
+  const value = textarea.value;
+  onChange(value.slice(0, edit.from) + edit.text + value.slice(edit.to));
+  // React writes the new value on its next render, which moves the cursor.
   requestAnimationFrame(() => {
     textarea.focus();
     textarea.setSelectionRange(edit.selectFrom, edit.selectTo);
@@ -87,7 +134,29 @@ export function FormattingToolbar({
     to: number;
     text: string;
     href: string;
+    existing: boolean;
   } | null>(null);
+  const [formatting, setFormatting] = useState<Formatting>(noFormatting);
+  // Keep the pressed buttons in step with the cursor.
+  useEffect(() => {
+    const element = textarea.current;
+    if (!element) return;
+    const field = element;
+    function update() {
+      setFormatting(
+        formattingAt(field.value, field.selectionStart, field.selectionEnd),
+      );
+    }
+    update();
+    document.addEventListener("selectionchange", update);
+    field.addEventListener("input", update);
+    field.addEventListener("select", update);
+    return () => {
+      document.removeEventListener("selectionchange", update);
+      field.removeEventListener("input", update);
+      field.removeEventListener("select", update);
+    };
+  }, [textarea]);
   const latestRun = useRef<(action: Action) => void>(() => {});
   useEffect(() => {
     latestRun.current = run;
@@ -117,10 +186,18 @@ export function FormattingToolbar({
     const element = textarea.current;
     if (!element || disabled) return;
     const { value, selectionStart: start, selectionEnd: end } = element;
-    const wrap = (before: string, after: string, placeholder: string) =>
+    const current = formattingAt(value, start, end);
+    const toggle = (mark: (typeof marks)[keyof typeof marks]) =>
       applyEdit(
         element,
-        toggleWrap(value, start, end, before, after, placeholder),
+        toggleMark(
+          value,
+          start,
+          end,
+          mark.before,
+          mark.after,
+          activeMark(value, start, end, current, mark),
+        ),
         onChange,
       );
     const lines = (change: (lines: string[]) => string[], separate = false) =>
@@ -131,11 +208,9 @@ export function FormattingToolbar({
       );
     switch (action) {
       case "bold":
-        return wrap("**", "**", "chữ in đậm");
       case "italic":
-        return wrap("*", "*", "chữ in nghiêng");
       case "red":
-        return wrap("{đỏ}", "{/đỏ}", "chữ màu đỏ");
+        return toggle(marks[action]);
       case "indent":
         return lines(indentLines);
       case "outdent":
@@ -154,14 +229,24 @@ export function FormattingToolbar({
           true,
         );
       case "link": {
-        const selected = value.slice(start, end);
-        const existing = /^\[([^\]\n]+)\]\(([^\s)]+)\)$/.exec(selected);
-        setLink({
-          from: start,
-          to: end,
-          text: existing ? existing[1] : selected.trim(),
-          href: existing ? existing[2] : "",
-        });
+        const existing = current.marks.find((range) => range.type === "link");
+        setLink(
+          existing
+            ? {
+                from: existing.start,
+                to: existing.end,
+                text: value.slice(existing.contentStart, existing.contentEnd),
+                href: existing.href || "",
+                existing: true,
+              }
+            : {
+                from: start,
+                to: end,
+                text: value.slice(start, end).trim(),
+                href: "",
+                existing: false,
+              },
+        );
       }
     }
   }
@@ -193,6 +278,33 @@ export function FormattingToolbar({
     );
     setLink(null);
   }
+
+  function removeLink() {
+    const element = textarea.current;
+    if (!link || !element) return;
+    applyEdit(
+      element,
+      {
+        from: link.from,
+        to: link.to,
+        text: link.text,
+        selectFrom: link.from,
+        selectTo: link.from + link.text.length,
+      },
+      onChange,
+    );
+    setLink(null);
+  }
+
+  const pressed: Partial<Record<Action, boolean>> = {
+    bold: formatting.marks.some((range) => range.type === "strong"),
+    italic: formatting.marks.some((range) => range.type === "em"),
+    red: formatting.marks.some((range) => range.type === "color"),
+    link: formatting.marks.some((range) => range.type === "link"),
+    heading: formatting.line === "heading",
+    bullets: formatting.line === "bullets",
+    numbers: formatting.line === "numbers",
+  };
 
   const tools: {
     action: Action;
@@ -250,6 +362,14 @@ export function FormattingToolbar({
             size="icon-sm"
             disabled={disabled}
             aria-label={tool.label}
+            aria-pressed={
+              tool.action in pressed ? !!pressed[tool.action] : undefined
+            }
+            className={
+              pressed[tool.action]
+                ? "bg-[#dfe7d6] text-[#29412d] ring-1 ring-[#b9c8ad] hover:bg-[#d3dec8]"
+                : undefined
+            }
             title={tool.keys ? `${tool.label} (${tool.keys})` : tool.label}
             // Keep the text selection while clicking the button.
             onMouseDown={(event) => event.preventDefault()}
@@ -324,8 +444,18 @@ export function FormattingToolbar({
           </div>
           <div className="flex gap-2">
             <Button type="button" size="sm" onClick={insertLink}>
-              Gắn liên kết
+              {link.existing ? "Cập nhật" : "Gắn liên kết"}
             </Button>
+            {link.existing ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={removeLink}
+              >
+                Gỡ liên kết
+              </Button>
+            ) : null}
             <Button
               type="button"
               size="sm"

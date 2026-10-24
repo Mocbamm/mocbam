@@ -9,6 +9,9 @@ import {
 } from "@/lib/rich-text";
 import {
   editLines,
+  formattingAt,
+  toggleMark,
+  type TextEdit,
   indentLines,
   outdentLines,
   toggleWrap,
@@ -214,5 +217,52 @@ describe("toolbar output round trips", () => {
         children: ["thật ", { type: "strong", children: ["mộc"] }],
       },
     ]);
+  });
+});
+
+describe("toggle formatting at the cursor", () => {
+  const apply = (value: string, edit: TextEdit) =>
+    value.slice(0, edit.from) + edit.text + value.slice(edit.to);
+  const bold = (value: string, start: number, end = start) =>
+    toggleMark(
+      value,
+      start,
+      end,
+      "**",
+      "**",
+      formattingAt(value, start, end).marks.find((m) => m.type === "strong"),
+    );
+
+  it("switches on at the cursor, then off after typing", () => {
+    const on = bold("Mộc ", 4);
+    expect(apply("Mộc ", on)).toBe("Mộc ****");
+    expect(on.selectFrom).toBe(6);
+    // Typed "gỗ" between the marks; the cursor is still inside the bold.
+    const typed = "Mộc **gỗ**";
+    expect(formattingAt(typed, 8, 8).marks.map((m) => m.type)).toEqual([
+      "strong",
+    ]);
+    const off = bold(typed, 8);
+    expect(apply(typed, off)).toBe("Mộc **gỗ**");
+    expect(off.selectFrom).toBe(10);
+  });
+
+  it("splits formatted text when switched off mid-word or for a selection", () => {
+    const value = "**abcd**";
+    expect(apply(value, bold(value, 4))).toBe("**ab****cd**");
+    const edit = bold(value, 3, 5);
+    expect(apply(value, edit)).toBe("**a**bc**d**");
+    expect([edit.selectFrom, edit.selectTo]).toEqual([5, 7]);
+    expect(apply(value, bold(value, 2, 6))).toBe("abcd");
+  });
+
+  it("hides empty pairs and finds marks inside indented lines", () => {
+    expect(parseInline("a ****b {đỏ}{/đỏ}c")).toEqual(["a b c"]);
+    const value = "dòng\n> ## {đỏ}*x*{/đỏ} [y](/blog)";
+    const at = formattingAt(value, value.indexOf("x"), value.indexOf("x"));
+    expect(at.marks.map((m) => m.type).sort()).toEqual(["color", "em"]);
+    expect(at).toMatchObject({ line: "heading", indent: 1 });
+    const link = formattingAt(value, value.length - 9, value.length - 9);
+    expect(link.marks[0]).toMatchObject({ type: "link", href: "/blog" });
   });
 });
