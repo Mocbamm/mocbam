@@ -11,6 +11,12 @@ import {
   productJsonLd,
 } from "@/lib/seo";
 import { JsonLd } from "@/components/store/json-ld";
+import {
+  internalLinks,
+  otherPosts,
+  postProducts,
+  postsAboutProduct,
+} from "@/lib/related-content";
 
 describe("search descriptions", () => {
   it("strips formatting and cuts long text at a word", () => {
@@ -132,5 +138,45 @@ describe("structured data", () => {
     );
     expect(html).not.toContain("</script><script>");
     expect(html).toContain("\\u003c/script>");
+  });
+});
+
+describe("return policy and related content", () => {
+  it("states the shop's return policy once and points products at it", () => {
+    const [shop] = organizationJsonLd(demoSettings);
+    expect(shop).toMatchObject({
+      hasMerchantReturnPolicy: {
+        applicableCountry: "VN",
+        merchantReturnDays: 7,
+        returnPolicyCategory:
+          "https://schema.org/MerchantReturnFiniteReturnWindow",
+      },
+    });
+    const policyId = (shop as { hasMerchantReturnPolicy: { "@id": string } })
+      .hasMerchantReturnPolicy["@id"];
+    expect(productJsonLd(demoProducts[0]).offers).toMatchObject({
+      hasMerchantReturnPolicy: { "@id": policyId },
+    });
+  });
+
+  it("finds the products a post links to and the posts about a product", () => {
+    const [cat, rabbit, bear] = demoProducts;
+    const post = {
+      ...demoPosts[0],
+      content: `Xem [mèo](/san-pham/${cat.slug}) và **[gấu](https://www.mocbam.com/san-pham/${bear.slug}?ref=blog)**, [blog](/blog), [ngoài](https://shopee.vn/x)`,
+    };
+    expect(internalLinks(post.content)).toEqual([
+      `/san-pham/${cat.slug}`,
+      `/san-pham/${bear.slug}`,
+      "/blog",
+    ]);
+    const related = postProducts(post, demoProducts, 3);
+    expect(related.linked).toBe(true);
+    expect(related.products.slice(0, 2)).toEqual([cat, bear]);
+    expect(related.products).toHaveLength(3);
+    expect(postsAboutProduct(bear, [post, demoPosts[1]])).toEqual([post]);
+    expect(postsAboutProduct(rabbit, [post, demoPosts[1]])).toEqual([]);
+    expect(postProducts(demoPosts[1], demoProducts).linked).toBe(false);
+    expect(otherPosts(post, [post, ...demoPosts.slice(1)])).not.toContain(post);
   });
 });

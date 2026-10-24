@@ -2,7 +2,10 @@ import Image from "@/components/store/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
-import { getPost } from "@/lib/catalog";
+import { getCategories, getPost, getPosts, getProducts } from "@/lib/catalog";
+import { otherPosts, postProducts } from "@/lib/related-content";
+import { ProductCard } from "@/components/store/products";
+import { BlogCard } from "@/components/store/blog";
 import { dateLabel } from "@/components/store/format";
 import { Prose } from "@/components/store/content";
 import { JsonLd } from "@/components/store/json-ld";
@@ -37,8 +40,15 @@ export default async function PostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const [post, products, categories, posts] = await Promise.all([
+    getPost(slug),
+    getProducts(),
+    getCategories(),
+    getPosts(),
+  ]);
   if (!post) notFound();
+  const related = postProducts(post, products);
+  const nextPosts = otherPosts(post, posts);
   return (
     <article className="store-page store-article-page">
       <JsonLd
@@ -86,6 +96,48 @@ export default async function PostPage({
       <div className="store-article-body">
         <Prose content={post.content} />
       </div>
+      {related.products.length ? (
+        <aside
+          className="store-product-recommendations"
+          aria-labelledby="post-products-title"
+        >
+          <div className="store-product-section-heading">
+            <h2 id="post-products-title">
+              {related.linked
+                ? "Món nhỏ nhắc đến trong bài"
+                : "Có thể bạn cũng thương"}
+            </h2>
+            <Link href="/san-pham">Xem tất cả</Link>
+          </div>
+          <div className="store-product-grid">
+            {related.products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                category={
+                  categories.find((c) => c.id === product.category_id)?.name
+                }
+              />
+            ))}
+          </div>
+        </aside>
+      ) : null}
+      {nextPosts.length ? (
+        <aside
+          className="store-product-recommendations"
+          aria-labelledby="post-more-title"
+        >
+          <div className="store-product-section-heading">
+            <h2 id="post-more-title">Đọc tiếp</h2>
+            <Link href="/blog">Nhật ký Mộc Bàm</Link>
+          </div>
+          <div className="store-blog-grid">
+            {nextPosts.map((other) => (
+              <BlogCard key={other.id} post={other} compact />
+            ))}
+          </div>
+        </aside>
+      ) : null}
     </article>
   );
 }

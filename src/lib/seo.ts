@@ -95,6 +95,24 @@ export function productImages(product: Product) {
 }
 
 const organizationId = `${siteUrl}/#organization`;
+const returnPolicyId = `${siteUrl}/#return-policy`;
+
+// Mirrors the “Đổi trả & chăm sóc” policy: 7 days from delivery, sent back
+// by post, exchanged or refunded. Shipping is left out on purpose: for
+// Vietnam Google only accepts the whole country as a destination, while the
+// shop delivers to a few listed wards.
+const returnPolicy = {
+  "@type": "MerchantReturnPolicy",
+  "@id": returnPolicyId,
+  applicableCountry: "VN",
+  returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+  merchantReturnDays: 7,
+  returnMethod: "https://schema.org/ReturnByMail",
+  refundType: [
+    "https://schema.org/ExchangeRefund",
+    "https://schema.org/FullRefund",
+  ],
+};
 
 export function organizationJsonLd(settings: SiteSettings) {
   const sameAs = [
@@ -117,6 +135,7 @@ export function organizationJsonLd(settings: SiteSettings) {
       ...(settings.shop_email ? { email: settings.shop_email } : {}),
       ...(settings.shop_phone ? { telephone: settings.shop_phone } : {}),
       ...(sameAs.length ? { sameAs } : {}),
+      hasMerchantReturnPolicy: returnPolicy,
     },
     {
       "@context": "https://schema.org",
@@ -174,6 +193,7 @@ export function productJsonLd(product: Product, category?: Category) {
             availability,
             itemCondition: "https://schema.org/NewCondition",
             seller: { "@id": organizationId },
+            hasMerchantReturnPolicy: { "@id": returnPolicyId },
           }
         : {
             "@type": "AggregateOffer",
@@ -183,6 +203,7 @@ export function productJsonLd(product: Product, category?: Category) {
             offerCount: options.length,
             priceCurrency: "VND",
             availability,
+            hasMerchantReturnPolicy: { "@id": returnPolicyId },
           },
   };
 }

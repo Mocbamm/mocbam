@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
-import { getProduct, getProducts, getCategories } from "@/lib/catalog";
+import {
+  getProduct,
+  getProducts,
+  getCategories,
+  getPosts,
+} from "@/lib/catalog";
+import { postsAboutProduct } from "@/lib/related-content";
+import { BlogCard } from "@/components/store/blog";
 import { ProductDetails, ProductCard } from "@/components/store/products";
 import { JsonLd } from "@/components/store/json-ld";
 import {
@@ -37,12 +44,14 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [product, products, categories] = await Promise.all([
+  const [product, products, categories, posts] = await Promise.all([
     getProduct(slug),
     getProducts(),
     getCategories(),
+    getPosts(),
   ]);
   if (!product) notFound();
+  const stories = postsAboutProduct(product, posts).slice(0, 2);
   const category = categories.find((c) => c.id === product.category_id);
   return (
     <div className="store-product-page">
@@ -72,6 +81,22 @@ export default async function ProductPage({
         <span aria-current="page">{product.name}</span>
       </nav>
       <ProductDetails product={product} category={category} />
+      {stories.length ? (
+        <section
+          className="store-product-recommendations"
+          aria-labelledby="product-posts-title"
+        >
+          <div className="store-product-section-heading">
+            <h2 id="product-posts-title">Chuyện về món này</h2>
+            <Link href="/blog">Nhật ký Mộc Bàm</Link>
+          </div>
+          <div className="store-blog-grid">
+            {stories.map((post) => (
+              <BlogCard key={post.id} post={post} compact />
+            ))}
+          </div>
+        </section>
+      ) : null}
       <section
         className="store-product-recommendations"
         aria-labelledby="related-products-title"
