@@ -18,6 +18,15 @@ import { ContentVisual, Prose } from "@/components/store/content";
 import { HeroMedia } from "@/components/store/hero-media";
 import { HeroSlideshow } from "@/components/store/hero-slideshow";
 import { contentSections } from "@/lib/site-content";
+import { JsonLd } from "@/components/store/json-ld";
+import { organizationJsonLd, pageMetadata, siteDescription } from "@/lib/seo";
+
+export const metadata = pageMetadata({
+  title: "Mộc Bàm – Phụ kiện handmade từ thiên nhiên",
+  absoluteTitle: true,
+  description: siteDescription,
+  path: "/",
+});
 
 export default async function HomePage() {
   const [products, categories, posts, content, settings, promotions] =
@@ -67,6 +76,7 @@ export default async function HomePage() {
     heroNote.content !== defaultNote.content;
   return (
     <>
+      <JsonLd data={organizationJsonLd(settings)} />
       <section
         className="store-container store-home-campaign"
         aria-labelledby="home-title"

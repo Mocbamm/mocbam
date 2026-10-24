@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { matchesSearch } from "@/lib/store-discovery";
 import { plainText } from "@/lib/rich-text";
+import { metaDescription } from "@/lib/seo";
 import { ContentEditor, MediaField } from "./media-editor";
 import type { LinkTarget } from "./formatting-toolbar";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,41 @@ function toDateInput(iso: string) {
 }
 function fromDateInput(value: string) {
   return new Date(`${value}:00+07:00`).toISOString();
+}
+
+// Roughly how the post appears in Google results.
+function SearchPreview({
+  title,
+  slug,
+  description,
+}: {
+  title: string;
+  slug: string;
+  description: string;
+}) {
+  const fullTitle = `${title.trim() || "Tiêu đề bài viết"} | Mộc Bàm`;
+  return (
+    <div className="space-y-1 rounded-xl border border-[#dfe5d8] bg-white p-4 md:col-span-2">
+      <p className="text-xs font-medium uppercase tracking-wide text-[#788273]">
+        Xem trước trên Google
+      </p>
+      <p className="truncate pt-1 text-xs text-[#4d5156]">
+        www.mocbam.com › blog › {slug || "duong-dan"}
+      </p>
+      <p className="truncate text-lg leading-snug text-[#1a0dab]">
+        {fullTitle}
+      </p>
+      <p className="line-clamp-2 text-sm leading-5 text-[#4d5156]">
+        {metaDescription(description) || "Mô tả ngắn sẽ hiện ở đây."}
+      </p>
+      {fullTitle.length > 60 ? (
+        <p className="text-xs text-[#a15c00]">
+          Tiêu đề dài {fullTitle.length} ký tự; Google thường cắt sau khoảng 60
+          ký tự.
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export function PostManager({
@@ -214,8 +250,22 @@ export function PostManager({
                 required
                 value={draft.excerpt}
                 onChange={(event) => update("excerpt", event.target.value)}
+                aria-describedby="post-excerpt-help"
               />
+              <p
+                id="post-excerpt-help"
+                className={`text-xs leading-5 ${draft.excerpt.trim().length > 160 ? "text-[#a15c00]" : "text-[#788273]"}`}
+              >
+                {draft.excerpt.trim().length}/160 ký tự. Đây là đoạn hiện dưới
+                tiêu đề trên Google và khi chia sẻ Facebook/Zalo; nên viết
+                120–160 ký tự, có từ khóa chính (ví dụ “móc khóa gỗ handmade”).
+              </p>
             </div>
+            <SearchPreview
+              title={draft.title}
+              slug={draft.slug}
+              description={draft.excerpt}
+            />
             <div className="md:col-span-2">
               <MediaField
                 id="post-cover"

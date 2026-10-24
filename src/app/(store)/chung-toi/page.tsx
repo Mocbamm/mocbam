@@ -2,7 +2,13 @@ import Link from "next/link";
 import { Leaf, Heart, Hand } from "lucide-react";
 import { getPageContent } from "@/lib/site-content-server";
 import { ContentVisual, Prose } from "@/components/store/content";
-export const metadata = { title: "Câu chuyện Mộc Bàm" };
+import { pageMetadata } from "@/lib/seo";
+export const metadata = pageMetadata({
+  title: "Câu chuyện Mộc Bàm",
+  description:
+    "Mộc Bàm làm phụ kiện handmade từ gỗ, hạt và chất liệu tự nhiên, tỉ mỉ từng chi tiết. Đọc câu chuyện và cách chúng mình làm nên mỗi món đồ nhỏ.",
+  path: "/chung-toi",
+});
 export default async function AboutPage() {
   const content = await getPageContent("about");
   const about = content.about;

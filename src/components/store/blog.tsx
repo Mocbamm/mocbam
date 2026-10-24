@@ -58,7 +58,9 @@ export function BlogCard({
           </span>
         ) : null}
       </div>
-      <p className="store-blog-date mt-5">{dateLabel(post.created_at)}</p>
+      <p className="store-blog-date mt-5">
+        <time dateTime={post.created_at}>{dateLabel(post.created_at)}</time>
+      </p>
       <Heading
         className={`store-blog-title mt-2 font-serif text-[#29412d] ${compact ? "text-2xl" : "text-3xl"}`}
       >

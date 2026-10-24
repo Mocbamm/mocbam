@@ -3,7 +3,34 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { getProducts, getCategories } from "@/lib/catalog";
 import { Catalog } from "@/components/store/products";
-export const metadata: Metadata = { title: "Sản phẩm" };
+import { metaDescription, pageMetadata } from "@/lib/seo";
+// Each category is its own landing page; a search or price filter is not.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ "danh-muc"?: string }>;
+}): Promise<Metadata> {
+  const [query, categories] = await Promise.all([
+    searchParams,
+    getCategories(),
+  ]);
+  const category = categories.find((item) => item.slug === query["danh-muc"]);
+  if (category)
+    return pageMetadata({
+      title: `${category.name} handmade`,
+      description: metaDescription(
+        category.description ||
+          `${category.name} handmade của Mộc Bàm, làm tỉ mỉ từ chất liệu tự nhiên. Chọn món nhỏ xinh cho bạn hoặc làm quà.`,
+      ),
+      path: `/san-pham?danh-muc=${encodeURIComponent(category.slug)}`,
+    });
+  return pageMetadata({
+    title: "Sản phẩm handmade",
+    description:
+      "Tất cả phụ kiện handmade của Mộc Bàm: móc khóa, vòng tay, dây chuyền và nhân vật gỗ nhỏ xinh. Giao hàng tận nơi, đổi trả dễ dàng.",
+    path: "/san-pham",
+  });
+}
 export default async function ProductsPage({
   searchParams,
 }: {

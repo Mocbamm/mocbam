@@ -1,6 +1,12 @@
 import { getPosts } from "@/lib/catalog";
 import { BlogCatalog } from "@/components/store/blog";
-export const metadata = { title: "Nhật ký Mộc Bàm" };
+import { pageMetadata } from "@/lib/seo";
+export const metadata = pageMetadata({
+  title: "Nhật ký Mộc Bàm",
+  description:
+    "Câu chuyện, cảm hứng và mẹo chăm sóc đồ handmade từ Mộc Bàm: gỗ, hạt, len và những điều nhỏ xinh phía sau mỗi sản phẩm.",
+  path: "/blog",
+});
 export default async function BlogPage() {
   const posts = await getPosts();
   return (

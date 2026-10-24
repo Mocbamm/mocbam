@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getPageContent } from "@/lib/site-content-server";
 import { Prose } from "@/components/store/content";
 import { policyHref, policyLinks } from "@/components/store/policies";
-export const metadata = { title: "Chính sách & hướng dẫn" };
+import { metaDescription, pageMetadata } from "@/lib/seo";
 const keys: Record<string, string> = {
   "huong-dan": "shopping-guide",
   "van-chuyen": "shipping",
@@ -12,6 +12,29 @@ const keys: Record<string, string> = {
   "bao-mat": "privacy",
   "dieu-khoan": "terms",
 };
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ muc?: string }>;
+}) {
+  const { muc } = await searchParams;
+  const selected = policyLinks.find((policy) => policy.id === muc);
+  const entry = selected
+    ? (await getPageContent("policies"))[keys[selected.id]]
+    : null;
+  if (!selected || !entry)
+    return pageMetadata({
+      title: "Chính sách & hướng dẫn",
+      description:
+        "Hướng dẫn mua hàng, giao hàng, thanh toán, đổi trả, bảo hành và quyền riêng tư khi mua phụ kiện handmade tại Mộc Bàm.",
+      path: "/chinh-sach",
+    });
+  return pageMetadata({
+    title: entry.title || selected.title,
+    description: metaDescription(entry.content),
+    path: policyHref(selected.id),
+  });
+}
 export default async function PoliciesPage({
   searchParams,
 }: {

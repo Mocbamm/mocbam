@@ -1,7 +1,13 @@
 import { MapPin, Clock, Mail } from "lucide-react";
 import { getSettings, isConfigured } from "@/lib/catalog";
 import { ContactForm } from "@/components/store/contact";
-export const metadata = { title: "Liên hệ với Mộc" };
+import { pageMetadata } from "@/lib/seo";
+export const metadata = pageMetadata({
+  title: "Liên hệ với Mộc",
+  description:
+    "Liên hệ Mộc Bàm để hỏi về sản phẩm handmade, đặt quà hoặc hỗ trợ đơn hàng. Chúng mình trả lời qua email, điện thoại và mạng xã hội.",
+  path: "/lien-he",
+});
 export default async function ContactPage() {
   const settings = await getSettings();
   return (
