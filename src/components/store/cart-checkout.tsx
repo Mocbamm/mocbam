@@ -305,6 +305,10 @@ export function CheckoutScreen({
       shippingZonesOnly,
     );
   const offer = freeShipping(subtotal, freeShippingThreshold);
+  const quotedFree =
+    Boolean(destination.province && destination.ward) &&
+    (!shippingDistanceEnabled || Boolean(distanceQuote)) &&
+    quoted.fee === 0;
   const shipping = offer.free
     ? { ...quoted, fee: 0, name: "Miễn phí giao hàng" }
     : quoted;
@@ -752,7 +756,8 @@ export function CheckoutScreen({
                     : money(shipping.fee)}
             </span>
           </p>
-          {outsideDelivery ? null : (
+          {/* An area that already ships free needs no "buy more" nudge. */}
+          {outsideDelivery || (!offer.free && quotedFree) ? null : (
             <FreeShippingNote offer={offer} threshold={freeShippingThreshold} />
           )}
           {outsideDelivery ? (
