@@ -95,6 +95,7 @@ function RichLine({ text }: { text: string }) {
   return <Inline nodes={parseInline(text)} />;
 }
 
+// Headings and lists shift as a whole block.
 const indentStyle = (level: number) =>
   level ? { paddingLeft: `${level * 2}em` } : undefined;
 
@@ -161,33 +162,29 @@ function Block({ block }: { block: string }) {
         ))}
       </ol>
     );
-  // Lines in one paragraph may sit at different depths; keep each run of
-  // equally indented lines together.
-  const groups: { level: number; lines: string[] }[] = [];
+  // Indent on a paragraph pushes in only its first line, like a printed page,
+  // so every indented line becomes its own paragraph. Unindented runs keep
+  // their line breaks.
+  const paragraphs: { level: number; text: string }[] = [];
   for (const line of lines) {
-    const last = groups.at(-1);
-    if (last && last.level === line.level) last.lines.push(line.text);
-    else groups.push({ level: line.level, lines: [line.text] });
+    const last = paragraphs.at(-1);
+    if (last && !last.level && !line.level) last.text += `\n${line.text}`;
+    else paragraphs.push({ ...line });
   }
-  if (groups.length === 1)
-    return (
-      <p className="whitespace-pre-line" style={indentStyle(level)}>
-        <RichLine text={text} />
-      </p>
-    );
-  return (
-    <div>
-      {groups.map((group, index) => (
-        <p
-          key={index}
-          className="whitespace-pre-line"
-          style={indentStyle(group.level)}
-        >
-          <RichLine text={group.lines.join("\n")} />
-        </p>
-      ))}
-    </div>
+  const paragraph = (
+    { level, text }: (typeof paragraphs)[number],
+    key?: number,
+  ) => (
+    <p
+      key={key}
+      className="whitespace-pre-line"
+      style={level ? { textIndent: `${level * 2}em` } : undefined}
+    >
+      <RichLine text={text} />
+    </p>
   );
+  if (paragraphs.length === 1) return paragraph(paragraphs[0]);
+  return <div>{paragraphs.map(paragraph)}</div>;
 }
 
 export function Prose({ content }: { content: string }) {

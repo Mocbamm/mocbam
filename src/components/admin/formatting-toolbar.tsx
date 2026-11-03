@@ -332,13 +332,13 @@ export function FormattingToolbar({
     },
     {
       action: "outdent",
-      label: "Thụt ra",
+      label: "Bỏ thụt đầu dòng",
       icon: <ListIndentDecrease />,
       keys: "Ctrl/⌘ + [",
     },
     {
       action: "indent",
-      label: "Thụt vào",
+      label: "Thụt đầu dòng",
       icon: <ListIndentIncrease />,
       keys: "Ctrl/⌘ + ]",
     },

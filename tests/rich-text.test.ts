@@ -105,15 +105,15 @@ describe("rich text formatting", () => {
     expect(html).not.toContain("<script>");
   });
 
-  it("indents paragraphs, lines, headings and lists", () => {
+  it("indents first lines of paragraphs, and whole headings and lists", () => {
     const html = render(
-      "> Thụt một bậc\n\nDòng thường\n> > dòng thụt hai\n\n> ## Mục **lớn**\n\n> - một\n> - hai",
+      "> Thụt một bậc\n\nDòng thường\nvẫn liền dòng\n> > dòng thụt hai\n> dòng thụt một\n\n> ## Mục **lớn**\n\n> - một\n> - hai",
     );
     expect(html).toContain(
-      '<p class="whitespace-pre-line" style="padding-left:2em">Thụt một bậc</p>',
+      '<p class="whitespace-pre-line" style="text-indent:2em">Thụt một bậc</p>',
     );
     expect(html).toContain(
-      '<div><p class="whitespace-pre-line">Dòng thường</p><p class="whitespace-pre-line" style="padding-left:4em">dòng thụt hai</p></div>',
+      '<div><p class="whitespace-pre-line">Dòng thường\nvẫn liền dòng</p><p class="whitespace-pre-line" style="text-indent:4em">dòng thụt hai</p><p class="whitespace-pre-line" style="text-indent:2em">dòng thụt một</p></div>',
     );
     expect(html).toMatch(/<h2[^>]*style="padding-left:2em">Mục <strong/);
     expect(html).toMatch(
