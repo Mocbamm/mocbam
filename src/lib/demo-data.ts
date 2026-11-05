@@ -12,13 +12,13 @@ export const demoCategories: Category[] = [
   {
     id: "11111111-1111-4111-8111-111111111111",
     slug: "nhan-vat",
-    name: "Nhân vật gỗ",
+    name: "Búp bê",
     description: "Những người bạn nhỏ, được làm bằng tay từ gỗ tự nhiên.",
   },
   {
     id: "22222222-2222-4222-8222-222222222222",
     slug: "chuoi",
-    name: "Chuỗi & phụ kiện",
+    name: "Chuỗi",
     description: "Một chút mộc mạc để mang theo mỗi ngày.",
   },
 ];

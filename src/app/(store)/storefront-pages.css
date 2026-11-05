@@ -968,3 +968,43 @@
     transition: none;
   }
 }
+
+/* Owner feedback 06/11: the story title stays on one line above the text. */
+.storefront .store-about-title {
+  max-width: none;
+  margin-bottom: 32px;
+}
+.storefront .store-about-invitation-text {
+  max-width: 720px;
+  margin: 14px auto 0;
+  color: #64665f;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+/* Owner feedback 06/11: policy pages use smaller type, with the title and
+   the text box centred together on the page. */
+.storefront .store-policy-page {
+  max-width: 920px;
+}
+.storefront .store-policy-page .store-page-title {
+  font-size: clamp(26px, 2.6vw, 36px);
+}
+.storefront .store-policy-layout {
+  max-width: none;
+}
+.storefront .store-policy-page .store-prose {
+  font-size: 15px;
+  line-height: 1.8;
+}
+.storefront .store-policy-page .store-prose h2 {
+  font-size: 19px;
+}
+@media (max-width: 767px) {
+  .storefront .store-about-title {
+    margin-bottom: 24px;
+  }
+  .storefront .store-about-invitation-text {
+    font-size: 15px;
+  }
+}

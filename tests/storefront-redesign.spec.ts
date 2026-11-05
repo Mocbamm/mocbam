@@ -140,10 +140,10 @@ test("mobile catalog applies draft filters and resets to the complete catalog", 
   await filters.getByRole("button", { name: "Áp dụng", exact: true }).click();
   await expect(filters).not.toBeVisible();
   await expect(
-    products.getByRole("heading", { name: "Chuỗi & phụ kiện", exact: true }),
-  ).toBeVisible();
+    products.getByRole("heading", { name: "Chuỗi", exact: true }),
+  ).toBeAttached();
   await expect(
-    products.getByRole("button", { name: "Chuỗi & phụ kiện", exact: true }),
+    products.getByRole("button", { name: "Chuỗi", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
     products.getByRole("link", { name: "Chuỗi Vòng Mộc", exact: true }),

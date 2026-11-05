@@ -1,32 +1,27 @@
 import Link from "next/link";
 import { getPageContent } from "@/lib/site-content-server";
 import { Prose } from "@/components/store/content";
-import { policyHref, policyLinks } from "@/components/store/policies";
+import {
+  findPolicy,
+  policyHref,
+  policyLinks,
+} from "@/components/store/policies";
 import { metaDescription, pageMetadata } from "@/lib/seo";
-const keys: Record<string, string> = {
-  "huong-dan": "shopping-guide",
-  "van-chuyen": "shipping",
-  "thanh-toan": "payment",
-  "doi-tra": "returns",
-  "bao-hanh": "warranty",
-  "bao-mat": "privacy",
-  "dieu-khoan": "terms",
-};
 export async function generateMetadata({
   searchParams,
 }: {
   searchParams: Promise<{ muc?: string }>;
 }) {
   const { muc } = await searchParams;
-  const selected = policyLinks.find((policy) => policy.id === muc);
+  const selected = findPolicy(muc);
   const entry = selected
-    ? (await getPageContent("policies"))[keys[selected.id]]
+    ? (await getPageContent("policies"))[selected.key]
     : null;
   if (!selected || !entry)
     return pageMetadata({
       title: "Chính sách & hướng dẫn",
       description:
-        "Hướng dẫn mua hàng, giao hàng, thanh toán, đổi trả, bảo hành và quyền riêng tư khi mua phụ kiện handmade tại Mộc Bàm.",
+        "Hướng dẫn mua hàng, giao hàng, thanh toán, đổi trả, quyền riêng tư và cách liên hệ khi mua đồ decor handmade tại Mộc Bàm.",
       path: "/chinh-sach",
     });
   return pageMetadata({
@@ -41,12 +36,11 @@ export default async function PoliciesPage({
   searchParams: Promise<{ muc?: string }>;
 }) {
   const { muc } = await searchParams;
-  const selected = policyLinks.find((policy) => policy.id === muc);
+  const selected = findPolicy(muc);
   const content = await getPageContent("policies");
-  const entry = selected ? content[keys[selected.id]] : null;
+  const entry = selected ? content[selected.key] : null;
   return (
     <div className="store-page store-policy-page">
-      <p className="store-eyebrow">Để chúng mình hiểu nhau hơn</p>
       <h1 className="store-page-title">
         {entry?.title || "Chính sách & hướng dẫn."}
       </h1>
@@ -70,7 +64,7 @@ export default async function PoliciesPage({
                 href={policyHref(policy.id)}
                 className="store-policy-card"
               >
-                {content[keys[policy.id]].title}
+                {policy.title}
               </Link>
             ))}
           </div>

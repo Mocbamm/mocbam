@@ -13,12 +13,14 @@ export const storeHeading = localFont({
   preload: false,
 });
 
+// Owner trial 06/11: Mali for body text. To go back, point these at the
+// cabin-*.ttf files, which stay in public/fonts.
 export const storeBody = localFont({
   src: [
-    { path: "../../../public/fonts/cabin-400.ttf", weight: "400" },
-    { path: "../../../public/fonts/cabin-500.ttf", weight: "500" },
-    { path: "../../../public/fonts/cabin-600.ttf", weight: "600" },
-    { path: "../../../public/fonts/cabin-700.ttf", weight: "700" },
+    { path: "../../../public/fonts/mali-400.ttf", weight: "400" },
+    { path: "../../../public/fonts/mali-500.ttf", weight: "500" },
+    { path: "../../../public/fonts/mali-600.ttf", weight: "600" },
+    { path: "../../../public/fonts/mali-700.ttf", weight: "700" },
   ],
   variable: "--font-store-body",
   display: "swap",

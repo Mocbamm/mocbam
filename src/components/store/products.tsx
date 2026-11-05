@@ -10,10 +10,7 @@ import {
   Search,
   SlidersHorizontal,
   ChevronDown,
-  ChevronRight,
   X,
-  PackageCheck,
-  Leaf,
 } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import type { Product, Category } from "@/lib/types";
@@ -24,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { money } from "./format";
 import { ProductGallery, productImages } from "./product-media";
-import { policyHref } from "./policies";
 import "./catalog.css";
 
 export function ProductCard({
@@ -179,12 +175,6 @@ export function Catalog({
   });
   const selectedCategory = categories.find((c) => c.slug === category);
   const categoryId = selectedCategory?.id;
-  const bannerProduct =
-    products.find((product) =>
-      selectedCategory
-        ? product.category_id === selectedCategory.id
-        : product.featured,
-    ) || products[0];
   const hasFilters = Boolean(category || search.trim() || maximum < ceiling);
   const filtered = products
     .filter(
@@ -212,28 +202,8 @@ export function Catalog({
   }
   return (
     <section className="store-catalog" aria-label="Danh sách sản phẩm">
-      <header className="store-collection-banner">
-        <div className="store-collection-banner-copy">
-          <p className="store-collection-eyebrow">Gom một chút niềm vui</p>
-          <h1>{selectedCategory?.name || "Nhỏ xinh, đủ thương."}</h1>
-          <p>
-            {selectedCategory?.description ||
-              "Những người bạn nhỏ, những đường vân riêng. Chọn một chút Mộc để đồng hành, hay gửi thương đến người bạn quý."}
-          </p>
-        </div>
-        {bannerProduct ? (
-          <div className="store-collection-banner-media">
-            <Image
-              src={bannerProduct.image_url}
-              alt={bannerProduct.name}
-              fill
-              preload
-              sizes="35vw"
-              className="object-cover"
-            />
-          </div>
-        ) : null}
-      </header>
+      {/* Owner feedback 06/11: no banner, the products come first. */}
+      <h1 className="sr-only">{selectedCategory?.name || "Sản phẩm"}</h1>
       <div className="store-catalog-categories" aria-label="Danh mục sản phẩm">
         {[{ slug: "", name: "Tất cả" }, ...categories].map((c) => (
           <button
@@ -470,6 +440,11 @@ export function ProductDetails({
         product={product}
         variantImage={variantImage}
       />
+      {/* Owner feedback 06/11: the description sits under the photos so the
+          purchase controls stay near the top. */}
+      {product.description ? (
+        <p className="store-product-description">{product.description}</p>
+      ) : null}
       <div className="store-product-purchase-panel">
         {category ? (
           <Link
@@ -481,45 +456,6 @@ export function ProductDetails({
         ) : null}
         <h1>{product.name}</h1>
         <ProductActions product={product} onVariantChange={setVariantImage} />
-        <div className="store-product-reassurance">
-          <p>
-            <Leaf size={17} /> Mỗi đường vân gỗ có nét riêng, như bạn vậy.
-          </p>
-          <p>
-            <PackageCheck size={17} /> Phí giao hàng được hiển thị trước khi gửi
-            đơn.
-          </p>
-        </div>
-        <div className="store-product-accordions">
-          <details>
-            <summary>
-              Giao hàng & thanh toán <ChevronDown size={17} />
-            </summary>
-            <div>
-              <p>
-                Chọn địa chỉ nhận hàng để xem phí vận chuyển và phương thức
-                thanh toán đang áp dụng trước khi gửi đơn.
-              </p>
-              <Link href={policyHref("van-chuyen")}>
-                Xem chính sách giao hàng <ChevronRight size={14} />
-              </Link>
-            </div>
-          </details>
-          <details>
-            <summary>
-              Đổi trả & chăm sóc <ChevronDown size={17} />
-            </summary>
-            <div>
-              <p>
-                Mộc luôn sẵn lòng hỗ trợ bạn khi cần thông tin về sản phẩm, cách
-                chăm sóc hoặc đổi trả.
-              </p>
-              <Link href={policyHref("doi-tra")}>
-                Xem hướng dẫn đổi trả & chăm sóc <ChevronRight size={14} />
-              </Link>
-            </div>
-          </details>
-        </div>
       </div>
     </div>
   );
@@ -570,7 +506,6 @@ export function ProductActions({
       <p className="store-product-detail-price" aria-live="polite">
         {money(option?.price ?? product.price)}
       </p>
-      <p className="store-product-description">{product.description}</p>
       {product.variants?.length ? (
         <div className="store-product-variant">
           <label

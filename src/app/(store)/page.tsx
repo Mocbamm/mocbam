@@ -8,6 +8,7 @@ import {
   isConfigured,
 } from "@/lib/catalog";
 import { ContactForm } from "@/components/store/contact";
+import { SocialIcons } from "@/components/store/social";
 import { ProductCard } from "@/components/store/products";
 import { StoreCarousel } from "@/components/store/carousel";
 import { BlogCard } from "@/components/store/blog";
@@ -283,15 +284,12 @@ export default async function HomePage() {
       </section>
       <section className="store-container store-home-contact">
         <div>
-          <p className="store-eyebrow">Có một điều muốn kể?</p>
+          <p className="store-eyebrow">Có điều muốn tâm sự?</p>
           <h2 className="store-section-heading">
             {content["home-contact"].title}
           </h2>
           <Prose content={content["home-contact"].content} />
-          <a href={`mailto:${settings.shop_email}`} className="store-text-link">
-            {settings.shop_email}
-          </a>
-          <p className="store-contact-location">{settings.shop_address}</p>
+          <SocialIcons settings={settings} />
         </div>
         <ContactForm configured={isConfigured()} />
       </section>

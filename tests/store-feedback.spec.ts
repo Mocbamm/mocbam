@@ -4,7 +4,7 @@ test("header search opens an input and searches products and journal content", a
   page,
 }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle("Mộc Bàm");
+  await expect(page).toHaveTitle("Mộc Bàm – Phụ kiện handmade từ thiên nhiên");
   await expect(
     page.getByText("NHỎ XINH TỪ GỖ · TỈ MỈ TỪ TÂM", { exact: true }),
   ).toHaveCount(0);
@@ -29,7 +29,7 @@ test("home categories precede products and its carousel browses beyond the first
 }) => {
   await page.goto("/");
   const category = page.getByRole("heading", {
-    name: "Nhân vật gỗ",
+    name: "Búp bê",
     exact: true,
   });
   const products = page.getByRole("heading", {
@@ -112,14 +112,20 @@ test("policy dropdown opens only the selected policy and card buy-now reaches ch
     .getByRole("button", { name: "Chính sách", exact: true })
     .click();
   await navigation
-    .getByRole("link", { name: "Đổi trả & chăm sóc", exact: true })
+    .getByRole("link", {
+      name: "Chính sách đổi trả và hỗ trợ sau mua",
+      exact: true,
+    })
     .click();
   await expect(page).toHaveURL(/muc=doi-tra/);
   await expect(
-    page.getByRole("heading", { name: "Đổi trả & chăm sóc", exact: true }),
+    page.getByRole("heading", {
+      name: "CHÍNH SÁCH ĐỔI TRẢ VÀ HỖ TRỢ SAU MUA",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Giao hàng", exact: true }),
+    page.getByRole("heading", { name: "CHÍNH SÁCH GIAO HÀNG", exact: true }),
   ).toHaveCount(0);
   await expect(page.getByText("đồ án", { exact: false })).toHaveCount(0);
   await expect(
@@ -127,7 +133,9 @@ test("policy dropdown opens only the selected policy and card buy-now reaches ch
   ).toHaveCount(0);
   // No side list of other policies inside the page, whatever it is named.
   await expect(
-    page.locator("main").getByRole("link", { name: "Giao hàng", exact: true }),
+    page
+      .locator("main")
+      .getByRole("link", { name: "Chính sách giao hàng", exact: true }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("link", { name: "Xem tất cả chính sách" }),
@@ -161,7 +169,7 @@ test("home navigation and hover policy dropdown remain accessible", async ({
   await trigger.hover();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
   await navigation
-    .getByRole("link", { name: "Giao hàng", exact: true })
+    .getByRole("link", { name: "Chính sách giao hàng", exact: true })
     .hover();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
   await page.mouse.move(640, 700);

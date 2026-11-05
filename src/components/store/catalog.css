@@ -23,42 +23,6 @@
 .store-breadcrumb span {
   color: #2a472b;
 }
-.store-collection-banner {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
-  min-height: 256px;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #e8ece3;
-}
-.store-collection-banner-copy {
-  align-self: center;
-  padding: 36px 48px;
-}
-.store-collection-eyebrow {
-  margin-bottom: 12px;
-  font-size: 12px;
-}
-.store-collection-banner h1 {
-  margin: 0;
-  font-family: var(--font-store-heading, sans-serif);
-  font-size: clamp(28px, 3.3vw, 46px);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.035em;
-}
-.store-collection-banner-copy > p:last-child {
-  max-width: 530px;
-  margin-top: 18px;
-  color: #504545;
-  font-size: 15px;
-  line-height: 1.65;
-}
-.store-collection-banner-media {
-  position: relative;
-  min-width: 0;
-  min-height: 100%;
-}
 .store-catalog-categories {
   display: flex;
   flex-wrap: wrap;
@@ -129,8 +93,7 @@
   font-size: 14px;
   list-style: none;
 }
-.store-catalog-price-filter summary::-webkit-details-marker,
-.store-product-accordions summary::-webkit-details-marker {
+.store-catalog-price-filter summary::-webkit-details-marker {
   display: none;
 }
 .store-catalog-price-popover {
@@ -604,61 +567,6 @@
 .store-purchase-button-primary:hover:not(:disabled) {
   background: #365838;
 }
-.store-product-reassurance {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid #dfded8;
-  color: #667060;
-  font-size: 13px;
-  line-height: 1.6;
-}
-.store-product-reassurance p {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-.store-product-reassurance svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.store-product-accordions {
-  margin-top: 24px;
-  border-top: 1px solid #dfded8;
-}
-.store-product-accordions details {
-  border-bottom: 1px solid #dfded8;
-}
-.store-product-accordions summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  min-height: 56px;
-  cursor: pointer;
-  list-style: none;
-  font-size: 15px;
-}
-.store-product-accordions details[open] summary > svg {
-  transform: rotate(180deg);
-}
-.store-product-accordions details > div {
-  padding: 0 0 20px;
-  color: #504545;
-  font-size: 14px;
-  line-height: 1.8;
-}
-.store-product-accordions details a {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 10px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  color: #2a472b;
-}
 .store-product-recommendations {
   margin-top: 80px;
 }
@@ -773,9 +681,6 @@
   .store-product-stock {
     flex-basis: 100%;
   }
-  .store-collection-banner-copy {
-    padding: 30px;
-  }
 }
 @media (max-width: 767px) {
   .store-catalog-page,
@@ -786,25 +691,6 @@
     font-size: 12px;
     margin-bottom: 18px;
     gap: 6px;
-  }
-  .store-collection-banner {
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-    min-height: 220px;
-  }
-  .store-collection-banner-copy {
-    padding: 22px 18px;
-  }
-  .store-collection-eyebrow {
-    font-size: 11px;
-    margin-bottom: 10px;
-  }
-  .store-collection-banner h1 {
-    font-size: 26px;
-  }
-  .store-collection-banner-copy > p:last-child {
-    margin-top: 12px;
-    font-size: 13px;
-    line-height: 1.6;
   }
   .store-catalog-categories {
     gap: 6px;
@@ -952,12 +838,6 @@
   .store-product-card-actions {
     grid-template-columns: 1fr;
   }
-  .store-collection-banner {
-    grid-template-columns: 1fr;
-  }
-  .store-collection-banner-media {
-    display: none;
-  }
   .store-product-stock {
     flex-basis: 100%;
   }
@@ -970,5 +850,33 @@
   .store-card-button,
   .store-category-tab {
     transition: none;
+  }
+}
+
+/* Owner feedback 06/11: description under the photos, purchase panel beside. */
+.store-product-detail-grid {
+  grid-template-areas:
+    "gallery panel"
+    "description panel";
+  grid-template-rows: auto 1fr;
+  row-gap: 32px;
+}
+.store-product-gallery {
+  grid-area: gallery;
+}
+.store-product-detail-grid > .store-product-description {
+  grid-area: description;
+}
+.store-product-purchase-panel {
+  grid-area: panel;
+}
+@media (max-width: 767px) {
+  .store-product-detail-grid {
+    grid-template-areas:
+      "gallery"
+      "panel"
+      "description";
+    grid-template-rows: auto;
+    row-gap: 26px;
   }
 }

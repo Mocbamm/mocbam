@@ -7,7 +7,11 @@ import {
   mediaMarkdown,
   parseContentMedia,
 } from "@/lib/content-media";
-import { contentEntry, contentSections } from "@/lib/site-content";
+import {
+  contentEntry,
+  contentSections,
+  isEditableContent,
+} from "@/lib/site-content";
 import { postSchema } from "@/lib/validation";
 import { Prose } from "@/components/store/content";
 
@@ -77,9 +81,9 @@ describe("editable content media", () => {
     };
     expect(contentEntry([custom], "home-hero")).toEqual(custom);
     expect(contentEntry([], "returns").content).toMatch(/7 ngày/);
-    expect(contentEntry([], "warranty").content).toMatch(/12 tháng/);
-    // Owner's 11/10 policy text requires an unboxing video for returns.
-    expect(contentEntry([], "returns").content).toMatch(/quay video/);
+    // The retired warranty row now holds the owner's contact page.
+    expect(contentEntry([], "warranty").content).toMatch(/Kết nối với Mộc Bàm/);
+    expect(contentEntry([], "returns").content).toMatch(/Hỗ trợ sau mua/);
     expect(
       contentSections.filter((section) => section.kind === "media"),
     ).toHaveLength(8);
@@ -90,5 +94,28 @@ describe("editable content media", () => {
         "home-featured",
       ),
     ).toEqual({ key: "home-featured", title: "Sản phẩm nổi bật", content: "x" });
+  });
+  it("lets admin edit only the brand story, the policies and media", () => {
+    const editable = contentSections
+      .filter(isEditableContent)
+      .map((section) => section.key);
+    expect(editable).toContain("about");
+    expect(editable).toContain("warranty");
+    expect(editable).toContain("home-intro-media");
+    expect(editable).not.toContain("home-hero-note");
+    expect(editable).not.toContain("about-invitation");
+    expect(
+      contentSections
+        .filter((section) => section.group === "policies")
+        .map((section) => section.label),
+    ).toEqual([
+      "Hướng dẫn mua hàng",
+      "Chính sách giao hàng",
+      "Phương thức thanh toán",
+      "Chính sách đổi trả và hỗ trợ sau mua",
+      "Quyền riêng tư",
+      "Điều khoản sử dụng",
+      "Liên hệ",
+    ]);
   });
 });

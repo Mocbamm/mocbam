@@ -2,8 +2,8 @@
 begin;
 
 insert into public.categories(id,slug,name,description) values
-('11111111-1111-4111-8111-111111111111','nhan-vat','Nhân vật gỗ','Những người bạn nhỏ, được làm bằng tay từ gỗ tự nhiên.'),
-('22222222-2222-4222-8222-222222222222','chuoi','Chuỗi & phụ kiện','Một chút mộc mạc để mang theo mỗi ngày.')
+('11111111-1111-4111-8111-111111111111','nhan-vat','Búp bê','Những người bạn nhỏ, được làm bằng tay từ gỗ tự nhiên.'),
+('22222222-2222-4222-8222-222222222222','chuoi','Chuỗi','Một chút mộc mạc để mang theo mỗi ngày.')
 on conflict (id) do nothing;
 
 insert into public.products(id,slug,name,category_id,price,stock,image_url,description,featured,active,created_at) values

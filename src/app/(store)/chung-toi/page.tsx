@@ -13,15 +13,19 @@ export default async function AboutPage() {
   const content = await getPageContent("about");
   const about = content.about;
   const media = content["about-media"];
+  // The first line is the heading, anything after it a smaller sentence.
+  const [invitationTitle, ...invitationLines] =
+    content["about-invitation"].title.split("\n");
+  const invitationText = invitationLines.join(" ").trim();
   return (
     <div className="store-page store-about-page">
+      {/* Owner feedback 06/11: the title runs on one line above the story. */}
+      <h1 className="store-page-title store-about-title">
+        {about?.title || "Nhỏ thôi, nhưng có câu chuyện"}
+      </h1>
       <div className="store-about-intro">
         <div>
-          <p className="store-eyebrow">Câu chuyện của chúng mình</p>
-          <h1 className="store-page-title">
-            {about?.title || "Nhỏ thôi, nhưng có câu chuyện."}
-          </h1>
-          <div className="mt-7">
+          <div>
             <Prose
               content={
                 about?.content ||
@@ -66,9 +70,10 @@ export default async function AboutPage() {
         </div>
       </section>
       <div className="store-about-invitation">
-        <p className="store-section-title">
-          {content["about-invitation"].title}
-        </p>
+        <p className="store-section-title">{invitationTitle}</p>
+        {invitationText ? (
+          <p className="store-about-invitation-text">{invitationText}</p>
+        ) : null}
         <Link href="/lien-he" className="store-outline-link mt-6">
           {content["about-invitation"].content}
         </Link>

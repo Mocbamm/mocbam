@@ -23,7 +23,7 @@ export const orderLabels: Record<OrderStatus, string> = {
   returned: "Đã nhận hoàn hàng",
 };
 export const categoryOptions = [
-  { id: "11111111-1111-4111-8111-111111111111", name: "Nhân vật" },
+  { id: "11111111-1111-4111-8111-111111111111", name: "Búp bê" },
   { id: "22222222-2222-4222-8222-222222222222", name: "Chuỗi" },
 ];
 

@@ -12,6 +12,7 @@ import {
   contentEntry,
   contentGroups,
   contentSections,
+  isEditableContent,
   type ContentGroup,
 } from "@/lib/site-content";
 import { isContentMediaUrl } from "@/lib/content-media";
@@ -51,7 +52,7 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
   const visible = contentSections.filter(
     (item) =>
       item.group === group &&
-      !item.hidden &&
+      isEditableContent(item) &&
       (!search.trim() ||
         matchesSearch(
           `${item.label} ${drafts[item.key].title} ${drafts[item.key].content}`,
@@ -128,7 +129,8 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
               setSearch("");
               choose(
                 contentSections.find(
-                  (section) => section.group === item.id && !section.hidden,
+                  (section) =>
+                    section.group === item.id && isEditableContent(section),
                 )!.key,
               );
             }}
@@ -237,22 +239,20 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
             </p>
           ) : null}
           <fieldset disabled={saving || uploading} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="content-title">
-                {section.kind === "media"
-                  ? "Mô tả ảnh / video"
-                  : "Tiêu đề hiển thị"}
-              </Label>
-              <Textarea
-                id="content-title"
-                className="text-base md:text-sm"
-                rows={2}
-                maxLength={200}
-                required
-                value={draft.title}
-                onChange={(event) => update("title", event.target.value)}
-              />
-            </div>
+            {section.kind === "media" ? null : (
+              <div className="space-y-2">
+                <Label htmlFor="content-title">Tiêu đề hiển thị</Label>
+                <Textarea
+                  id="content-title"
+                  className="text-base md:text-sm"
+                  rows={2}
+                  maxLength={200}
+                  required
+                  value={draft.title}
+                  onChange={(event) => update("title", event.target.value)}
+                />
+              </div>
+            )}
             {section.kind === "media" ? (
               <div className="space-y-4">
                 <div className="flex gap-2">

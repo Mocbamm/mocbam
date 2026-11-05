@@ -11,7 +11,6 @@ import {
   Minus,
   Plus,
   Trash2,
-  Leaf,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { formatPrice, onOpenCartDrawer, useCart } from "@/lib/cart";
@@ -27,6 +26,7 @@ import {
 import { StoreSearch } from "./search-dialog";
 import StoreImage from "./image";
 import { policyHref, policyLinks } from "./policies";
+import { SocialIcons } from "./social";
 
 const navigation = [
   { href: "/", text: "Trang chủ" },
@@ -290,7 +290,7 @@ export function StoreHeader() {
                     width={96}
                     height={96}
                   />
-                  <span>Nhân vật gỗ</span>
+                  <span>Búp bê</span>
                 </Link>
                 <Link
                   href="/san-pham?danh-muc=chuoi"
@@ -302,7 +302,7 @@ export function StoreHeader() {
                     width={96}
                     height={96}
                   />
-                  <span>Chuỗi & phụ kiện</span>
+                  <span>Chuỗi</span>
                 </Link>
               </div>
               <Link
@@ -368,7 +368,6 @@ export function StoreHeader() {
             {policyOpen ? (
               <div id="desktop-policy-links" className="store-policy-dropdown">
                 <div>
-                  <p className="store-eyebrow">Cùng Mộc an tâm mua sắm</p>
                   {policyLinks.map((policy) => (
                     <Link
                       key={policy.id}
@@ -379,16 +378,6 @@ export function StoreHeader() {
                     </Link>
                   ))}
                 </div>
-                <Link
-                  href="/lien-he"
-                  onClick={() => setPolicyOpen(false)}
-                  className="store-policy-help"
-                >
-                  <Leaf size={28} strokeWidth={1.2} />
-                  <strong>Cần Mộc giúp một chút?</strong>
-                  <span>Chúng mình luôn ở đây, cùng bạn.</span>
-                  <span>Gửi lời nhắn</span>
-                </Link>
               </div>
             ) : null}
           </div>
@@ -416,73 +405,45 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
       <div className="store-footer-inner">
         <div className="store-footer-brand">
           <Brand footer />
-          <p>
-            Những món đồ nhỏ từ gỗ.
-            <br />
-            Một chút mộc mạc, một chút thương yêu.
-          </p>
-          <div className="store-social-links">
-            {[
-              { text: "Facebook", url: settings?.facebook_url },
-              { text: "Instagram", url: settings?.instagram_url },
-              { text: "TikTok", url: settings?.tiktok_url },
-              { text: "Zalo", url: settings?.zalo_url },
-              { text: "Shopee", url: settings?.shopee_url },
-            ].map((s) =>
-              s.url ? (
-                <a
-                  key={s.text}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {s.text}
-                </a>
-              ) : null,
-            )}
-          </div>
+          <StoreImage
+            src="/images/logo-moc-bam.webp"
+            alt="Logo Mộc Bàm"
+            width={132}
+            height={132}
+            className="store-footer-logo"
+          />
         </div>
         <div className="store-footer-column">
           <h2>Khám phá</h2>
-          <Link href="/san-pham">Tất cả sản phẩm</Link>
-          <Link href="/san-pham?danh-muc=nhan-vat">Nhân vật gỗ</Link>
-          <Link href="/san-pham?danh-muc=chuoi">Chuỗi & phụ kiện</Link>
+          {/* Owner feedback 06/11: one "Sản phẩm" entry; hovering it reveals
+              the two product lines. */}
+          <div className="store-footer-products">
+            <Link href="/san-pham">Sản phẩm</Link>
+            <div>
+              <Link href="/san-pham?danh-muc=chuoi">Chuỗi</Link>
+              <Link href="/san-pham?danh-muc=nhan-vat">Búp bê</Link>
+            </div>
+          </div>
           <Link href="/chung-toi">Câu chuyện Mộc Bàm</Link>
           <Link href="/blog">Nhật ký Mộc Bàm</Link>
         </div>
         <div className="store-footer-column">
-          <h2>Đồng hành</h2>
-          <details>
-            <summary>
-              Chính sách & hướng dẫn <ChevronDown size={14} />
-            </summary>
-            <div>
-              {policyLinks.map((policy) => (
-                <Link key={policy.id} href={policyHref(policy.id)}>
-                  {policy.title}
-                </Link>
-              ))}
-            </div>
-          </details>
-          <Link href="/lien-he">Liên hệ với chúng tôi</Link>
-          <Link href="/tai-khoan">Tài khoản & đơn hàng</Link>
+          <h2>Chính sách</h2>
+          {policyLinks.map((policy) => (
+            <Link key={policy.id} href={policyHref(policy.id)}>
+              {policy.title}
+            </Link>
+          ))}
         </div>
         <div className="store-footer-column store-footer-contact">
           <h2>Ghé Mộc một chút</h2>
-          <p>{settings?.shop_address || "Mộc Bàm · Việt Nam"}</p>
-          {settings?.shop_hours ? <p>{settings.shop_hours}</p> : null}
-          {settings?.shop_email ? (
-            <a href={`mailto:${settings.shop_email}`}>{settings.shop_email}</a>
-          ) : null}
-          <Link href="/lien-he" className="store-footer-message">
-            Gửi Mộc lời nhắn
-          </Link>
+          <Link href="/lien-he">Liên hệ với chúng tôi</Link>
+          <Link href="/tai-khoan">Tài khoản và đơn hàng</Link>
+          <SocialIcons settings={settings} />
         </div>
       </div>
       <div className="store-footer-bottom">
-        <span>
-          © {new Date().getFullYear()} Mộc Bàm. Từ gỗ, với thương yêu.
-        </span>
+        <span>© {new Date().getFullYear()} Mộc Bàm.</span>
         <Link href={policyHref("bao-mat")}>Quyền riêng tư</Link>
       </div>
     </footer>
