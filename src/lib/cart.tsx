@@ -12,13 +12,18 @@ import { toast } from "sonner";
 const OPEN_CART_EVENT = "mocbam:open-cart";
 
 // “Bỏ giỏ” slides the cart drawer open; “Mua ngay” goes straight to checkout.
-export function openCartDrawer() {
-  window.dispatchEvent(new Event(OPEN_CART_EVENT));
+// `addedKey` names the cart line just added, so the drawer can highlight it.
+export function openCartDrawer(addedKey?: string) {
+  window.dispatchEvent(
+    new CustomEvent<string | undefined>(OPEN_CART_EVENT, { detail: addedKey }),
+  );
 }
 
-export function onOpenCartDrawer(listener: () => void) {
-  window.addEventListener(OPEN_CART_EVENT, listener);
-  return () => window.removeEventListener(OPEN_CART_EVENT, listener);
+export function onOpenCartDrawer(listener: (addedKey?: string) => void) {
+  const handle = (event: Event) =>
+    listener((event as CustomEvent<string | undefined>).detail);
+  window.addEventListener(OPEN_CART_EVENT, handle);
+  return () => window.removeEventListener(OPEN_CART_EVENT, handle);
 }
 import { cartItemKey, productOption } from "./product-options";
 const STORAGE_KEY = "mocbam.cart.v1";

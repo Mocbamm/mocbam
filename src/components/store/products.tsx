@@ -15,7 +15,7 @@ import {
 import { Dialog as DialogPrimitive } from "radix-ui";
 import type { Product, Category } from "@/lib/types";
 import { openCartDrawer, useCart } from "@/lib/cart";
-import { productOption } from "@/lib/product-options";
+import { cartItemKey, productOption } from "@/lib/product-options";
 import { trackStoreEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,9 +34,12 @@ export function ProductCard({
   const router = useRouter();
   const images = productImages(product);
   const [imageIndex, setImageIndex] = useState(0);
+  const [swapped, setSwapped] = useState(false);
   const photoHintId = useId();
   const image = (
     <Image
+      key={imageIndex}
+      data-swapped={swapped || undefined}
       src={images[imageIndex] || product.image_url}
       alt={`${product.name}${images.length > 1 ? ` — ảnh ${imageIndex + 1}` : ""}`}
       fill
@@ -50,9 +53,10 @@ export function ProductCard({
         {images.length > 1 ? (
           <button
             type="button"
-            onClick={() =>
-              setImageIndex((index) => (index + 1) % images.length)
-            }
+            onClick={() => {
+              setImageIndex((index) => (index + 1) % images.length);
+              setSwapped(true);
+            }}
             aria-label={`Xem ảnh tiếp theo của ${product.name}`}
             aria-describedby={photoHintId}
             className="store-product-image-link"
@@ -116,7 +120,7 @@ export function ProductCard({
             onClick={() =>
               product.variants?.length
                 ? router.push(`/san-pham/${product.slug}`)
-                : add(product) && openCartDrawer()
+                : add(product) && openCartDrawer(cartItemKey(product.id))
             }
             aria-label={`Thêm ${product.name} vào giỏ hàng`}
             className="store-card-button store-card-button-outline"
@@ -164,6 +168,8 @@ export function Catalog({
     Math.ceil(Math.max(0, ...products.map((p) => p.price)) / 10000) * 10000,
   );
   const [category, setCategory] = useState(initialCategory);
+  // Only a category the shopper picks settles in; the first render stays still.
+  const [browsed, setBrowsed] = useState(false);
   const [search, setSearch] = useState(initialSearch);
   const [maximum, setMaximum] = useState(ceiling);
   const [sort, setSort] = useState("featured");
@@ -196,6 +202,7 @@ export function Catalog({
     );
   function resetFilters() {
     setCategory("");
+    setBrowsed(true);
     setSearch("");
     setMaximum(ceiling);
     setSort("featured");
@@ -209,7 +216,10 @@ export function Catalog({
           <button
             key={c.slug}
             type="button"
-            onClick={() => setCategory(c.slug)}
+            onClick={() => {
+              setCategory(c.slug);
+              setBrowsed(true);
+            }}
             aria-pressed={category === c.slug}
             className="store-category-tab"
           >
@@ -250,6 +260,7 @@ export function Catalog({
                 onSubmit={(event) => {
                   event.preventDefault();
                   setCategory(draft.category);
+                  setBrowsed(true);
                   setSearch(draft.search);
                   setMaximum(draft.maximum);
                   setFiltersOpen(false);
@@ -395,7 +406,11 @@ export function Catalog({
         </div>
       ) : null}
       {filtered.length ? (
-        <div className="store-product-grid">
+        <div
+          key={category}
+          data-browsed={browsed || undefined}
+          className="store-product-grid"
+        >
           {filtered.map((p) => (
             <ProductCard
               key={p.id}
@@ -582,7 +597,7 @@ export function ProductActions({
           disabled={availableStock < 1}
           onClick={() => {
             if (add(product, quantity, variantId || undefined))
-              openCartDrawer();
+              openCartDrawer(cartItemKey(product.id, variantId || undefined));
           }}
           variant="outline"
           className="store-purchase-button-outline"

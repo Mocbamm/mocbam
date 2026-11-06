@@ -21,6 +21,8 @@ export function FaqChat({
   phone?: string;
 }) {
   const [open, setOpen] = useState(false);
+  // The trigger icon only turns once the shopper has used it, not on load.
+  const [toggled, setToggled] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [busy, setBusy] = useState(false);
@@ -140,7 +142,7 @@ export function FaqChat({
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`max-w-[92%] rounded-xl px-3 py-2.5 text-xs leading-6 ${message.sender === "staff" ? "bg-[#e9edde] text-[#3f5138]" : "ml-auto bg-[#29412d] text-white"}`}
+                    className={`store-support-message max-w-[92%] rounded-xl px-3 py-2.5 text-xs leading-6 ${message.sender === "staff" ? "bg-[#e9edde] text-[#3f5138]" : "ml-auto bg-[#29412d] text-white"}`}
                   >
                     <p className="mb-1 text-[10px] opacity-70">
                       {message.sender === "staff" ? "Nhân viên Mộc Bàm" : "Bạn"}
@@ -206,12 +208,16 @@ export function FaqChat({
         onClick={() => {
           if (!open && userId && configured) void load();
           setOpen(!open);
+          setToggled(true);
         }}
         aria-label={open ? "Đóng trợ lý" : "Trò chuyện với Mộc"}
         aria-expanded={open}
+        data-toggled={toggled || undefined}
         className="store-support-trigger ml-auto flex h-12 items-center gap-2 rounded-full bg-[#29412d] px-4 text-xs text-[#f1f1df] shadow-lg"
       >
-        {open ? <X size={18} /> : <MessageCircle size={18} />}
+        <span key={open ? "close" : "open"} className="store-support-icon">
+          {open ? <X size={18} /> : <MessageCircle size={18} />}
+        </span>
         <span className="hidden sm:inline">Hỏi Mộc nhé</span>
       </button>
     </div>

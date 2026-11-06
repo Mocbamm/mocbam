@@ -880,3 +880,21 @@
     row-gap: 26px;
   }
 }
+
+/* The mobile filter panel slides in from the right over a fading backdrop. */
+.store-filter-overlay[data-state="open"] {
+  animation: store-fade-in 240ms var(--ease-soft);
+}
+.store-filter-overlay[data-state="closed"] {
+  animation: store-fade-out 200ms ease-in;
+}
+.store-filter-sheet[data-state="open"] {
+  animation: store-slide-in-right 300ms var(--ease-soft);
+}
+.store-filter-sheet[data-state="closed"] {
+  animation: store-slide-out-right 200ms ease-in;
+}
+/* Switching category settles the new grid in gently. */
+.store-product-grid[data-browsed] {
+  animation: store-rise-in 300ms var(--ease-soft);
+}

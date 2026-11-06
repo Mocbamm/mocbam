@@ -1329,7 +1329,12 @@ body:has(.storefront) [aria-label="Lựa chọn cookie"] [data-slot="button"] {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, #142d1cb3 0%, #142d1c40 45%, transparent 75%);
+  background: linear-gradient(
+    to top,
+    #142d1cb3 0%,
+    #142d1c40 45%,
+    transparent 75%
+  );
 }
 .store-category-banner:hover .store-category-banner-media {
   transform: scale(1.03);
@@ -1422,4 +1427,184 @@ body:has(.storefront) [aria-label="Lựa chọn cookie"] [data-slot="button"] {
   .store-story-media {
     aspect-ratio: 3 / 2;
   }
+}
+
+/* Motion: short, soft movements in keeping with the calm, handmade feel.
+   Distances stay small and nothing bounces. The global reduced-motion rule in
+   globals.css shortens all of it to an instant change. */
+@keyframes store-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes store-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes store-drop-in {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+@keyframes store-rise-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+@keyframes store-panel-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 8px;
+  }
+}
+@keyframes store-icon-in {
+  from {
+    opacity: 0;
+    rotate: -90deg;
+    scale: 0.6;
+  }
+}
+@keyframes store-slide-in-right {
+  from {
+    translate: 100% 0;
+  }
+}
+@keyframes store-slide-out-right {
+  to {
+    translate: 100% 0;
+  }
+}
+@keyframes store-fresh-row {
+  from {
+    background-color: #e3ead9;
+    box-shadow:
+      -24px 0 0 #e3ead9,
+      24px 0 0 #e3ead9;
+  }
+}
+@keyframes store-row-out {
+  to {
+    opacity: 0;
+    translate: 16px 0;
+    block-size: 0;
+    padding-block: 0;
+    border-bottom-color: transparent;
+  }
+}
+
+/* Search opens with a short rise; its backdrop fades with it. */
+.store-search-dialog {
+  opacity: 0;
+  translate: 0 12px;
+  transition:
+    opacity 240ms var(--ease-soft),
+    translate 240ms var(--ease-soft),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+.store-search-dialog[open] {
+  opacity: 1;
+  translate: 0 0;
+}
+.store-search-dialog::backdrop {
+  background-color: #1d2b1e00;
+  transition:
+    background-color 240ms var(--ease-soft),
+    overlay 240ms allow-discrete,
+    display 240ms allow-discrete;
+}
+.store-search-dialog[open]::backdrop {
+  background-color: #1d2b1e59;
+}
+@starting-style {
+  .store-search-dialog[open] {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  .store-search-dialog[open]::backdrop {
+    background-color: #1d2b1e00;
+  }
+}
+
+/* Desktop policy menu drops in; its chevron turns while open. */
+.store-policy-dropdown {
+  animation: store-drop-in 200ms var(--ease-soft);
+}
+.store-policy-menu > button svg,
+.store-mobile-menu nav > details > summary svg,
+.store-catalog-price-filter summary svg {
+  transition: rotate 220ms var(--ease-soft);
+}
+.store-policy-menu > button[aria-expanded="true"] svg,
+.store-mobile-menu nav > details[open] > summary svg,
+.store-catalog-price-filter[open] summary svg {
+  rotate: 180deg;
+}
+.store-catalog-price-filter[open] .store-catalog-price-popover {
+  animation: store-drop-in 200ms var(--ease-soft);
+}
+
+/* Disclosures open to their full height instead of jumping, where the
+   browser supports animating to auto; elsewhere they open instantly. */
+.store-mobile-menu nav > details,
+.storefront .store-order-details,
+.storefront .store-profile-panel {
+  interpolate-size: allow-keywords;
+}
+.store-mobile-menu nav > details::details-content,
+.storefront .store-order-details::details-content,
+.storefront .store-profile-panel::details-content {
+  block-size: 0;
+  overflow: clip;
+  overflow-clip-margin: 8px;
+  transition:
+    block-size 280ms var(--ease-soft),
+    content-visibility 280ms allow-discrete;
+}
+.store-mobile-menu nav > details[open]::details-content,
+.storefront .store-order-details[open]::details-content,
+.storefront .store-profile-panel[open]::details-content {
+  block-size: auto;
+}
+
+/* The support panel grows out of its button; the icon turns as it swaps. */
+.storefront .store-support-panel {
+  transform-origin: bottom right;
+  animation: store-panel-in 260ms var(--ease-soft);
+}
+.store-support-trigger[data-toggled] .store-support-icon {
+  display: inline-flex;
+  animation: store-icon-in 220ms var(--ease-soft);
+}
+.store-support-message {
+  animation: store-rise-in 260ms var(--ease-soft);
+}
+
+/* Cart drawer: the item just added glows softly, removed items slip away and
+   changed quantities settle in. */
+.store-drawer-items {
+  interpolate-size: allow-keywords;
+}
+.store-drawer-item[data-fresh] {
+  animation: store-fresh-row 1.6s ease-out;
+}
+.store-drawer-item[data-leaving] {
+  overflow: hidden;
+  pointer-events: none;
+  animation: store-row-out 240ms ease-in forwards;
+}
+.store-quantity-control > span[data-changed],
+.store-drawer-heading h2 span[data-changed] {
+  display: inline-block;
+  animation: store-drop-in 200ms var(--ease-soft);
+}
+
+/* Product photos crossfade in when a shopper flips to another angle. */
+.store-product-card-image[data-swapped],
+.store-product-gallery-main img[data-swapped] {
+  animation: store-fade-in 320ms var(--ease-soft);
 }

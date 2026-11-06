@@ -27,6 +27,11 @@ export function ProductGallery({
     ),
   ];
   const [selected, setSelected] = useState(0);
+  const [swapped, setSwapped] = useState(false);
+  function show(index: number) {
+    setSelected(index);
+    setSwapped(true);
+  }
   const videoSelected =
     selected === images.length && Boolean(product.video_url);
   return (
@@ -48,7 +53,7 @@ export function ProductGallery({
           <button
             type="button"
             disabled={images.length < 2}
-            onClick={() => setSelected((index) => (index + 1) % images.length)}
+            onClick={() => show((selected + 1) % images.length)}
             aria-label={
               images.length > 1
                 ? `Xem ảnh tiếp theo của ${product.name}`
@@ -57,6 +62,8 @@ export function ProductGallery({
             className="store-product-image-link disabled:cursor-default"
           >
             <Image
+              key={selected}
+              data-swapped={swapped || undefined}
               src={images[selected] || product.image_url}
               alt={`${product.name} — ảnh ${selected + 1}`}
               fill
@@ -76,7 +83,7 @@ export function ProductGallery({
             <button
               type="button"
               key={url}
-              onClick={() => setSelected(index)}
+              onClick={() => show(index)}
               aria-label={`Ảnh ${index + 1} của ${product.name}`}
               aria-pressed={selected === index}
               className="store-product-gallery-thumbnail"
@@ -93,7 +100,7 @@ export function ProductGallery({
           {product.video_url ? (
             <button
               type="button"
-              onClick={() => setSelected(images.length)}
+              onClick={() => show(images.length)}
               aria-pressed={videoSelected}
               className="store-product-gallery-thumbnail store-product-gallery-video-button"
             >

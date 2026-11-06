@@ -1,6 +1,9 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 :root {
+  /* Soft, unhurried ease-out shared by the storefront's motion. */
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
   --background: #faf9f5;
   --foreground: #253b2d;
   --card: #ffffff;

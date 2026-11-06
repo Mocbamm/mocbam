@@ -29,7 +29,7 @@ export function StoreSearch() {
       <dialog
         ref={dialog}
         aria-labelledby="store-search-title"
-        className="store-search-dialog fixed inset-0 m-auto border border-[#d9ddce] bg-[#faf9f3] text-[#29412d] shadow-xl backdrop:bg-black/35"
+        className="store-search-dialog fixed inset-0 m-auto border border-[#d9ddce] bg-[#faf9f3] text-[#29412d] shadow-xl"
         onClick={(event) => {
           if (event.target === event.currentTarget) {
             const rect = event.currentTarget.getBoundingClientRect();

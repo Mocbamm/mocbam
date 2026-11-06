@@ -51,9 +51,39 @@ function Brand({ footer = false }: { footer?: boolean }) {
 function CartDrawer() {
   const { items, count, subtotal, ready, update, remove } = useCart();
   const [open, setOpen] = useState(false);
-  useEffect(() => onOpenCartDrawer(() => setOpen(true)), []);
+  // The line just added glows; the line whose quantity changed ticks over;
+  // removed lines fade out before they leave the cart.
+  const [fresh, setFresh] = useState<string>();
+  const [changed, setChanged] = useState<string>();
+  const [leaving, setLeaving] = useState<string[]>([]);
+  useEffect(
+    () =>
+      onOpenCartDrawer((addedKey) => {
+        setFresh(addedKey);
+        setChanged(undefined);
+        setOpen(true);
+      }),
+    [],
+  );
+  function leave(key: string) {
+    setLeaving((keys) => (keys.includes(key) ? keys : [...keys, key]));
+  }
+  function changeQuantity(key: string, quantity: number) {
+    if (quantity < 1) return leave(key);
+    setChanged(key);
+    update(key, quantity);
+  }
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          setFresh(undefined);
+          setChanged(undefined);
+        }
+      }}
+    >
       <SheetTrigger asChild>
         <button
           type="button"
@@ -71,7 +101,13 @@ function CartDrawer() {
       >
         <div className="store-drawer-heading">
           <SheetTitle>
-            Giỏ hàng <span>({count})</span>
+            Giỏ hàng{" "}
+            <span
+              key={count}
+              data-changed={fresh || changed ? true : undefined}
+            >
+              ({count})
+            </span>
           </SheetTitle>
           <SheetClose asChild>
             <button
@@ -90,7 +126,18 @@ function CartDrawer() {
           <>
             <div className="store-drawer-items">
               {items.map(({ product, quantity, key }) => (
-                <article key={key} className="store-drawer-item">
+                <article
+                  key={key}
+                  className="store-drawer-item"
+                  data-fresh={fresh === key || undefined}
+                  data-leaving={leaving.includes(key) || undefined}
+                  onAnimationEnd={(event) => {
+                    if (event.animationName === "store-row-out") {
+                      remove(key);
+                      setLeaving((keys) => keys.filter((k) => k !== key));
+                    }
+                  }}
+                >
                   <SheetClose asChild>
                     <Link
                       href={`/san-pham/${product.slug}`}
@@ -121,18 +168,22 @@ function CartDrawer() {
                         <button
                           type="button"
                           aria-label={`Giảm số lượng ${product.name}`}
-                          onClick={() => update(key, quantity - 1)}
+                          onClick={() => changeQuantity(key, quantity - 1)}
                         >
                           <Minus size={14} />
                         </button>
-                        <span aria-label={`Số lượng ${product.name}`}>
+                        <span
+                          key={quantity}
+                          aria-label={`Số lượng ${product.name}`}
+                          data-changed={changed === key || undefined}
+                        >
                           {quantity}
                         </span>
                         <button
                           type="button"
                           aria-label={`Tăng số lượng ${product.name}`}
                           disabled={quantity >= Math.min(10, product.stock)}
-                          onClick={() => update(key, quantity + 1)}
+                          onClick={() => changeQuantity(key, quantity + 1)}
                         >
                           <Plus size={14} />
                         </button>
@@ -141,7 +192,7 @@ function CartDrawer() {
                         type="button"
                         className="store-icon-button"
                         aria-label={`Xóa ${product.name}`}
-                        onClick={() => remove(key)}
+                        onClick={() => leave(key)}
                       >
                         <Trash2 size={16} />
                       </button>
