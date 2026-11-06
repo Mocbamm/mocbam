@@ -104,3 +104,29 @@ test("about invitation shows a heading with a smaller sentence", async ({
     page.getByRole("link", { name: "Chia sẻ cùng Mộc Bàm" }),
   ).toBeVisible();
 });
+
+test("header Sản phẩm reveals the product lines on hover and still opens all products", async ({
+  page,
+}) => {
+  await page.goto("/blog");
+  const navigation = page.getByRole("navigation", { name: "Điều hướng chính" });
+  const beads = navigation.getByRole("link", { name: "Chuỗi", exact: true });
+  await expect(beads).toBeHidden();
+  const products = navigation.getByRole("link", {
+    name: "Sản phẩm",
+    exact: true,
+  });
+  await products.hover();
+  await expect(beads).toBeVisible();
+  await navigation.getByRole("link", { name: "Búp bê", exact: true }).click();
+  await expect(page).toHaveURL(/danh-muc=nhan-vat/);
+  await page.mouse.move(640, 700);
+  await expect(beads).toBeHidden();
+  await products.click();
+  await expect(page).toHaveURL(/\/san-pham$/);
+  // Keyboard users reach the lines with Tab.
+  await products.focus();
+  await page.keyboard.press("Tab");
+  await expect(beads).toBeFocused();
+  await expect(beads).toBeVisible();
+});

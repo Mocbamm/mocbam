@@ -230,13 +230,46 @@
   font-size: 14px;
   white-space: nowrap;
 }
-.store-desktop-nav > a {
+.store-desktop-nav > a,
+.store-nav-products > a {
   padding-block: 14px;
 }
 .store-desktop-nav > a:hover,
-.store-desktop-nav > a[aria-current="page"] {
+.store-desktop-nav > a[aria-current="page"],
+.store-nav-products > a:hover,
+.store-nav-products > a[aria-current="page"] {
   text-decoration: underline;
   text-underline-offset: 6px;
+}
+/* The product lines open while the pointer rests on "Sản phẩm", or while
+   keyboard focus is inside it; a mouse click leaves it closed. */
+.store-nav-products {
+  position: relative;
+}
+.store-nav-products > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.store-nav-products > a svg {
+  transition: rotate 220ms ease;
+}
+.store-nav-products:is(:hover, :has(:focus-visible)) > a svg {
+  rotate: 180deg;
+}
+.store-nav-products > .store-nav-submenu {
+  display: none;
+  top: 100%;
+  left: -28px;
+  min-width: 200px;
+}
+.store-nav-products:is(:hover, :has(:focus-visible)) > .store-nav-submenu {
+  display: block;
+}
+/* It opens flush under the link, so it needs no hover bridge, which would
+   otherwise cover the link and swallow the click. */
+.store-nav-products > .store-nav-submenu::before {
+  content: none;
 }
 .store-policy-menu > button {
   display: inline-flex;

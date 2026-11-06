@@ -316,23 +316,41 @@ export function StoreHeader() {
           </Sheet>
         </div>
         <nav className="store-desktop-nav" aria-label="Điều hướng chính">
-          {navigation.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={
-                (
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href)
-                )
-                  ? "page"
-                  : undefined
-              }
-            >
-              {item.text}
-            </Link>
-          ))}
+          {navigation.map((item) => {
+            const link = (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={
+                  (
+                    item.href === "/"
+                      ? pathname === "/"
+                      : pathname.startsWith(item.href)
+                  )
+                    ? "page"
+                    : undefined
+                }
+              >
+                {item.text}
+                {item.href === "/san-pham" ? <ChevronDown size={12} /> : null}
+              </Link>
+            );
+            // Owner feedback 06/11: hovering "Sản phẩm" shows the two product
+            // lines; clicking it still opens every product.
+            return item.href === "/san-pham" ? (
+              <div key={item.href} className="store-nav-products">
+                {link}
+                <div className="store-policy-dropdown store-nav-submenu">
+                  <div>
+                    <Link href="/san-pham?danh-muc=chuoi">Chuỗi</Link>
+                    <Link href="/san-pham?danh-muc=nhan-vat">Búp bê</Link>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              link
+            );
+          })}
           <div
             className="store-policy-menu"
             onMouseEnter={openPolicy}
