@@ -898,3 +898,26 @@
 .store-product-grid[data-browsed] {
   animation: store-rise-in 300ms var(--ease-soft);
 }
+/* Public voucher price: new price first, original struck through beside it. */
+.store-price-sale {
+  color: #a4442f;
+}
+.store-price-was {
+  margin-left: 4px;
+  color: #8b947d;
+  font-size: 0.78em;
+  font-weight: 400;
+  text-decoration-thickness: 1px;
+}
+.store-price-code {
+  display: block;
+  margin-top: 6px;
+  color: #68795a;
+  font-size: 13px;
+  font-weight: 400;
+}
+.store-price-code strong {
+  color: #2a472b;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}

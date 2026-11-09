@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { money } from "./format";
+import { useSales } from "./sale-context";
+import { cartSale } from "@/lib/sale-price";
 import { AddressFields } from "./address-fields";
 import { saveOrderReceipt } from "@/lib/saved-orders";
 import {
@@ -76,6 +78,14 @@ export function CartScreen({
   const { items, subtotal, ready, update, remove } = useCart();
   const offer = freeShipping(subtotal, freeShippingThreshold);
   const estimate = offer.free ? 0 : shippingFee;
+  const sale = cartSale(
+    useSales(),
+    items.map(({ product, quantity }) => ({
+      product_id: product.id,
+      price: product.price,
+      quantity,
+    })),
+  );
   if (!ready)
     return (
       <p className="py-20 text-center text-sm text-[#7c866b]">
@@ -179,10 +189,23 @@ export function CartScreen({
                   : money(estimate)}
             </span>
           </p>
+          {sale ? (
+            <p className="flex justify-between gap-4">
+              <span>
+                Ưu đãi ({sale.code})
+                <span className="block text-[11px] text-[#8b947d]">
+                  Tự áp dụng ở bước đặt hàng
+                </span>
+              </span>
+              <span>−{money(sale.amount)}</span>
+            </p>
+          ) : null}
           <FreeShippingNote offer={offer} threshold={freeShippingThreshold} />
           <p className="flex justify-between border-t border-[#d1d9c2] pt-5 text-base font-medium text-[#29412d]">
             <span>Tổng dự kiến</span>
-            <span>{money(subtotal + (estimate ?? 0))}</span>
+            <span>
+              {money(subtotal + (estimate ?? 0) - (sale?.amount ?? 0))}
+            </span>
           </p>
         </div>
         <Button asChild className="mt-6 h-12 w-full">
@@ -222,6 +245,7 @@ export function CheckoutScreen({
   signedIn?: boolean;
 }) {
   const { items, subtotal, ready, clear } = useCart();
+  const sales = useSales();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [destination, setDestination] = useState({
@@ -354,8 +378,28 @@ export function CheckoutScreen({
   const idempotency = useRef("");
   const submittedDraft = useRef("");
   const started = useRef(false);
-  async function applyDiscount() {
-    if (busy || quoting || !configured || !discountCode.trim()) return;
+  // A live public voucher is filled in for the customer, matching the sale
+  // prices shown on product cards. A failed automatic try stays silent.
+  const autoDiscountTried = useRef(false);
+  useEffect(() => {
+    if (!ready || !items.length || !configured || autoDiscountTried.current)
+      return;
+    autoDiscountTried.current = true;
+    const best = cartSale(
+      sales,
+      items.map(({ product, quantity }) => ({
+        product_id: product.id,
+        price: product.price,
+        quantity,
+      })),
+    );
+    // A successful quote fills the code field itself.
+    if (best && !discountCode.trim()) void applyDiscount(best.code, true);
+    // Runs once, when the cart first becomes ready.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, items.length, configured]);
+  async function applyDiscount(code = discountCode, silent = false) {
+    if (busy || quoting || !configured || !code.trim()) return;
     setQuoting(true);
     setDiscountError("");
     setDiscount(null);
@@ -364,7 +408,7 @@ export function CheckoutScreen({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: discountCode,
+          code,
           items: items.map(({ product, quantity, variant_id }) => ({
             product_id: product.id,
             ...(variant_id ? { variant_id } : {}),
@@ -377,9 +421,10 @@ export function CheckoutScreen({
       setDiscountCode(result.code);
       setDiscount({ ...result, cart_fingerprint: cartFingerprint });
     } catch (cause) {
-      setDiscountError(
-        cause instanceof Error ? cause.message : "Chưa thể kiểm tra ưu đãi.",
-      );
+      if (!silent)
+        setDiscountError(
+          cause instanceof Error ? cause.message : "Chưa thể kiểm tra ưu đãi.",
+        );
     } finally {
       setQuoting(false);
     }
@@ -706,7 +751,7 @@ export function CheckoutScreen({
               type="button"
               variant="outline"
               disabled={busy || !configured || quoting || !discountCode.trim()}
-              onClick={applyDiscount}
+              onClick={() => void applyDiscount()}
             >
               {quoting ? "Đang kiểm tra..." : "Áp dụng"}
             </Button>

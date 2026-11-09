@@ -11,6 +11,7 @@ vi.mock("react", async (original) => ({
   useEffect: () => {},
 }));
 vi.mock("@/lib/cart", () => ({ useCart: hooks.cart }));
+vi.mock("@/components/store/sale-context", () => ({ useSales: () => [] }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 type Props = Record<string, unknown> & { children?: ReactNode };

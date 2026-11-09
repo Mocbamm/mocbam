@@ -1,9 +1,13 @@
+import { cache } from "react";
 import { requireAdmin } from "./auth";
 import { databaseError, HttpError } from "./http";
 import { isConfigured } from "./supabase/config";
 import { createServerSupabase } from "./supabase/server";
 import { createServiceSupabase } from "./supabase/admin";
 import type { Discount } from "./types";
+import { calculateDiscount } from "./sale-price";
+
+export { calculateDiscount };
 
 export const discountColumns =
   "id,code,title,description,kind,value,min_subtotal,max_discount,starts_at,ends_at,active,public_campaign,scope,product_ids,customer_user_ids,customer_user_id,max_uses,used_count,created_at";
@@ -28,15 +32,7 @@ export function discountIsAvailable(
   );
 }
 
-export function calculateDiscount(discount: Discount, subtotal: number) {
-  const amount =
-    discount.kind === "percentage"
-      ? Math.floor((subtotal * discount.value) / 100)
-      : discount.value;
-  return Math.min(subtotal, amount, discount.max_discount ?? subtotal);
-}
-
-export async function getPublicPromotions(): Promise<Discount[]> {
+export const getPublicPromotions = cache(async (): Promise<Discount[]> => {
   if (!isConfigured()) return [];
   const db = await createServerSupabase();
   const { data, error } = await db
@@ -50,7 +46,7 @@ export async function getPublicPromotions(): Promise<Discount[]> {
   return (data as Discount[]).filter((discount) =>
     discountIsAvailable(discount, null),
   );
-}
+});
 
 export async function getAdminDiscounts(): Promise<Discount[]> {
   const { supabase } = await requireAdmin();

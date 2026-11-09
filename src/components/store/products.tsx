@@ -20,8 +20,55 @@ import { trackStoreEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { money } from "./format";
+import { useSales } from "./sale-context";
+import { salePrice } from "@/lib/sale-price";
 import { ProductGallery, productImages } from "./product-media";
 import "./catalog.css";
+
+// Original price struck through next to the price after the public voucher.
+export function Price({
+  productId,
+  price,
+  className,
+  prefix = "",
+  live,
+  showCode,
+}: {
+  productId: string;
+  price: number;
+  className: string;
+  prefix?: string;
+  live?: boolean;
+  showCode?: boolean;
+}) {
+  const sale = salePrice(useSales(), productId, price);
+  return (
+    <p className={className} aria-live={live ? "polite" : undefined}>
+      {sale ? (
+        <>
+          <span className="store-price-sale">
+            {prefix}
+            {money(sale.price)}
+          </span>{" "}
+          <s className="store-price-was">
+            <span className="sr-only">Giá gốc </span>
+            {money(price)}
+          </s>
+          {showCode ? (
+            <span className="store-price-code">
+              Giá khi dùng mã <strong>{sale.code}</strong> lúc thanh toán
+            </span>
+          ) : null}
+        </>
+      ) : (
+        <>
+          {prefix}
+          {money(price)}
+        </>
+      )}
+    </p>
+  );
+}
 
 export function ProductCard({
   product,
@@ -104,10 +151,12 @@ export function ProductCard({
         >
           {product.name}
         </Link>
-        <p className="store-product-card-price">
-          {product.variants?.length ? "Từ " : ""}
-          {money(product.price)}
-        </p>
+        <Price
+          className="store-product-card-price"
+          productId={product.id}
+          price={product.price}
+          prefix={product.variants?.length ? "Từ " : ""}
+        />
         {images.length > 1 ? (
           <p id={photoHintId} className="store-product-photo-hint">
             Bấm ảnh để xem góc khác
@@ -518,9 +567,13 @@ export function ProductActions({
   }, [product]);
   return (
     <div className="store-product-actions">
-      <p className="store-product-detail-price" aria-live="polite">
-        {money(option?.price ?? product.price)}
-      </p>
+      <Price
+        className="store-product-detail-price"
+        productId={product.id}
+        price={option?.price ?? product.price}
+        live
+        showCode
+      />
       {product.variants?.length ? (
         <div className="store-product-variant">
           <label
