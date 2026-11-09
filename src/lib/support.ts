@@ -31,5 +31,5 @@ export function mergeSupportMessages(
 }
 
 export function supportAcknowledgement(hours: string) {
-  return `Cảm ơn bạn đã nhắn cho Mộc! Mộc đã ghi nhận câu hỏi của bạn và sẽ nhờ nhân viên kiểm tra lại. Bạn vui lòng đợi Mộc phản hồi trong giờ làm việc (${hours || "Thứ 2 – Thứ 7, từ 09:00 – 18:00"}) nhé.`;
+  return `Cảm ơn bạn đã nhắn cho Mộc Bàm! Mộc Bàm đã ghi nhận câu hỏi của bạn và sẽ nhờ nhân viên kiểm tra lại. Bạn vui lòng đợi Mộc Bàm phản hồi trong giờ làm việc (${hours || "Thứ 2 – Thứ 7, từ 09:00 – 18:00"}) nhé.`;
 }

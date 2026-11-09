@@ -102,7 +102,7 @@ test("bank receipt shows exact instructions and removes QR after payment confirm
   };
   await page.getByRole("button", { name: "Cập nhật trạng thái" }).click();
   await expect(
-    page.getByRole("heading", { name: "Mộc đã xác nhận thanh toán." }),
+    page.getByRole("heading", { name: "Mộc Bàm đã xác nhận thanh toán" }),
   ).toBeVisible();
   await expect(
     page.getByRole("img", { name: /Mã QR chuyển khoản/ }),
@@ -140,7 +140,7 @@ for (const state of [
     );
     await page.goto(`/don-hang/${order.id}?token=browser-fixture`);
     await expect(
-      page.getByRole("heading", { name: "Đơn hàng đã được hủy." }),
+      page.getByRole("heading", { name: "Đơn hàng đã được hủy" }),
     ).toBeVisible();
     await expect(
       page.getByRole("img", { name: /Mã QR chuyển khoản/ }),
@@ -156,7 +156,7 @@ for (const state of [
       ).toBeVisible();
     } else if (state === "refunded") {
       await expect(
-        page.getByText("Mộc đã xác nhận hoàn tiền vào", { exact: false }),
+        page.getByText("Mộc Bàm đã xác nhận hoàn tiền vào", { exact: false }),
       ).toBeVisible();
     } else {
       await expect(

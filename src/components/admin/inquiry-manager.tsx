@@ -277,7 +277,7 @@ export function InquiryManager({
               </Button>
               <a
                 className="block underline"
-                href={`mailto:${inquiry.email}?subject=${encodeURIComponent("Mộc Bàm phản hồi lời nhắn của bạn")}&body=${encodeURIComponent("Chào " + inquiry.name + ",\n\nMộc đã nhận được lời nhắn:\n" + inquiry.message + "\n\nPhản hồi của Mộc:\n")}`}
+                href={`mailto:${inquiry.email}?subject=${encodeURIComponent("Mộc Bàm phản hồi lời nhắn của bạn")}&body=${encodeURIComponent("Chào " + inquiry.name + ",\n\nMộc Bàm đã nhận được lời nhắn:\n" + inquiry.message + "\n\nPhản hồi của Mộc Bàm:\n")}`}
               >
                 Mở ứng dụng email · {inquiry.email}
               </a>

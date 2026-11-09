@@ -10,7 +10,7 @@ test("cart drawer shares quantities, totals and persistence with the header cart
   const drawer = page.getByRole("dialog", { name: /^Giỏ hàng/ });
   await expect(
     drawer.getByRole("heading", {
-      name: "Giỏ hàng đang chờ bạn.",
+      name: "Giỏ hàng đang chờ bạn",
       exact: true,
     }),
   ).toBeVisible();
@@ -64,7 +64,7 @@ test("cart drawer shares quantities, totals and persistence with the header cart
     .click();
   await expect(
     drawer.getByRole("heading", {
-      name: "Giỏ hàng đang chờ bạn.",
+      name: "Giỏ hàng đang chờ bạn",
       exact: true,
     }),
   ).toBeVisible();

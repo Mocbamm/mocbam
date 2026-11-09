@@ -12,8 +12,8 @@ export default async function CheckoutPage() {
   const profile = user ? await getCustomerProfile() : null;
   return (
     <div className="store-page store-checkout-page">
-      <p className="store-eyebrow">Một chút Mộc sắp đến với bạn</p>
-      <h1 className="store-page-title mb-10">Gửi thương, nhận Mộc.</h1>
+      <p className="store-eyebrow">Một chút Mộc Bàm sắp đến với bạn</p>
+      <h1 className="store-page-title mb-10">Gửi thương, nhận Mộc Bàm</h1>
       <CheckoutScreen
         shippingFee={settings.shipping_fee}
         shippingZones={settings.shipping_zones}

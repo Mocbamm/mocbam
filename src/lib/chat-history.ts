@@ -24,7 +24,7 @@ export const chatHistorySchema = z
 export type ChatMessage = z.infer<typeof chatHistorySchema>["messages"][number];
 export const chatGreeting: ChatMessage = {
   from: "shop",
-  text: "Chào bạn, mình là trợ lý nhỏ của Mộc 🌿 Bạn muốn tìm hiểu điều gì?",
+  text: "Chào bạn, mình là trợ lý nhỏ của Mộc Bàm 🌿 Bạn muốn tìm hiểu điều gì?",
 };
 
 export function boundedHistory(messages: ChatMessage[]) {

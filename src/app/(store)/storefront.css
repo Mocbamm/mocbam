@@ -26,6 +26,8 @@
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
+  /* Coiny has one weight; show it as drawn instead of a smeared faux bold. */
+  font-synthesis-weight: none;
 }
 .storefront {
   min-height: 100vh;
@@ -43,8 +45,8 @@
 .storefront-overlay .font-serif {
   font-family: var(--font-store-heading), Arial, sans-serif;
   font-style: normal;
-  font-weight: 600;
-  letter-spacing: -0.035em;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 .storefront [data-slot="button"],
 .storefront-overlay [data-slot="button"] {
@@ -209,9 +211,9 @@
 .store-brand > span {
   font-family: var(--font-store-heading), Arial, sans-serif;
   font-size: 36px;
-  font-weight: 600;
+  font-weight: 400;
   line-height: 1.2;
-  letter-spacing: -0.045em;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 .store-brand small {
@@ -229,6 +231,18 @@
   justify-self: start;
   font-size: 14px;
   white-space: nowrap;
+}
+/* The menu is split around the centered brand; each half keeps the same
+   distance from it. The second half shares the last column with the icons. */
+.store-desktop-nav:not(.store-desktop-nav-end) {
+  justify-self: end;
+  padding-right: clamp(24px, 4vw - 20px, 56px);
+}
+.store-desktop-nav-end {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: start;
+  padding-left: clamp(24px, 4vw - 20px, 56px);
 }
 .store-desktop-nav > a,
 .store-nav-products > a {
@@ -271,6 +285,9 @@
 .store-nav-products > .store-nav-submenu::before {
   content: none;
 }
+.store-policy-menu {
+  position: relative;
+}
 .store-policy-menu > button {
   display: inline-flex;
   align-items: center;
@@ -280,7 +297,8 @@
 .store-policy-dropdown {
   position: absolute;
   top: calc(100% - 8px);
-  left: 32px;
+  /* Opens under its own link, lined up with its text. */
+  left: -28px;
   width: max-content;
   min-width: 300px;
   padding: 14px 28px;
@@ -312,6 +330,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  grid-column: 3;
+  grid-row: 1;
   justify-self: end;
 }
 .store-header-actions > button {
@@ -609,7 +629,7 @@
   line-height: 1.15;
   white-space: pre-line;
   color: #fff;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   text-shadow: 0 2px 16px #142d1c60;
   margin-bottom: 28px;
 }
@@ -739,11 +759,41 @@
 .store-home-contact > div > h2 {
   margin-bottom: 24px;
 }
+/* Owner brief 09/11: the form card blended into the page, so it takes the
+   craft story's forest green; fields stay light so they read as fields. */
 .store-home-contact form {
-  border: 1px solid #dfded8;
-  background: #fff;
+  border: 1px solid #2a472b;
+  background: #2a472b;
+  color: #f5f4f2;
   border-radius: 16px;
   padding: 28px;
+}
+.store-home-contact form label {
+  color: #f5f4f2;
+}
+.store-home-contact form :is(input, textarea) {
+  border-color: #f5f4f2;
+  background: #f5f4f2;
+  color: #2a472b;
+}
+.store-home-contact form :is(input, textarea)::placeholder {
+  color: #7d8877;
+}
+.store-home-contact form [data-slot="button"] {
+  background: #f5f4f2;
+  color: #2a472b;
+}
+.store-home-contact form [data-slot="button"]:hover:not(:disabled) {
+  background: #e3e9dc;
+}
+.store-home-contact form > p:last-child {
+  color: #c9d4c2;
+}
+.store-home-contact form > [role="alert"] {
+  color: #ffd9cf;
+}
+.store-home-contact :is(form, .store-contact-success) :focus-visible {
+  outline-color: #f5f4f2;
 }
 /* Footer: the same forest surface as the craft story. */
 .store-footer {
@@ -1352,7 +1402,7 @@ body:has(.storefront) [aria-label="Lựa chọn cookie"] [data-slot="button"] {
   font-size: clamp(26px, 2.6vw, 38px);
   font-weight: 600;
   line-height: 1.2;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   margin-bottom: 16px;
   text-shadow: 0 2px 12px #142d1c60;
 }

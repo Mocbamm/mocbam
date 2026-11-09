@@ -18,7 +18,7 @@ export default async function AdminLayout({
 }) {
   if (!isConfigured())
     return (
-      <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 text-center">
+      <div className="admin-app mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 text-center">
         <Sprout className="mb-5 size-12 text-[#37533c]" />
         <h1 className="text-3xl font-semibold">Kết nối cửa hàng của bạn</h1>
         <p className="mt-4 text-sm leading-7 text-[#697465]">
@@ -38,7 +38,7 @@ export default async function AdminLayout({
   if (!user) redirect("/tai-khoan?next=/admin");
   if (!(await isAdmin(user)))
     return (
-      <div className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 text-center">
+      <div className="admin-app mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center px-6 text-center">
         <ShieldCheck className="mb-5 size-12 text-[#37533c]" />
         <h1 className="text-3xl font-semibold">
           Tài khoản chưa có quyền quản trị

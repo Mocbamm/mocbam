@@ -107,7 +107,9 @@ test("policy dropdown opens only the selected policy and card buy-now reaches ch
   page,
 }) => {
   await page.goto("/");
-  const navigation = page.getByRole("navigation", { name: "Điều hướng chính" });
+  const navigation = page.getByRole("navigation", {
+    name: "Nhật ký và chính sách",
+  });
   await navigation
     .getByRole("button", { name: "Chính sách", exact: true })
     .click();
@@ -162,13 +164,16 @@ test("home navigation and hover policy dropdown remain accessible", async ({
   await expect(
     page.getByRole("link", { name: "Mộc Bàm - Trang chủ" }),
   ).toContainText("MỘC BÀM");
-  const trigger = navigation.getByRole("button", {
+  const policyNavigation = page.getByRole("navigation", {
+    name: "Nhật ký và chính sách",
+  });
+  const trigger = policyNavigation.getByRole("button", {
     name: "Chính sách",
     exact: true,
   });
   await trigger.hover();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
-  await navigation
+  await policyNavigation
     .getByRole("link", { name: "Chính sách giao hàng", exact: true })
     .hover();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");

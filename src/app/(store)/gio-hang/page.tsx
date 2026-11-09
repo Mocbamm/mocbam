@@ -6,7 +6,7 @@ export default async function CartPage() {
   return (
     <div className="store-page store-cart-page">
       <p className="store-eyebrow">Đã chọn bằng thương yêu</p>
-      <h1 className="store-page-title mb-10">Giỏ hàng của bạn.</h1>
+      <h1 className="store-page-title mb-10">Giỏ hàng của bạn</h1>
       <CartScreen
         shippingFee={
           settings.shipping_zones_only ? null : settings.shipping_fee

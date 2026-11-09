@@ -24,7 +24,7 @@ export function InquiryReplyComposer({
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [subject, setSubject] = useState("Mộc Bàm phản hồi lời nhắn của bạn");
   const [body, setBody] = useState(
-    `Chào ${inquiry.name || "bạn"},\n\nCảm ơn bạn đã nhắn cho Mộc.\n\n\nThân mến,\nMộc Bàm`,
+    `Chào ${inquiry.name || "bạn"},\n\nCảm ơn bạn đã nhắn cho Mộc Bàm.\n\n\nThân mến,\nMộc Bàm`,
   );
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [history, setHistory] = useState<InquiryEmailReply[]>([]);

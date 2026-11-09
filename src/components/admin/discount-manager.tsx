@@ -145,7 +145,7 @@ export function DiscountManager({
     setEmailDiscount(discount);
     setEmailSubject(`${discount.title} — ưu đãi riêng từ Mộc Bàm`);
     setEmailBody(
-      "Chào {ten_khach},\n\nMộc Bàm gửi bạn một ưu đãi riêng để cảm ơn bạn đã đồng hành cùng Mộc. Thông tin mã ưu đãi và cách sử dụng ở bên dưới.\n\nCảm ơn bạn,\nMộc Bàm",
+      "Chào {ten_khach},\n\nMộc Bàm gửi bạn một ưu đãi riêng để cảm ơn bạn đã đồng hành cùng Mộc Bàm. Thông tin mã ưu đãi và cách sử dụng ở bên dưới.\n\nCảm ơn bạn,\nMộc Bàm",
     );
     setEmailRecipients(
       privateVoucherCustomerIds(discount)

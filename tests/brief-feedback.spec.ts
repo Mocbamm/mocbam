@@ -5,7 +5,9 @@ test("policy menu lists the brief's policies in order without extras", async ({
   page,
 }) => {
   await page.goto("/");
-  const navigation = page.getByRole("navigation", { name: "Điều hướng chính" });
+  const navigation = page.getByRole("navigation", {
+    name: "Nhật ký và chính sách",
+  });
   await navigation
     .getByRole("button", { name: "Chính sách", exact: true })
     .click();

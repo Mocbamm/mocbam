@@ -109,3 +109,19 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Owner brief 09/11: admin uses the storefront's fonts as well, Mali for text
+   and Coiny for headings. Coiny has one weight, so no faux bold. */
+.admin-app {
+  font-family: var(--font-store-body), Arial, sans-serif;
+  font-synthesis-weight: none;
+}
+.admin-app :is(h1, h2, h3),
+.admin-app .admin-brand {
+  font-family: var(--font-store-heading), Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.admin-app .admin-brand > span {
+  font-family: var(--font-store-body), Arial, sans-serif;
+}

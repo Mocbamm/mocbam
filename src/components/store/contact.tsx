@@ -60,7 +60,7 @@ export function ContactForm({
       >
         <Check size={27} className="text-[#627f4d]" />
         <h2 className="mt-5 font-serif text-3xl text-[#29412d]">
-          Mộc đã nhận lời nhắn.
+          Mộc Bàm đã nhận lời nhắn
         </h2>
         <p className="mt-4 text-sm leading-7 text-[#7c866b]">
           Cảm ơn bạn đã ghé. Chúng mình sẽ trao đổi qua thông tin bạn để lại.
@@ -122,7 +122,7 @@ export function ContactForm({
             name="message"
             required
             maxLength={4000}
-            placeholder="Bạn muốn kể Mộc nghe điều gì?"
+            placeholder="Bạn muốn kể Mộc Bàm nghe điều gì?"
             className="mt-2 min-h-40"
           />
         </div>

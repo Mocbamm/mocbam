@@ -68,13 +68,6 @@ export default async function HomePage() {
       image: "/images/verdant/bracelet-photo.webp",
     },
   };
-  const heroNote = content["home-hero-note"];
-  const defaultNote = contentSections.find(
-    (section) => section.key === "home-hero-note",
-  )!;
-  const customNote =
-    heroNote.title !== defaultNote.title ||
-    heroNote.content !== defaultNote.content;
   return (
     <>
       <JsonLd data={organizationJsonLd(settings)} />
@@ -165,23 +158,24 @@ export default async function HomePage() {
       </section>
       <section
         className="store-benefits store-container"
-        aria-label="Những điều Mộc trân trọng"
+        aria-label="Những điều Mộc Bàm trân trọng"
       >
+        {/* Owner brief 09/11: fixed wording for the three values. */}
         {[
           {
             icon: HandHeart,
-            title: customNote ? heroNote.title : "Hoàn thiện thủ công",
-            text: customNote ? heroNote.content : "Tỉ mỉ trong từng chi tiết",
+            title: "Thủ công từ tâm",
+            text: "Chăm chút từng chi tiết nhỏ",
           },
           {
             icon: Leaf,
-            title: "Mỗi vân gỗ một nét riêng",
-            text: "Không cái nào giống cái nào",
+            title: "Nét đẹp độc bản",
+            text: "Mỗi hạt mang một vẻ riêng",
           },
           {
             icon: Headset,
-            title: "Mộc luôn sẵn lòng hỗ trợ",
-            text: "Luôn ở đây, cùng bạn",
+            title: "Tận tâm cùng bạn",
+            text: "Đồng hành từ lựa chọn đến trải nghiệm",
           },
         ].map(({ icon: Icon, title, text }) => (
           <div key={title} className="store-benefit">

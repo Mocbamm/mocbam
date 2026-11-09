@@ -35,7 +35,7 @@ export default async function AccountPage({
           <div className="store-account-heading">
             <div>
               <p className="store-eyebrow">Rất vui gặp lại bạn</p>
-              <h1 className="store-page-title">Góc nhỏ của bạn.</h1>
+              <h1 className="store-page-title">Góc nhỏ của bạn</h1>
               <p className="mt-4 text-xs text-[#7c866b]">{user.email}</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -52,7 +52,7 @@ export default async function AccountPage({
             </div>
           </div>
           {profile ? <ProfileForm profile={profile} /> : null}
-          <h2 className="store-section-title mb-5">Những đơn hàng đã gửi</h2>
+          <h2 className="store-section-title mb-5">Đơn hàng của bạn</h2>
           <AccountOrders />
         </>
       ) : (
@@ -72,8 +72,9 @@ export default async function AccountPage({
             strokeWidth={1.2}
             className="mx-auto text-[#8b9b79]"
           />
-          <p className="store-eyebrow mt-6">Chào bạn đến với Mộc</p>
-          <h1 className="store-page-title mt-4">Một góc nhỏ dành riêng.</h1>
+          {/* Owner brief 09/11: no big title under the greeting. */}
+          <h1 className="sr-only">Tài khoản</h1>
+          <p className="store-eyebrow mt-6">Chào bạn đến với Mộc Bàm</p>
           <p className="store-page-description mx-auto">
             Đăng nhập bằng Google hoặc email để lưu đơn hàng và theo dõi hành
             trình những điều bạn chọn.

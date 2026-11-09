@@ -71,7 +71,7 @@ test("staff chat opens and can be closed without blocking browsing", async ({
 }) => {
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Trò chuyện với Mộc", exact: true })
+    .getByRole("button", { name: "Trò chuyện với Mộc Bàm", exact: true })
     .click();
   const region = page.getByRole("region", { name: "Trò chuyện với Mộc Bàm" });
   await expect(region).toBeVisible();
@@ -80,7 +80,7 @@ test("staff chat opens and can be closed without blocking browsing", async ({
     .click();
   await expect(region).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Trò chuyện với Mộc", exact: true }),
+    page.getByRole("button", { name: "Trò chuyện với Mộc Bàm", exact: true }),
   ).toHaveAttribute("aria-expanded", "false");
 });
 

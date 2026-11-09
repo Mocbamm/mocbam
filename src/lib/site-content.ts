@@ -25,7 +25,7 @@ export const contentSections: ContentSection[] = [
     group: "home",
     hidden: true,
     label: "Lời chào đầu trang",
-    title: "Một chút mộc.\nMột chút thương.",
+    title: "Một chút mộc\nMột chút thương",
     content:
       "Những người bạn nhỏ từ gỗ, mang theo câu chuyện riêng và niềm vui giản dị. Để mỗi ngày của bạn thêm một chút đáng yêu.",
   },
@@ -115,7 +115,7 @@ export const contentSections: ContentSection[] = [
     group: "home",
     label: "Tiêu đề sản phẩm nổi bật",
     title: "Sản phẩm nổi bật",
-    content: "Mộc chọn cho bạn",
+    content: "Mộc Bàm chọn cho bạn",
   },
   {
     key: "home-intro",
@@ -131,7 +131,7 @@ export const contentSections: ContentSection[] = [
     hint: "Khối giới thiệu màu xanh trên trang chủ. Ảnh ngang đúng tỉ lệ 3 : 2, kích thước 1800 × 1200 px (tối thiểu 1200 × 800 px). Ảnh đúng tỉ lệ này hiện trọn vẹn, không bị cắt; ảnh khác tỉ lệ sẽ bị cắt bớt hai bên hoặc trên dưới.",
     aspectRatio: "3 / 2",
     kind: "media",
-    title: "Một người bạn gỗ, được Mộc nâng niu",
+    title: "Một người bạn gỗ, được Mộc Bàm nâng niu",
     content: "/images/verdant/bear-photo.webp",
   },
   {
@@ -145,7 +145,7 @@ export const contentSections: ContentSection[] = [
     key: "home-contact",
     group: "home",
     label: "Lời mời liên hệ",
-    title: "Gửi Mộc một lời nhắn.",
+    title: "Gửi Mộc Bàm một lời nhắn",
     content:
       "Một câu hỏi, một ý tưởng, hay chỉ muốn chào nhau. Chúng mình luôn sẵn lòng nghe bạn.",
   },
@@ -245,7 +245,7 @@ export const contentSections: ContentSection[] = [
     content:
       "## 1. Quy định chung\n\nWebsite Mộc Bàm được xây dựng nhằm giới thiệu sản phẩm decor handmade và hỗ trợ khách hàng tìm hiểu, lựa chọn, đặt mua sản phẩm.\nKhi sử dụng website, khách hàng cần tuân thủ các quy định được nêu trong điều khoản này cũng như các chính sách liên quan được công bố trên website.\nMộc Bàm có quyền cập nhật hoặc điều chỉnh nội dung website và các điều khoản khi cần thiết để phù hợp với hoạt động kinh doanh và quy định hiện hành.\n\n## 2. Trách nhiệm của khách hàng\n\nKhi đặt hàng trên website, khách hàng có trách nhiệm:\n- Cung cấp đầy đủ và chính xác thông tin cá nhân, thông tin liên hệ và địa chỉ nhận hàng.\n- Kiểm tra kỹ sản phẩm, số lượng, giá bán và tổng giá trị đơn hàng trước khi xác nhận đặt mua.\n- Lựa chọn phương thức thanh toán phù hợp và thực hiện thanh toán theo hướng dẫn.\n- Phối hợp với Mộc Bàm khi cần xác nhận hoặc làm rõ thông tin liên quan đến đơn hàng.\nKhách hàng chịu trách nhiệm đối với tính chính xác của những thông tin mình cung cấp trong quá trình đặt hàng.\n\n## 3. Quy định về đơn hàng\n\nSau khi khách hàng hoàn tất đặt hàng, thông tin đơn hàng sẽ được ghi nhận để Mộc Bàm kiểm tra và xử lý.\nMộc Bàm có quyền từ chối hoặc hủy đơn hàng trong các trường hợp:\n- Không thể liên hệ với khách hàng để xác nhận những thông tin cần thiết.\n- Thông tin đặt hàng không chính xác hoặc không đầy đủ.\n- Sản phẩm đã hết hoặc không còn khả năng cung cấp.\nTrong trường hợp đơn hàng không thể tiếp tục xử lý hoặc cần điều chỉnh, Mộc Bàm sẽ thông báo và trao đổi với khách hàng về hướng giải quyết phù hợp.\n\n## 4. Thay đổi và hủy đơn hàng\n\nNếu muốn thay đổi thông tin hoặc hủy đơn hàng sau khi đặt mua, khách hàng vui lòng liên hệ Mộc Bàm trong thời gian sớm nhất.\nYêu cầu thay đổi hoặc hủy đơn sẽ được xem xét tùy theo tình trạng xử lý thực tế tại thời điểm tiếp nhận. Mộc Bàm sẽ trao đổi với khách hàng về khả năng thực hiện yêu cầu trước khi tiến hành điều chỉnh.\n\n## 5. Thông tin và hình ảnh sản phẩm\n\nMộc Bàm luôn cố gắng cung cấp hình ảnh và thông tin sản phẩm rõ ràng để khách hàng thuận tiện tham khảo và lựa chọn. Tuy nhiên, do đặc điểm của sản phẩm handmade, một số chi tiết về hình dáng, màu sắc hoặc cách sắp xếp có thể có khác biệt nhẹ giữa hình ảnh trên website và sản phẩm thực tế. Những khác biệt này xuất phát từ đặc trưng của quá trình thực hiện thủ công và không làm thay đổi mẫu sản phẩm mà khách hàng đã lựa chọn.\n\n## 6. Quyền sở hữu nội dung trên website\n\nHình ảnh sản phẩm, logo, bài viết, nội dung giới thiệu và các tài liệu được đăng tải trên website thuộc quyền quản lý hoặc quyền sử dụng hợp pháp của Mộc Bàm và các chủ thể có liên quan.\nMọi hành vi sao chép, sử dụng, chỉnh sửa hoặc đăng tải lại những nội dung này đều cần có sự đồng ý trước của Mộc Bàm hoặc chủ thể có quyền tương ứng.\nKhách hàng và các bên truy cập website không được tự ý sử dụng nội dung trên website cho mục đích cá nhân hoặc thương mại khi chưa được cho phép.\n\n## 7. Liên kết và các chính sách liên quan\n\nTrong quá trình sử dụng website, khách hàng có thể tham khảo thêm các chính sách được Mộc Bàm công bố, bao gồm:\n- Hướng dẫn mua hàng.\n- Chính sách giao hàng.\n- Phương thức thanh toán.\n- Chính sách đổi trả và hỗ trợ sau mua.\n- Quyền riêng tư.\n- Liên hệ\nCác chính sách này bổ sung thông tin và hướng dẫn cụ thể cho từng hoạt động mua sắm tại Mộc Bàm.\n\nMộc Bàm cảm ơn bạn đã dành thời gian tìm hiểu và tin tưởng lựa chọn chúng mình. Hy vọng bạn sẽ có trải nghiệm thật vui khi ghé thăm và mua sắm tại Mộc Bàm!",
   },
-    // Formerly the warranty policy; the owner rewrote it as the contact page.
+  // Formerly the warranty policy; the owner rewrote it as the contact page.
   {
     key: "warranty",
     group: "policies",
@@ -293,7 +293,8 @@ export function contentEntry(entries: SiteContent[], key: string): SiteContent {
     return {
       key,
       title: fallback.title,
-      content: replaced.content === undefined ? entry.content : fallback.content,
+      content:
+        replaced.content === undefined ? entry.content : fallback.content,
     };
   if (entry)
     return fallback?.kind === "media"

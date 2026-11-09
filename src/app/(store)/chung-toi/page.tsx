@@ -42,7 +42,7 @@ export default async function AboutPage() {
       </div>
       <section
         className="store-about-values"
-        aria-label="Những điều Mộc trân trọng"
+        aria-label="Những điều Mộc Bàm trân trọng"
       >
         <div className="grid gap-5 sm:grid-cols-3">
           {[

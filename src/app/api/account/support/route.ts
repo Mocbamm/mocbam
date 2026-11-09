@@ -12,7 +12,7 @@ import { createServerSupabase } from "@/lib/supabase/server";
 
 async function session() {
   const user = await getCurrentUser();
-  if (!user) throw new HttpError(401, "Đăng nhập để trò chuyện với Mộc.");
+  if (!user) throw new HttpError(401, "Đăng nhập để trò chuyện với Mộc Bàm.");
   return { user, db: await createServerSupabase() };
 }
 export async function GET() {

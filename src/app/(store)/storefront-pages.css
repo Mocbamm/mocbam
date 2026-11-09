@@ -21,7 +21,7 @@
   font-size: clamp(32px, 3.6vw, 48px);
   font-weight: 600;
   line-height: 1.2;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .storefront .store-page-description {
@@ -31,13 +31,17 @@
   font-size: 16px;
   line-height: 1.8;
 }
+/* Owner brief 09/11: the journal's intro sits on one line where it fits. */
+.storefront .store-journal-page > .store-page-description {
+  max-width: none;
+}
 
 .storefront .store-section-title {
   color: #2a472b;
   font-size: clamp(24px, 2.4vw, 32px);
   font-weight: 600;
   line-height: 1.3;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
 }
 
 .storefront .store-panel-title {
@@ -45,7 +49,7 @@
   font-size: 20px;
   font-weight: 600;
   line-height: 1.4;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
 }
 
 .storefront .store-back-link {
@@ -87,7 +91,7 @@
   font-size: 24px;
   font-weight: 600;
   line-height: 1.4;
-  letter-spacing: -0.025em;
+  letter-spacing: 0;
 }
 
 .storefront .store-prose :is(img, video) {
@@ -163,7 +167,7 @@
   font-size: 24px;
   font-weight: 600;
   line-height: 1.4;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .storefront .store-blog-excerpt {
@@ -423,7 +427,7 @@
   font-size: 18px;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .storefront .store-cart-remove {
@@ -473,7 +477,7 @@
 .storefront .store-order-summary h2 {
   font-size: 24px;
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .storefront .store-checkout-layout > div:first-child {
@@ -522,7 +526,7 @@
   font-size: clamp(28px, 3.4vw, 42px);
   font-weight: 600;
   line-height: 1.3;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
 }
 
 .storefront .store-order-panel {
@@ -542,7 +546,7 @@
   font-size: 24px;
   font-weight: 600;
   line-height: 1.4;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .storefront .store-order-line {

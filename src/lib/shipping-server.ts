@@ -10,7 +10,7 @@ export async function roadDistance(
   if (!key)
     throw new HttpError(
       503,
-      "Dịch vụ tính khoảng cách chưa được cấu hình. Vui lòng liên hệ Mộc.",
+      "Dịch vụ tính khoảng cách chưa được cấu hình. Vui lòng liên hệ Mộc Bàm.",
     );
   const wardSuffix = `, ${destination.ward.trim()}`;
   const address = destination.address.trim();
@@ -54,7 +54,7 @@ export async function roadDistance(
   if (!response.ok)
     throw new HttpError(
       503,
-      "Dịch vụ tính khoảng cách đang gián đoạn. Vui lòng thử lại hoặc liên hệ Mộc.",
+      "Dịch vụ tính khoảng cách đang gián đoạn. Vui lòng thử lại hoặc liên hệ Mộc Bàm.",
     );
   let data: unknown;
   try {

@@ -471,7 +471,7 @@
   font-family: var(--font-store-heading, sans-serif);
   font-size: clamp(30px, 3.2vw, 46px);
   line-height: 1.22;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   font-weight: 600;
 }
 .store-product-detail-price {
@@ -580,7 +580,7 @@
   font-family: var(--font-store-heading, sans-serif);
   font-size: 30px;
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 .store-product-section-heading > a {
   display: inline-flex;

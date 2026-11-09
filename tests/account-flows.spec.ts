@@ -28,7 +28,7 @@ test("chat requires an account and gives guests a direct contact alternative", a
 }) => {
   await page.goto("/");
   await page
-    .getByRole("button", { name: "Trò chuyện với Mộc", exact: true })
+    .getByRole("button", { name: "Trò chuyện với Mộc Bàm", exact: true })
     .click();
   await expect(
     page.getByRole("region", { name: "Trò chuyện với Mộc Bàm" }),

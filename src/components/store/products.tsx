@@ -254,7 +254,7 @@ export function Catalog({
                 </DialogPrimitive.Close>
               </div>
               <DialogPrimitive.Description className="store-filter-description">
-                Tìm một chút Mộc vừa ý bạn.
+                Tìm một chút Mộc Bàm vừa ý bạn.
               </DialogPrimitive.Description>
               <form
                 onSubmit={(event) => {
@@ -389,7 +389,7 @@ export function Catalog({
             value={sort}
             onChange={(event) => setSort(event.target.value)}
           >
-            <option value="featured">Mộc gợi ý</option>
+            <option value="featured">Gợi ý</option>
             <option value="newest">Mới nhất</option>
             <option value="price-asc">Giá thấp đến cao</option>
             <option value="price-desc">Giá cao đến thấp</option>

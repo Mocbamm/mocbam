@@ -3,7 +3,7 @@ import { getSettings, isConfigured } from "@/lib/catalog";
 import { ContactForm } from "@/components/store/contact";
 import { pageMetadata } from "@/lib/seo";
 export const metadata = pageMetadata({
-  title: "Liên hệ với Mộc",
+  title: "Liên hệ với Mộc Bàm",
   description:
     "Liên hệ Mộc Bàm để hỏi về sản phẩm handmade, đặt quà hoặc hỗ trợ đơn hàng. Chúng mình trả lời qua email, điện thoại và mạng xã hội.",
   path: "/lien-he",
@@ -13,10 +13,10 @@ export default async function ContactPage() {
   return (
     <div className="store-page store-contact-page">
       <p className="store-eyebrow">Chúng mình luôn sẵn lòng nghe</p>
-      <h1 className="store-page-title">Gửi Mộc một lời nhắn.</h1>
+      <h1 className="store-page-title">Gửi Mộc Bàm một lời nhắn</h1>
       <p className="store-page-description">
         Có một câu hỏi, một ý tưởng, hay chỉ muốn chào nhau? Để lại lời nhắn,
-        Mộc sẽ trao đổi cùng bạn.
+        Mộc Bàm sẽ trao đổi cùng bạn.
       </p>
       <div className="store-contact-layout">
         <div className="store-form-panel">
@@ -26,7 +26,7 @@ export default async function ContactPage() {
           <div className="space-y-7">
             <div>
               <p className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#839275]">
-                <Mail size={13} /> Trò chuyện cùng Mộc
+                <Mail size={13} /> Trò chuyện cùng Mộc Bàm
               </p>
               <a
                 href={`mailto:${settings.shop_email}`}

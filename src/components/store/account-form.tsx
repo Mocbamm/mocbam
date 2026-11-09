@@ -50,7 +50,7 @@ export function AccountForm({
       if (!response.ok) throw new Error(result.error);
       setConfirmationEmail(email.trim());
       setMessage(
-        "Nếu email này đang chờ xác nhận, Mộc đã gửi một liên kết mới. Hãy dùng email mới nhất.",
+        "Nếu email này đang chờ xác nhận, Mộc Bàm đã gửi một liên kết mới. Hãy dùng email mới nhất.",
       );
       setCooldown(60);
     } catch (cause) {
@@ -109,7 +109,7 @@ export function AccountForm({
             aria-hidden="true"
           />
           <h2 className="font-serif text-2xl text-[#29412d]">
-            Kiểm tra hộp thư nhé.
+            Kiểm tra hộp thư nhé
           </h2>
           <p className="mt-3 text-sm leading-7 text-[#596650]">
             Mở email xác nhận được gửi đến{" "}

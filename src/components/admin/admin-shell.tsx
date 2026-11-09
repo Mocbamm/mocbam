@@ -45,11 +45,11 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   return (
-    <div className="min-h-screen bg-[#f7f6f0] text-[#21372b] lg:flex">
+    <div className="admin-app min-h-screen bg-[#f7f6f0] text-[#21372b] lg:flex">
       <aside className="border-b border-[#dce3d7] bg-[#ecf0e6] lg:fixed lg:inset-y-0 lg:w-64 lg:border-r lg:border-b-0">
         <Link href="/admin" className="flex items-center gap-3 px-6 py-7">
           <Sprout className="size-9" />
-          <span className="text-2xl font-semibold tracking-tight">
+          <span className="admin-brand text-2xl font-semibold tracking-tight">
             Mộc Bàm
             <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-[0.24em] text-[#6b7867]">
               Quản trị cửa hàng

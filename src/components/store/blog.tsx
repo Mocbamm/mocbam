@@ -207,7 +207,7 @@ export function BlogCatalog({ posts }: { posts: BlogPost[] }) {
             ? "Chưa tìm thấy bài viết phù hợp. Bạn thử từ khóa khác nhé."
             : posts.length
               ? "Chưa có bài viết trong khoảng ngày này. Bạn thử chọn khoảng ngày khác nhé."
-              : "Mộc đang viết những câu chuyện đầu tiên. Ghé lại sau nhé."}
+              : "Mộc Bàm đang viết những câu chuyện đầu tiên. Ghé lại sau nhé."}
         </p>
       )}
     </>

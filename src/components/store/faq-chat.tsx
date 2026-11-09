@@ -42,7 +42,9 @@ export function FaqChat({
       setError("");
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Chưa kết nối được với Mộc.",
+        error instanceof Error
+          ? error.message
+          : "Chưa kết nối được với Mộc Bàm.",
       );
     }
   }, []);
@@ -90,7 +92,7 @@ export function FaqChat({
           <div className="store-support-heading flex items-center justify-between bg-[#29412d] px-5 py-4 text-white">
             <div>
               <p className="flex items-center gap-2 text-sm">
-                <Leaf size={15} /> Mộc luôn lắng nghe
+                <Leaf size={15} /> Mộc Bàm luôn lắng nghe
               </p>
               <p className="mt-1 text-[10px] text-[#c9d3bf]">
                 Nhân viên trả lời trong giờ làm việc
@@ -107,8 +109,8 @@ export function FaqChat({
           {!userId ? (
             <div className="flex-1 space-y-5 p-6 text-sm leading-7">
               <p>
-                Đăng nhập để gửi câu hỏi cho Mộc, lưu cuộc trò chuyện và nhận
-                phản hồi của nhân viên ngay tại đây.
+                Đăng nhập để gửi câu hỏi cho Mộc Bàm, lưu cuộc trò chuyện và
+                nhận phản hồi của nhân viên ngay tại đây.
               </p>
               <Link
                 href="/tai-khoan"
@@ -136,8 +138,8 @@ export function FaqChat({
                 aria-live="polite"
               >
                 <p className="rounded-xl bg-[#e9edde] px-3 py-2.5 text-xs leading-6">
-                  Chào bạn, Mộc có thể giúp gì? Bạn có thể gửi mã đơn hàng để
-                  Mộc tra cứu nhanh hơn.
+                  Chào bạn, Mộc Bàm có thể giúp gì? Bạn có thể gửi mã đơn hàng
+                  để Mộc Bàm tra cứu nhanh hơn.
                 </p>
                 {messages.map((message) => (
                   <div
@@ -186,7 +188,7 @@ export function FaqChat({
                   maxLength={4000}
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
-                  placeholder="Nhắn cho Mộc..."
+                  placeholder="Nhắn cho Mộc Bàm..."
                   className="min-w-0 flex-1 bg-transparent text-xs outline-none"
                   disabled={!loaded || busy}
                 />
@@ -210,7 +212,7 @@ export function FaqChat({
           setOpen(!open);
           setToggled(true);
         }}
-        aria-label={open ? "Đóng trợ lý" : "Trò chuyện với Mộc"}
+        aria-label={open ? "Đóng trợ lý" : "Trò chuyện với Mộc Bàm"}
         aria-expanded={open}
         data-toggled={toggled || undefined}
         className="store-support-trigger ml-auto flex h-12 items-center gap-2 rounded-full bg-[#29412d] px-4 text-xs text-[#f1f1df] shadow-lg"
@@ -218,7 +220,7 @@ export function FaqChat({
         <span key={open ? "close" : "open"} className="store-support-icon">
           {open ? <X size={18} /> : <MessageCircle size={18} />}
         </span>
-        <span className="hidden sm:inline">Hỏi Mộc nhé</span>
+        <span className="hidden sm:inline">Hỏi Mộc Bàm nhé</span>
       </button>
     </div>
   );

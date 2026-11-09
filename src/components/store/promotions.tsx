@@ -18,7 +18,7 @@ export function PromotionBanner({
     >
       <div className="border border-[#c8d3b9] bg-[#e8eedc] p-6 sm:p-9">
         <p className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[#617654]">
-          <Tag size={14} /> Một món quà từ Mộc
+          <Tag size={14} /> Một món quà từ Mộc Bàm
         </p>
         <h2
           id="promotions-title"

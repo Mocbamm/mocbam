@@ -80,7 +80,7 @@ export function SettingsManager({
             onChange={(checked) => update("shipping_zones_only", checked)}
           />
           <p className="-mt-2 text-xs leading-5 text-[#788273]">
-            Bật: khách ở nơi khác sẽ thấy “Mộc chưa giao tới khu vực này” và
+            Bật: khách ở nơi khác sẽ thấy “Mộc Bàm chưa giao tới khu vực này” và
             không đặt được đơn. Tắt: nơi khác tính theo phí mặc định.
           </p>
           {draft.shipping_zones_only ? null : (
@@ -124,7 +124,7 @@ export function SettingsManager({
               className="text-xs leading-5 text-[#788273]"
             >
               {draft.shipping_free_threshold
-                ? `Đơn có tiền hàng (trước mã giảm giá) từ ${numberFormat.format(draft.shipping_free_threshold)} ₫ được miễn phí giao hàng ở mọi khu vực Mộc giao tới. `
+                ? `Đơn có tiền hàng (trước mã giảm giá) từ ${numberFormat.format(draft.shipping_free_threshold)} ₫ được miễn phí giao hàng ở mọi khu vực Mộc Bàm giao tới. `
                 : "Nhập 0 để tắt. "}
               Giỏ hàng và trang đặt hàng tự nhắc khách mua thêm bao nhiêu để
               được miễn phí.

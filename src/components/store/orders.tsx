@@ -82,7 +82,7 @@ function PaymentDetails({
         </p>
       ) : refunded ? (
         <p className="mt-5 text-sm leading-7 text-[#60754f]">
-          Mộc đã xác nhận hoàn tiền
+          Mộc Bàm đã xác nhận hoàn tiền
           {order.refunded_at ? ` vào ${dateLabel(order.refunded_at)}` : ""}. Nếu
           bạn cần đối soát giao dịch, hãy liên hệ cửa hàng với mã đơn{" "}
           {order.reference}.
@@ -91,11 +91,11 @@ function PaymentDetails({
         <p role="status" className="mt-5 text-sm leading-7 text-[#847044]">
           Đơn đã hủy nhưng đã thanh toán. Cửa hàng cần xử lý hoàn tiền thủ công;
           trạng thái sẽ được cập nhật sau khi tiền đã được hoàn. Vui lòng liên
-          hệ Mộc với mã đơn {order.reference} để đối soát.
+          hệ Mộc Bàm với mã đơn {order.reference} để đối soát.
         </p>
       ) : paid ? (
         <p className="mt-5 text-sm leading-7 text-[#60754f]">
-          Mộc đã xác nhận nhận đủ tiền
+          Mộc Bàm đã xác nhận nhận đủ tiền
           {order.paid_at ? ` vào ${dateLabel(order.paid_at)}` : ""}. Bạn không
           cần thanh toán lại cho đơn này.
         </p>
@@ -103,7 +103,7 @@ function PaymentDetails({
         <p className="mt-5 text-sm leading-7 text-[#7c866b]">
           Bạn không cần thanh toán cho đơn đã hủy.
           {order.payment_method === "bank_transfer"
-            ? " Vui lòng không chuyển tiền. Nếu bạn đã chuyển trước khi đơn bị hủy, hãy liên hệ Mộc để đối soát và xử lý hoàn tiền."
+            ? " Vui lòng không chuyển tiền. Nếu bạn đã chuyển trước khi đơn bị hủy, hãy liên hệ Mộc Bàm để đối soát và xử lý hoàn tiền."
             : ""}
         </p>
       ) : order.payment_method === "cod" ? (
@@ -111,15 +111,15 @@ function PaymentDetails({
           Thanh toán{" "}
           <strong className="text-[#29412d]">{money(order.total)}</strong> cho
           nhân viên giao hàng khi nhận được đơn. Trạng thái sẽ được cập nhật khi
-          Mộc xác nhận đã thu tiền.
+          Mộc Bàm xác nhận đã thu tiền.
         </p>
       ) : showBankInstructions ? (
         bank ? (
           <div className="mt-6 grid gap-7 border-t border-[#d4dcc7] pt-6 sm:grid-cols-[1fr_auto]">
             <div className="min-w-0">
               <p className="text-sm leading-7 text-[#7c866b]">
-                Chuyển đúng số tiền và nội dung bên dưới để Mộc đối soát đơn.
-                Thông tin nhận tiền được lưu theo đơn hàng này.
+                Chuyển đúng số tiền và nội dung bên dưới để Mộc Bàm đối soát
+                đơn. Thông tin nhận tiền được lưu theo đơn hàng này.
               </p>
               <dl className="mt-5 space-y-4 text-sm">
                 {[
@@ -138,10 +138,10 @@ function PaymentDetails({
                 ))}
               </dl>
               <p className="mt-5 text-xs leading-6 text-[#7c866b]">
-                Chuyển khoản không tự đổi trạng thái thanh toán. Mộc sẽ kiểm tra
-                tiền vào tài khoản và xác nhận thủ công. Nếu đã chuyển mà chưa
-                thấy cập nhật, hãy liên hệ cửa hàng với mã đơn {order.reference}
-                .
+                Chuyển khoản không tự đổi trạng thái thanh toán. Mộc Bàm sẽ kiểm
+                tra tiền vào tài khoản và xác nhận thủ công. Nếu đã chuyển mà
+                chưa thấy cập nhật, hãy liên hệ cửa hàng với mã đơn{" "}
+                {order.reference}.
               </p>
             </div>
             {bank.qrDataUrl ? (
@@ -162,14 +162,14 @@ function PaymentDetails({
           </div>
         ) : (
           <p role="status" className="mt-5 text-sm leading-7 text-[#7c866b]">
-            Chưa mở được thông tin nhận tiền của đơn. Vui lòng liên hệ Mộc với
-            mã đơn {order.reference} trước khi chuyển khoản.
+            Chưa mở được thông tin nhận tiền của đơn. Vui lòng liên hệ Mộc Bàm
+            với mã đơn {order.reference} trước khi chuyển khoản.
           </p>
         )
       ) : (
         <p className="mt-5 text-sm leading-7 text-[#7c866b]">
-          Đơn này chưa chọn phương thức thanh toán. Vui lòng liên hệ Mộc với mã
-          đơn {order.reference} để được hướng dẫn.
+          Đơn này chưa chọn phương thức thanh toán. Vui lòng liên hệ Mộc Bàm với
+          mã đơn {order.reference} để được hướng dẫn.
         </p>
       )}
       <Link
@@ -291,7 +291,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
           <RefreshCw size={14} /> Thử lại
         </Button>
         <Link href="/lien-he" className="ml-4 text-xs underline">
-          Liên hệ Mộc
+          Liên hệ Mộc Bàm
         </Link>
       </div>
     );
@@ -310,19 +310,19 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
         </p>
         <h1 className="mt-3 font-serif text-4xl tracking-tight text-[#29412d] sm:text-5xl">
           {order.status === "cancelled"
-            ? "Đơn hàng đã được hủy."
+            ? "Đơn hàng đã được hủy"
             : order.status === "returned"
-              ? "Mộc đã nhận lại hàng hoàn."
+              ? "Mộc Bàm đã nhận lại hàng hoàn"
               : order.payment_status === "refunded"
-                ? "Mộc đã xác nhận hoàn tiền."
+                ? "Mộc Bàm đã xác nhận hoàn tiền"
                 : order.payment_status === "paid"
-                  ? "Mộc đã xác nhận thanh toán."
-                  : "Mộc đã nhận đơn hàng của bạn."}
+                  ? "Mộc Bàm đã xác nhận thanh toán"
+                  : "Mộc Bàm đã nhận đơn hàng của bạn"}
         </h1>
         <p className="mx-auto mt-5 max-w-lg text-sm leading-7 text-[#7c866b]">
           Trạng thái xử lý: <strong>{statusLabels[order.status]}</strong>. Thanh
           toán: <strong>{paymentStatusLabels[order.payment_status]}</strong>.
-          Bạn có thể cập nhật trạng thái để xem thông tin mới nhất từ Mộc.
+          Bạn có thể cập nhật trạng thái để xem thông tin mới nhất từ Mộc Bàm.
         </p>
       </div>
       <div className="grid gap-7 md:grid-cols-2">
@@ -393,9 +393,7 @@ export function ReceiptScreen({ id, token }: { id: string; token: string }) {
           <Link href="/tai-khoan">Đơn hàng của tôi</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/san-pham">
-            Ghé Mộc thêm một chút
-          </Link>
+          <Link href="/san-pham">Ghé Mộc Bàm thêm một chút</Link>
         </Button>
       </div>
     </>
@@ -541,8 +539,8 @@ export function OrderProgress({ status }: { status: OrderStatus }) {
   if (status === "returned")
     return (
       <p className="mt-6 text-sm">
-        Mộc đã nhận lại hàng hoàn. Trạng thái hoàn tiền được cập nhật riêng bên
-        dưới.
+        Mộc Bàm đã nhận lại hàng hoàn. Trạng thái hoàn tiền được cập nhật riêng
+        bên dưới.
       </p>
     );
   if (status === "cancelled")

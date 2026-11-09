@@ -38,7 +38,7 @@ function EmptyCart() {
         className="mx-auto text-[#8d9b7a]"
       />
       <h2 className="mt-6 font-serif text-3xl text-[#29412d]">
-        Giỏ hàng đang chờ một chút Mộc.
+        Giỏ hàng đang chờ một chút Mộc Bàm
       </h2>
       <p className="mt-4 text-sm leading-7 text-[#7c866b]">
         Cùng tìm một người bạn nhỏ để mang theo nhé.
@@ -483,7 +483,9 @@ export function CheckoutScreen({
         );
       }
       if (!result.id || !result.token)
-        throw new Error("Phản hồi đơn hàng chưa đầy đủ. Vui lòng liên hệ Mộc.");
+        throw new Error(
+          "Phản hồi đơn hàng chưa đầy đủ. Vui lòng liên hệ Mộc Bàm.",
+        );
       trackStoreEvent("order_submitted", {
         currency: "VND",
         num_items: items.reduce((s, i) => s + i.quantity, 0),
@@ -579,7 +581,7 @@ export function CheckoutScreen({
           </div>
           <AddressFields onChange={setDestination} />
           <div className="sm:col-span-2">
-            <Label htmlFor="checkout-note">Lời nhắn cho Mộc</Label>
+            <Label htmlFor="checkout-note">Lời nhắn cho Mộc Bàm</Label>
             <Textarea
               id="checkout-note"
               name="note"
@@ -614,8 +616,8 @@ export function CheckoutScreen({
                   (COD)
                 </span>
                 <span className="mt-2 block text-xs leading-6 text-[#7c866b]">
-                  Trả tiền cho nhân viên giao hàng khi nhận được đơn. Mộc sẽ xác
-                  nhận đơn trước khi gửi.
+                  Trả tiền cho nhân viên giao hàng khi nhận được đơn. Mộc Bàm sẽ
+                  xác nhận đơn trước khi gửi.
                 </span>
               </span>
             </label>
@@ -638,7 +640,7 @@ export function CheckoutScreen({
                   </span>
                   <span className="mt-2 block text-xs leading-6 text-[#7c866b]">
                     Thông tin nhận tiền và mã QR sẽ xuất hiện sau khi đặt đơn.
-                    Mộc kiểm tra giao dịch rồi xác nhận thanh toán thủ công.
+                    Mộc Bàm kiểm tra giao dịch rồi xác nhận thanh toán thủ công.
                   </span>
                 </span>
               </label>
@@ -651,7 +653,7 @@ export function CheckoutScreen({
           </div>
           <p className="mt-4 text-xs leading-6 text-[#7c866b]">
             Gửi đơn chưa xác nhận đã thanh toán. Trạng thái sẽ cập nhật khi Mộc
-            xác nhận đã nhận tiền.
+            Bàm xác nhận đã nhận tiền.
           </p>
         </fieldset>
       </div>
@@ -765,9 +767,9 @@ export function CheckoutScreen({
               role="alert"
               className="border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-800"
             >
-              Mộc hiện chỉ giao trong khu vực gần cửa hàng, chưa giao tới{" "}
-              {destination.ward}. Bạn có thể chọn địa chỉ khác hoặc nhắn Mộc để
-              được hỗ trợ.
+              Mộc Bàm hiện chỉ giao trong khu vực gần cửa hàng, chưa giao tới{" "}
+              {destination.ward}. Bạn có thể chọn địa chỉ khác hoặc nhắn Mộc Bàm
+              để được hỗ trợ.
             </p>
           ) : null}
           {shippingDistanceEnabled ? (

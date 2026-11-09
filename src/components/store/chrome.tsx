@@ -228,7 +228,7 @@ function CartDrawer() {
         ) : (
           <div className="store-drawer-empty">
             <ShoppingBag size={42} strokeWidth={1} />
-            <h3>Giỏ hàng đang chờ bạn.</h3>
+            <h3>Giỏ hàng đang chờ bạn</h3>
             <p>Ghé một vòng, tìm món nhỏ mình thương.</p>
             <SheetClose asChild>
               <Link
@@ -361,13 +361,16 @@ export function StoreHeader() {
                 onClick={() => setOpen(false)}
                 className="store-menu-contact"
               >
-                Mộc luôn sẵn lòng nghe bạn
+                Mộc Bàm luôn sẵn lòng nghe bạn
               </Link>
             </SheetContent>
           </Sheet>
         </div>
+        {/* Owner brief 09/11: the menu sat right against the brand, so it is
+            split around it: three links on the left, the journal and
+            policies on the right before the icons. */}
         <nav className="store-desktop-nav" aria-label="Điều hướng chính">
-          {navigation.map((item) => {
+          {navigation.slice(0, 3).map((item) => {
             const link = (
               <Link
                 key={item.href}
@@ -402,6 +405,21 @@ export function StoreHeader() {
               link
             );
           })}
+        </nav>
+        <Brand />
+        <nav
+          className="store-desktop-nav store-desktop-nav-end"
+          aria-label="Nhật ký và chính sách"
+        >
+          {navigation.slice(3).map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={pathname.startsWith(item.href) ? "page" : undefined}
+            >
+              {item.text}
+            </Link>
+          ))}
           <div
             className="store-policy-menu"
             onMouseEnter={openPolicy}
@@ -451,7 +469,6 @@ export function StoreHeader() {
             ) : null}
           </div>
         </nav>
-        <Brand />
         <div className="store-header-actions">
           <StoreSearch />
           <Link
@@ -505,7 +522,7 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
           ))}
         </div>
         <div className="store-footer-column store-footer-contact">
-          <h2>Ghé Mộc một chút</h2>
+          <h2>Ghé Mộc Bàm một chút</h2>
           <Link href="/lien-he">Liên hệ với chúng tôi</Link>
           <Link href="/tai-khoan">Tài khoản và đơn hàng</Link>
           <SocialIcons settings={settings} />

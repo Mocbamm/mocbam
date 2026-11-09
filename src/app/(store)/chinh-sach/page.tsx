@@ -42,7 +42,7 @@ export default async function PoliciesPage({
   return (
     <div className="store-page store-policy-page">
       <h1 className="store-page-title">
-        {entry?.title || "Chính sách & hướng dẫn."}
+        {entry?.title || "Chính sách & hướng dẫn"}
       </h1>
       {entry ? (
         // Owner feedback: show only the policy the customer opened, without a
@@ -73,7 +73,7 @@ export default async function PoliciesPage({
       <p className="mt-10 border-t border-[#dde1d0] pt-7 text-sm leading-7 text-[#7c866b]">
         Bạn cần trao đổi thêm?{" "}
         <Link href="/lien-he" className="underline underline-offset-4">
-          Gửi lời nhắn cho Mộc.
+          Gửi lời nhắn cho Mộc Bàm.
         </Link>
       </p>
     </div>
