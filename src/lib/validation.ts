@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { shippingZoneSchema, shippingDistanceBandsSchema } from "./shipping";
+import {
+  shippingZoneSchema,
+  shippingDistanceBandsSchema,
+} from "./shipping-schema";
 import { postDateEditable } from "./features";
 
 const short = (max = 200) => z.string().trim().min(1).max(max);

@@ -1,5 +1,9 @@
+import { getImageProps } from "next/image";
 import { isContentMediaUrl } from "@/lib/content-media";
-import { heroMediaSources } from "@/lib/storefront-media";
+import {
+  heroMediaSources,
+  storefrontImageSource,
+} from "@/lib/storefront-media";
 import type { SiteContent } from "@/lib/types";
 import { ContentVisual } from "./content";
 import StoreImage from "./image";
@@ -26,10 +30,22 @@ export function HeroMedia({
   if (
     isContentMediaUrl(sources.desktop, "image") &&
     isContentMediaUrl(sources.mobile, "image")
-  )
+  ) {
+    // Phones get the resized, compressed copies too; a bare srcSet here sent
+    // them the original upload (2.4 MB for the current banner).
+    const mobileImage = getImageProps({
+      src: storefrontImageSource(sources.mobile),
+      alt: "",
+      fill: true,
+      sizes: "96vw",
+    }).props;
     return (
       <picture className={`store-home-hero-media${desktopShade}${mobileShade}`}>
-        <source media="(max-width: 640px)" srcSet={sources.mobile} />
+        <source
+          media="(max-width: 640px)"
+          srcSet={mobileImage.srcSet}
+          sizes={mobileImage.sizes}
+        />
         <StoreImage
           src={sources.desktop}
           alt={desktop.title}
@@ -41,6 +57,7 @@ export function HeroMedia({
         />
       </picture>
     );
+  }
   return (
     <>
       <div

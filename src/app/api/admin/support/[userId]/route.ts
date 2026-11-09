@@ -7,7 +7,7 @@ import {
   json,
   readJson,
 } from "@/lib/http";
-import { supportMessageSchema } from "@/lib/support";
+import { supportMessageSchema } from "@/lib/support-schema";
 
 export async function POST(
   request: Request,

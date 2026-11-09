@@ -1,11 +1,5 @@
-import { z } from "zod";
-
-export const supportMessageSchema = z
-  .object({
-    body: z.string().trim().min(1).max(4000),
-  })
-  .strict();
-
+// Shared by the chat bubble on every storefront page, so it must stay free
+// of zod; the request schema lives in support-schema.ts.
 export type SupportMessage = {
   id: number;
   user_id: string;

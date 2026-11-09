@@ -1,6 +1,7 @@
 import { isConfigured } from "./catalog";
 import { databaseError } from "./http";
 import { createServerSupabase } from "./supabase/server";
+import { cache } from "react";
 import {
   contentEntry,
   contentSections,
@@ -9,7 +10,7 @@ import {
 import { demoContent } from "./demo-data";
 import type { SiteContent } from "./types";
 
-export async function getPageContent(group: ContentGroup) {
+async function loadPageContent(group: ContentGroup) {
   const sections = contentSections.filter((section) => section.group === group);
   let entries = demoContent;
   if (isConfigured()) {
@@ -30,4 +31,10 @@ export async function getPageContent(group: ContentGroup) {
       contentEntry(entries, section.key),
     ]),
   );
+}
+
+// One query per request even when a page and its metadata both ask.
+const sharedPageContent = cache(loadPageContent);
+export async function getPageContent(group: ContentGroup) {
+  return structuredClone(await sharedPageContent(group));
 }

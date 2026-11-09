@@ -7,7 +7,7 @@ import {
   json,
   readJson,
 } from "@/lib/http";
-import { supportMessageSchema } from "@/lib/support";
+import { supportMessageSchema } from "@/lib/support-schema";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 async function session() {

@@ -2,7 +2,8 @@ import { createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/shipping/quote/route";
 import { roadDistance } from "@/lib/shipping-server";
-import { checkoutAddress, shippingDistanceBandsSchema } from "@/lib/shipping";
+import { checkoutAddress } from "@/lib/shipping";
+import { shippingDistanceBandsSchema } from "@/lib/shipping-schema";
 
 vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({

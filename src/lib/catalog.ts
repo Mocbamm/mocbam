@@ -18,6 +18,7 @@ import { requireAdmin } from "./auth";
 import { databaseError } from "./http";
 import { isConfigured } from "./supabase/config";
 import { createServerSupabase } from "./supabase/server";
+import { cache } from "react";
 
 export { isConfigured };
 const productColumns =
@@ -29,7 +30,7 @@ export const orderColumns =
 export const settingsColumns =
   "shipping_fee,shipping_zones,shipping_zones_only,shipping_free_threshold,shipping_distance_enabled,shipping_origin_address,shipping_distance_bands,shop_email,shop_phone,shop_address,shop_hours,facebook_url,instagram_url,tiktok_url,zalo_url,shopee_url,bank_transfer_enabled,bank_bin,bank_name,bank_account_number,bank_account_name";
 
-export async function getProducts(): Promise<Product[]> {
+async function loadProducts(): Promise<Product[]> {
   if (!isConfigured())
     return structuredClone(demoProducts.filter((p) => p.active));
   const db = await createServerSupabase();
@@ -42,7 +43,7 @@ export async function getProducts(): Promise<Product[]> {
   if (error) throw databaseError(error);
   return data as Product[];
 }
-export async function getProduct(slug: string): Promise<Product | null> {
+async function loadProduct(slug: string): Promise<Product | null> {
   if (!isConfigured())
     return structuredClone(
       demoProducts.find((p) => p.slug === slug && p.active) || null,
@@ -57,7 +58,7 @@ export async function getProduct(slug: string): Promise<Product | null> {
   if (error) throw databaseError(error);
   return data as Product | null;
 }
-export async function getCategories(): Promise<Category[]> {
+async function loadCategories(): Promise<Category[]> {
   if (!isConfigured()) return structuredClone(demoCategories);
   const db = await createServerSupabase();
   const { data, error } = await db
@@ -67,7 +68,7 @@ export async function getCategories(): Promise<Category[]> {
   if (error) throw databaseError(error);
   return data as Category[];
 }
-export async function getPosts(): Promise<BlogPost[]> {
+async function loadPosts(): Promise<BlogPost[]> {
   if (!isConfigured())
     return structuredClone(demoPosts.filter((p) => p.published));
   const db = await createServerSupabase();
@@ -79,7 +80,7 @@ export async function getPosts(): Promise<BlogPost[]> {
   if (error) throw databaseError(error);
   return data as BlogPost[];
 }
-export async function getPost(slug: string): Promise<BlogPost | null> {
+async function loadPost(slug: string): Promise<BlogPost | null> {
   if (!isConfigured())
     return structuredClone(
       demoPosts.find((p) => p.slug === slug && p.published) || null,
@@ -94,7 +95,7 @@ export async function getPost(slug: string): Promise<BlogPost | null> {
   if (error) throw databaseError(error);
   return data as BlogPost | null;
 }
-export async function getSiteContent(key: string): Promise<SiteContent | null> {
+async function loadSiteContent(key: string): Promise<SiteContent | null> {
   if (!isConfigured())
     return structuredClone(demoContent.find((p) => p.key === key) || null);
   const db = await createServerSupabase();
@@ -106,7 +107,7 @@ export async function getSiteContent(key: string): Promise<SiteContent | null> {
   if (error) throw databaseError(error);
   return data as SiteContent | null;
 }
-export async function getSettings(): Promise<SiteSettings> {
+async function loadSettings(): Promise<SiteSettings> {
   if (!isConfigured()) return structuredClone(demoSettings);
   const db = await createServerSupabase();
   const { data, error } = await db
@@ -117,6 +118,24 @@ export async function getSettings(): Promise<SiteSettings> {
   if (error) throw databaseError(error);
   return data as SiteSettings;
 }
+
+// The store layout and the page it wraps (and generateMetadata) ask for the
+// same rows during one request; cache() runs each query once per request.
+// Every caller still gets its own copy, so one cannot reorder another's data.
+function oncePerRequest<A extends unknown[], T>(
+  load: (...args: A) => Promise<T>,
+) {
+  const shared = cache(load);
+  return async (...args: A): Promise<T> =>
+    structuredClone(await shared(...args));
+}
+export const getProducts = oncePerRequest(loadProducts);
+export const getProduct = oncePerRequest(loadProduct);
+export const getCategories = oncePerRequest(loadCategories);
+export const getPosts = oncePerRequest(loadPosts);
+export const getPost = oncePerRequest(loadPost);
+export const getSiteContent = oncePerRequest(loadSiteContent);
+export const getSettings = oncePerRequest(loadSettings);
 
 async function adminRows<T>(
   table: string,

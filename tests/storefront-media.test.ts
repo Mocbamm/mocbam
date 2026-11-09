@@ -109,9 +109,12 @@ describe("storefront media administration", () => {
     const html = renderToStaticMarkup(
       createElement(HeroMedia, { desktop, mobile: phone }),
     );
+    // Phones get resized copies of their own image, never the raw upload.
     expect(html).toContain(
-      `<source media="(max-width: 640px)" srcSet="${mobile}"`,
+      `<source media="(max-width: 640px)" srcSet="/_next/image?url=${encodeURIComponent(mobile)}&amp;w=640`,
     );
+    expect(html).toContain('sizes="96vw"');
+    expect(html).not.toContain(`srcSet="${mobile}"`);
     const videoHtml = renderToStaticMarkup(
       createElement(HeroMedia, {
         desktop: { ...desktop, content: video },

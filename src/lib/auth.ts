@@ -1,9 +1,12 @@
+import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 import { HttpError, databaseError } from "./http";
 import { isConfigured } from "./supabase/config";
 import { createServerSupabase } from "./supabase/server";
 
-export async function getCurrentUser(): Promise<User | null> {
+// Asked by the store layout, the page and isAdmin in one request; cache()
+// makes it a single round trip to Supabase Auth per request.
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   if (!isConfigured()) return null;
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.auth.getUser();
@@ -15,7 +18,7 @@ export async function getCurrentUser(): Promise<User | null> {
   )
     throw new HttpError(503, "Dịch vụ đăng nhập tạm thời không khả dụng.");
   return error ? null : data.user;
-}
+});
 
 export async function isAdmin(user?: User | null): Promise<boolean> {
   if (!isConfigured()) return false;

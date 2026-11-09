@@ -1,32 +1,12 @@
-import { z } from "zod";
-
-export const shippingZoneSchema = z
-  .object({
-    name: z.string().trim().min(1).max(100),
-    province: z.string().trim().min(1).max(100),
-    wards: z.array(z.string().trim().min(1).max(100)).max(200),
-    fee: z.number().int().min(0).max(100_000_000),
-  })
-  .strict();
-export type ShippingZone = z.infer<typeof shippingZoneSchema>;
-export const shippingDistanceBandSchema = z
-  .object({
-    up_to_km: z.number().positive().max(3000).multipleOf(0.001),
-    fee: z.number().int().min(0).max(100_000_000),
-  })
-  .strict();
-export const shippingDistanceBandsSchema = z
-  .array(shippingDistanceBandSchema)
-  .max(50)
-  .refine(
-    (bands) =>
-      bands.every(
-        (band, index) =>
-          index === 0 || band.up_to_km > bands[index - 1].up_to_km,
-      ),
-    "Các mốc km phải tăng dần và không trùng nhau.",
-  );
-export type ShippingDistanceBand = z.infer<typeof shippingDistanceBandSchema>;
+// Used by checkout in the browser, so it must stay free of zod; the
+// validation schemas live in shipping-schema.ts.
+export type ShippingZone = {
+  name: string;
+  province: string;
+  wards: string[];
+  fee: number;
+};
+export type ShippingDistanceBand = { up_to_km: number; fee: number };
 export type ShippingAddress = { address: string; city: string; ward: string };
 export type ShippingDistanceQuote = {
   id: string;
