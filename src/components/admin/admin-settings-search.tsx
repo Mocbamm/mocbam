@@ -24,7 +24,7 @@ export function AdminSettingsSearch() {
           id={id}
           type="search"
           maxLength={200}
-          placeholder="Phí giao hàng, ngân hàng, email, Zalo…"
+          placeholder="Phí giao hàng, ngân hàng, email, Threads…"
           className={fieldClass}
           value={query}
           onChange={(event) => setQuery(event.target.value)}

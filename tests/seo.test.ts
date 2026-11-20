@@ -43,7 +43,7 @@ describe("search descriptions", () => {
       locale: "vi_VN",
       type: "article",
       publishedTime: "2026-10-03T00:00:00.000Z",
-      images: [{ url: "/images/share.jpg", width: 1200, height: 630 }],
+      images: [{ url: "/images/share-net-moc-tam-an.jpg", width: 1200, height: 630 }],
     });
     expect(meta.twitter).toMatchObject({ card: "summary_large_image" });
   });

@@ -47,7 +47,7 @@ export const adminSettingsSections = [
   {
     id: "settings-social",
     title: "Mạng xã hội",
-    description: "Facebook, Instagram, TikTok, Zalo, Shopee",
+    description: "Facebook, Instagram, TikTok, Threads, Shopee",
   },
 ] as const;
 

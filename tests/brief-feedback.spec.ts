@@ -83,13 +83,25 @@ test("product pages drop the banner and the shipping accordions", async ({
     ".store-product-detail-grid > .store-product-description",
   );
   const gallery = page.locator(".store-product-gallery");
-  const [descriptionBox, galleryBox] = await Promise.all([
+  const panel = page.locator(".store-product-purchase-panel");
+  const [descriptionBox, galleryBox, panelBox] = await Promise.all([
     description.boundingBox(),
     gallery.boundingBox(),
+    panel.boundingBox(),
   ]);
-  // Under the photos, in the same column.
-  expect(descriptionBox!.y).toBeGreaterThan(galleryBox!.y + galleryBox!.height);
-  expect(Math.abs(descriptionBox!.x - galleryBox!.x)).toBeLessThan(2);
+  // Owner brief 19/11: below both the photos and the purchase panel, centred
+  // and wider than the photo column.
+  expect(descriptionBox!.y).toBeGreaterThan(
+    Math.max(
+      galleryBox!.y + galleryBox!.height,
+      panelBox!.y + panelBox!.height,
+    ),
+  );
+  expect(descriptionBox!.width).toBeGreaterThan(galleryBox!.width);
+  const pageCentre = (galleryBox!.x + panelBox!.x + panelBox!.width) / 2;
+  expect(
+    Math.abs(descriptionBox!.x + descriptionBox!.width / 2 - pageCentre),
+  ).toBeLessThan(4);
 });
 
 test("about invitation shows a heading with a smaller sentence", async ({
@@ -98,12 +110,10 @@ test("about invitation shows a heading with a smaller sentence", async ({
   await page.goto("/chung-toi");
   await expect(page.getByText("Câu chuyện của chúng mình")).toHaveCount(0);
   await expect(
-    page.getByText("Một góc xinh, một câu chuyện của riêng bạn", {
-      exact: true,
-    }),
+    page.getByText("Bạn sẽ gửi bình an này đến ai?", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Chia sẻ cùng Mộc Bàm" }),
+    page.getByRole("link", { name: "Kể cho Mộc Bàm nghe" }),
   ).toBeVisible();
 });
 

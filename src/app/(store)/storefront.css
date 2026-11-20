@@ -1397,7 +1397,7 @@ body:has(.storefront) [aria-label="Lựa chọn cookie"] [data-slot="button"] {
   margin-bottom: 6px;
   text-shadow: 0 1px 6px #142d1c80;
 }
-.store-category-banner-copy h2 {
+.store-category-banner-copy h3 {
   color: #fff;
   font-size: clamp(26px, 2.6vw, 38px);
   font-weight: 600;
@@ -1657,4 +1657,175 @@ body:has(.storefront) [aria-label="Lựa chọn cookie"] [data-slot="button"] {
 .store-product-card-image[data-swapped],
 .store-product-gallery-main img[data-swapped] {
   animation: store-fade-in 320ms var(--ease-soft);
+}
+
+/* Owner brief 19/11: the story follows the banner. Its green panel splits
+   evenly: the 3 : 2 photo on one side, the centred heading on the other. */
+.store-story-panel {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.store-story-copy {
+  align-items: center;
+  text-align: center;
+}
+.store-story-copy h2 {
+  max-width: none;
+  font-size: clamp(26px, 2.6vw, 38px);
+  line-height: 1.35;
+  white-space: pre-line;
+  text-wrap: balance;
+}
+/* Category heading and gift ideas share the home section rhythm. */
+.store-home-categories,
+.store-home-gifts {
+  margin-top: var(--home-gap);
+}
+.store-home-categories .store-category-banners {
+  margin-top: 24px;
+}
+/* Option B, card deck (19/11): copy and buttons on the left, a small stack
+   of cream message cards on the right. */
+.store-home-gifts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(32px, 6vw, 96px);
+  align-items: center;
+}
+.store-gifts-copy > p {
+  max-width: 520px;
+  margin: 14px 0 0;
+  color: #5c6157;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.store-gifts-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.store-gift-deck {
+  --deck-step: 7px;
+  --deck-tilt: 1.6deg;
+  display: grid;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 28px 34px 0;
+}
+.store-gift-note {
+  --depth: 0;
+  display: flex;
+  grid-area: 1 / 1;
+  min-height: 300px;
+  flex-direction: column;
+  padding: clamp(26px, 4vw, 44px);
+  border: 1px solid #e3dccd;
+  border-radius: 14px;
+  background: #fbf7ee;
+  box-shadow: 0 10px 28px rgb(42 71 43 / 0.08);
+  z-index: calc(10 - var(--depth));
+  transform: translate(
+      calc(var(--depth) * var(--deck-step)),
+      calc(var(--depth) * 8px)
+    )
+    rotate(calc(var(--depth) * var(--deck-tilt)));
+  transition:
+    transform 300ms ease,
+    opacity 300ms ease;
+}
+.store-gift-note[data-depth="0"] {
+  cursor: pointer;
+}
+.store-gift-note:not([data-depth="0"]) > * {
+  opacity: 0;
+}
+.store-gift-note[data-depth="4"] {
+  opacity: 0;
+}
+.store-gift-note[data-leaving] {
+  transform: translate(-36px, -14px) rotate(-6deg);
+  opacity: 0;
+}
+.store-gift-note-occasion {
+  color: #8a6e45;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.store-gift-note blockquote {
+  margin: 18px 0 24px;
+  color: #2a472b;
+  font-family: var(--font-store-heading), sans-serif;
+  font-size: clamp(21px, 2.1vw, 28px);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.store-gift-note-count {
+  margin-top: auto;
+  color: #8b8f84;
+  font-size: 13px;
+}
+/* On narrow screens the buttons move under the cards they act on. */
+@media (max-width: 899px) {
+  .store-home-gifts {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .store-gifts-copy {
+    display: contents;
+  }
+  .store-gifts-copy > p {
+    margin-top: -10px;
+  }
+  .store-gift-deck {
+    margin: 0;
+  }
+  .store-gifts-actions {
+    order: 1;
+    margin-top: 0;
+  }
+}
+@media (max-width: 767px) {
+  .store-gift-note {
+    min-height: 260px;
+  }
+  /* A gentler fan so the back cards stay inside a phone screen. */
+  .store-gift-deck {
+    --deck-step: 3px;
+    --deck-tilt: 0.8deg;
+    padding: 0 22px 30px 0;
+  }
+}
+@media (min-width: 1024px) {
+  .store-home-categories .store-section-heading,
+  .store-home-gifts .store-section-heading {
+    font-size: 48px;
+  }
+}
+@media (max-width: 767px) {
+  .store-story-panel {
+    grid-template-columns: 1fr;
+  }
+  .store-home-categories .store-category-banners {
+    margin-top: 18px;
+  }
+}
+/* Below laptop width the two halves get too narrow for her two-line
+   heading, so the photo sits above the text. */
+@media (max-width: 1099px) {
+  .store-story-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The footer's bottom line keeps the same side margins as the columns. */
+.store-footer-bottom {
+  width: calc(100% - 64px);
+}
+@media (max-width: 767px) {
+  .store-footer-bottom {
+    width: auto;
+  }
 }

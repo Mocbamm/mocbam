@@ -1012,3 +1012,57 @@
     font-size: 15px;
   }
 }
+
+/* Owner brief 19/11: Chúng tôi opens with a wide 16 : 7 banner (2400 × 1050
+   px) and a centred reading column below it. */
+.storefront .store-about-banner {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 7;
+  border-radius: 16px;
+}
+.storefront .store-about-story {
+  max-width: 860px;
+  margin: 48px auto 0;
+}
+.storefront .store-about-story .store-about-title {
+  margin: 0 auto 32px;
+  text-align: center;
+}
+@media (max-width: 767px) {
+  .storefront .store-about-banner {
+    aspect-ratio: 4 / 3;
+    border-radius: 12px;
+  }
+  .storefront .store-about-story {
+    margin-top: 28px;
+  }
+}
+
+/* Owner brief 19/11: the post title and text spread to the width of the cover
+   photo instead of a narrow column under a wide image. */
+.storefront .store-article-heading,
+.storefront .store-article-cover,
+.storefront .store-article-body {
+  max-width: 960px;
+  margin-inline: auto;
+}
+.storefront .store-article-heading .store-page-title {
+  max-width: none;
+  font-size: clamp(30px, 3vw, 40px);
+}
+.storefront .store-article-body .store-prose {
+  font-size: 17px;
+  line-height: 1.9;
+}
+@media (max-width: 767px) {
+  .storefront .store-article-body .store-prose {
+    font-size: 16px;
+    line-height: 1.85;
+  }
+}
+
+/* The back link lines up with the post column. */
+.storefront .store-article-page > .store-back-link {
+  margin-left: max(0px, calc((100% - 960px) / 2));
+}

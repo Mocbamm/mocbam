@@ -269,18 +269,24 @@ export function PostManager({
             <div className="md:col-span-2">
               <MediaField
                 id="post-cover"
-                label="Ảnh bìa (không bắt buộc)"
+                label="Ảnh bìa (không bắt buộc) · 1700 × 1000 px"
                 kind="image"
                 value={draft.image_url}
                 onChange={(url) => update("image_url", url)}
                 disabled={saving}
                 onUploadingChange={setUploading}
               />
+              <p className="mt-2 text-xs text-[#788273]">
+                Kích thước chuẩn: 1700 × 1000 px (ảnh ngang, tỉ lệ 17 : 10),
+                JPG, PNG hoặc WebP tối đa 4 MB. Giữ chủ thể ở giữa: danh sách
+                bài viết cắt nhẹ hai bên. Video: MP4 1920 × 1080 px, tối đa 20
+                MB.
+              </p>
             </div>
             <div className="md:col-span-2">
               <MediaField
                 id="post-video"
-                label="Video đầu bài (không bắt buộc)"
+                label="Video đầu bài (không bắt buộc) · 1920 × 1080 px"
                 kind="video"
                 value={draft.video_url || ""}
                 onChange={(url) => update("video_url", url)}

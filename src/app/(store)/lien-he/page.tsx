@@ -1,11 +1,12 @@
-import { MapPin, Clock, Mail } from "lucide-react";
+import { MapPin, Mail } from "lucide-react";
 import { getSettings, isConfigured } from "@/lib/catalog";
 import { ContactForm } from "@/components/store/contact";
 import { pageMetadata } from "@/lib/seo";
+import { socialLinks } from "@/components/store/social";
 export const metadata = pageMetadata({
   title: "Liên hệ với Mộc Bàm",
   description:
-    "Liên hệ Mộc Bàm để hỏi về sản phẩm handmade, đặt quà hoặc hỗ trợ đơn hàng. Chúng mình trả lời qua email, điện thoại và mạng xã hội.",
+    "Liên hệ Mộc Bàm để hỏi về sản phẩm handmade, đặt quà hoặc hỗ trợ đơn hàng. Chúng mình trả lời qua email và mạng xã hội.",
   path: "/lien-he",
 });
 export default async function ContactPage() {
@@ -34,9 +35,6 @@ export default async function ContactPage() {
               >
                 {settings.shop_email}
               </a>
-              <p className="mt-2 text-sm text-[#7c866b]">
-                {settings.shop_phone}
-              </p>
             </div>
             <div>
               <p className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#839275]">
@@ -46,20 +44,14 @@ export default async function ContactPage() {
                 {settings.shop_address}
               </p>
             </div>
-            <div>
-              <p className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#839275]">
-                <Clock size={13} /> Thời gian đồng hành
-              </p>
-              <p className="text-sm leading-7 text-[#7c866b]">
-                {settings.shop_hours}
-              </p>
-            </div>
             <div className="flex flex-wrap gap-5 border-t border-[#d4dcc7] pt-6 text-xs">
+              {/* Owner brief 19/11: Facebook, Instagram and TikTok stay and
+                  Threads joins them; each falls back to the shop's official
+                  account when its setting is empty. */}
               {[
-                { name: "Facebook", url: settings.facebook_url },
-                { name: "Instagram", url: settings.instagram_url },
-                { name: "TikTok", url: settings.tiktok_url },
-                { name: "Zalo", url: settings.zalo_url },
+                ...socialLinks(settings)
+                  .filter((link) => !link.href.startsWith("mailto:"))
+                  .map((link) => ({ name: link.label, url: link.href })),
                 { name: "Shopee", url: settings.shopee_url },
               ].map((s) =>
                 s.url ? (

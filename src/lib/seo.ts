@@ -9,7 +9,7 @@ export const siteDescription =
   "Mộc Bàm – phụ kiện handmade lấy cảm hứng từ thiên nhiên: móc khóa, vòng tay, dây chuyền và nhân vật gỗ nhỏ xinh, làm tỉ mỉ từng chi tiết.";
 // 1200×630, the size Facebook, Zalo and X expect for link previews.
 export const defaultShareImage = {
-  url: "/images/share-logo.jpg",
+  url: "/images/share-net-moc-tam-an.jpg",
   width: 1200,
   height: 630,
   alt: "Logo Mộc Bàm – Nét mộc, Tâm an",

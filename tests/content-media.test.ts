@@ -73,13 +73,39 @@ describe("editable content media", () => {
       }).success,
     ).toBe(false);
   });
-  it("keeps saved marketing edits and supplies complete policy/media defaults", () => {
-    const custom = {
-      key: "home-hero",
-      title: "Mùa quà tặng",
-      content: "Lời chào mới",
+  it("keeps saved story, policy and media edits but serves fixed wording from code", () => {
+    const story = {
+      key: "about",
+      title: "Câu chuyện mới",
+      content: "Nội dung",
     };
-    expect(contentEntry([custom], "home-hero")).toEqual(custom);
+    expect(contentEntry([story], "about")).toEqual(story);
+    // Wording admin no longer edits follows the owner's latest brief even
+    // where an older row is saved.
+    expect(
+      contentEntry(
+        [
+          {
+            key: "home-intro",
+            title: "Mỗi món quà nhỏ, một câu chuyện riêng",
+            content: "x",
+          },
+        ],
+        "home-intro",
+      ).title,
+    ).toBe("Một tiếng động nhỏ,\nkhởi đầu cho một ý\u00a0nghĩa lớn");
+    expect(
+      contentEntry(
+        [
+          {
+            key: "home-category-characters",
+            title: "Dòng Búp bê",
+            content: "Những người bạn nhỏ",
+          },
+        ],
+        "home-category-characters",
+      ).content,
+    ).toBe("Bình an luôn đồng hành");
     expect(contentEntry([], "returns").content).toMatch(/7 ngày/);
     // The retired warranty row now holds the owner's contact page.
     expect(contentEntry([], "warranty").content).toMatch(/Kết nối với Mộc Bàm/);
@@ -87,13 +113,11 @@ describe("editable content media", () => {
     expect(
       contentSections.filter((section) => section.kind === "media"),
     ).toHaveLength(8);
-    // Rows still holding replaced seed copy show the owner's new wording.
-    expect(
-      contentEntry(
-        [{ key: "home-featured", title: "Nhỏ xinh, đủ thương.", content: "x" }],
-        "home-featured",
-      ),
-    ).toEqual({ key: "home-featured", title: "Sản phẩm nổi bật", content: "x" });
+    // Every image or video slot tells the owner its exact size.
+    for (const section of contentSections.filter(
+      (item) => item.kind === "media",
+    ))
+      expect(section.hint, section.key).toMatch(/\d{3,4} × \d{3,4} px/);
   });
   it("lets admin edit only the brand story, the policies and media", () => {
     const editable = contentSections

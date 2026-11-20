@@ -7,8 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { MediaField } from "./media-editor";
+import { FormattedTextField, MediaField } from "./media-editor";
 import type { Product, ProductVariant } from "@/lib/types";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -493,7 +492,7 @@ export function ProductManager({
                   <div className="sm:col-span-3">
                     <MediaField
                       id={`variant-image-${variant.id}`}
-                      label="Ảnh riêng của phân loại (không bắt buộc)"
+                      label="Ảnh riêng của phân loại (không bắt buộc) · 1200 × 1200 px"
                       kind="image"
                       value={variant.image_url}
                       onChange={(image_url) =>
@@ -543,12 +542,17 @@ export function ProductManager({
                 disabled={saving}
                 onUploadingChange={setUploading}
               />
+              <p className="mt-2 text-xs text-[#788273]">
+                Kích thước chuẩn: 1200 × 1200 px (ảnh vuông), JPG, PNG hoặc WebP
+                tối đa 4 MB. Đặt sản phẩm ở giữa ảnh.
+              </p>
             </div>
             <div className="space-y-3 md:col-span-2">
               <Label htmlFor="product-gallery-upload">Ảnh bổ sung</Label>
               <p className="text-xs text-[#788273]">
-                Tối đa 8 ảnh JPG, PNG hoặc WebP, 4 MB mỗi ảnh. Khách hàng có thể
-                xem các góc khác của sản phẩm.
+                Tối đa 8 ảnh JPG, PNG hoặc WebP, 4 MB mỗi ảnh, kích thước chuẩn
+                1200 × 1200 px (ảnh vuông). Khách hàng có thể xem các góc khác
+                của sản phẩm.
               </p>
               <div className="flex flex-wrap gap-3">
                 {(draft.image_urls || []).map((url, index) => (
@@ -636,12 +640,10 @@ export function ProductManager({
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="product-description">Mô tả</Label>
-              <Textarea
+              <FormattedTextField
                 id="product-description"
-                rows={5}
                 value={draft.description}
-                onChange={(event) => update("description", event.target.value)}
-                required
+                onChange={(value) => update("description", value)}
               />
             </div>
             <div className="flex flex-wrap gap-5 md:col-span-2">

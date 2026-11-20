@@ -60,7 +60,7 @@ describe("admin overview and settings lookup", () => {
     expect(
       searchSettingsSections("email").map((section) => section.id),
     ).toEqual(["settings-contact"]);
-    expect(searchSettingsSections("ZALO").map((section) => section.id)).toEqual(
+    expect(searchSettingsSections("THREADS").map((section) => section.id)).toEqual(
       ["settings-social"],
     );
     expect(searchSettingsSections("")).toHaveLength(4);

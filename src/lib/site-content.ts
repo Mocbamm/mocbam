@@ -33,7 +33,8 @@ export const contentSections: ContentSection[] = [
     key: "home-hero-media",
     group: "home",
     label: "Banner trượt 1",
-    hint: "Ảnh đầu tiên của banner trượt trên trang chủ. Gợi ý ảnh ngang 2400 × 1050 px, chủ thể ở giữa; góc dưới bên trái có 2 nút bấm. Có thể thêm ảnh dọc riêng ở mục Banner trên điện thoại.",
+    hint:
+      "Ảnh đầu tiên của banner trượt trên trang chủ. Kích thước chuẩn: 2400 × 1050 px (tỉ lệ 16 : 7); ảnh JPG, PNG hoặc WebP tối đa 4 MB, hoặc video MP4 cùng tỉ lệ tối đa 20 MB. Giữ chủ thể ở giữa, chừa góc dưới bên trái cho 2 nút bấm. Ảnh dọc riêng cho điện thoại đặt ở mục Banner trên điện thoại.",
     aspectRatio: "16 / 7",
     kind: "media",
     title: "Những món đồ gỗ nhỏ xinh trong không gian xanh của Mộc Bàm",
@@ -46,14 +47,16 @@ export const contentSections: ContentSection[] = [
     kind: "media",
     title: "Không gian nhỏ xinh của Mộc Bàm trên điện thoại",
     content: "none",
-    hint: "Không bắt buộc. Gợi ý ảnh dọc 900 × 1200 px, chừa khoảng trống phía dưới bên trái cho chữ. Nếu không chọn tệp, điện thoại dùng banner chính; banner mẫu có sẵn ảnh dọc phù hợp. Banner chính phải được bật.",
+    hint:
+      "Không bắt buộc. Kích thước chuẩn: 900 × 1200 px (ảnh dọc, tỉ lệ 3 : 4), tối đa 4 MB; chừa khoảng trống phía dưới bên trái cho chữ. Nếu không chọn tệp, điện thoại dùng banner chính. Banner chính phải được bật.",
     aspectRatio: "3 / 4",
   },
   {
     key: "home-hero-slide-2-media",
     group: "home",
     label: "Banner trượt 2",
-    hint: "Không bắt buộc. Ảnh thứ hai của banner trượt, tự chuyển sau vài giây. Gợi ý ảnh ngang 2400 × 1050 px, chủ thể ở giữa. Chọn “Không dùng” để bỏ ảnh này.",
+    hint:
+      "Không bắt buộc. Ảnh thứ hai của banner trượt, tự chuyển sau vài giây. Kích thước chuẩn: 2400 × 1050 px (tỉ lệ 16 : 7), tối đa 4 MB; chủ thể ở giữa. Chọn “Không dùng” để bỏ ảnh này.",
     aspectRatio: "16 / 7",
     kind: "media",
     title: "Những người bạn gỗ nhỏ của Mộc Bàm",
@@ -63,7 +66,8 @@ export const contentSections: ContentSection[] = [
     key: "home-hero-slide-3-media",
     group: "home",
     label: "Banner trượt 3",
-    hint: "Không bắt buộc. Ảnh thứ ba của banner trượt. Gợi ý ảnh ngang 2400 × 1050 px, chủ thể ở giữa.",
+    hint:
+      "Không bắt buộc. Ảnh thứ ba của banner trượt. Kích thước chuẩn: 2400 × 1050 px (tỉ lệ 16 : 7), tối đa 4 MB; chủ thể ở giữa.",
     aspectRatio: "16 / 7",
     kind: "media",
     title: "Góc nhỏ xinh của Mộc Bàm",
@@ -80,14 +84,15 @@ export const contentSections: ContentSection[] = [
     key: "home-category-characters",
     group: "home",
     label: "Banner danh mục nhân vật (Tiêu đề và dòng chữ nhỏ)",
-    title: "Dòng nhân vật",
-    content: "Những người bạn nhỏ",
+    title: "Dòng Búp bê",
+    content: "Bình an luôn đồng hành",
   },
   {
     key: "home-category-characters-media",
     group: "home",
     label: "Ảnh banner danh mục búp bê",
-    hint: "Banner ảnh của danh mục, nằm ngay dưới banner trượt. Gợi ý ảnh ngang 1500 × 1000 px; chừa khoảng trống phía dưới bên trái cho chữ và nút.",
+    hint:
+      "Banner ảnh của danh mục, nằm dưới khối câu chuyện. Kích thước chuẩn: 1500 × 1000 px (tỉ lệ 3 : 2), tối đa 4 MB; chừa khoảng trống phía dưới bên trái cho chữ và nút.",
     aspectRatio: "3 / 2",
     kind: "media",
     title: "Dòng nhân vật",
@@ -97,14 +102,15 @@ export const contentSections: ContentSection[] = [
     key: "home-category-beads",
     group: "home",
     label: "Banner danh mục chuỗi (Tiêu đề và dòng chữ nhỏ)",
-    title: "Dòng chuỗi",
-    content: "Giản dị theo cách riêng",
+    title: "Dòng Chuỗi",
+    content: "Bình an trong từng góc nhỏ",
   },
   {
     key: "home-category-beads-media",
     group: "home",
     label: "Ảnh banner danh mục chuỗi",
-    hint: "Banner ảnh của danh mục, nằm ngay dưới banner trượt. Gợi ý ảnh ngang 1500 × 1000 px; chừa khoảng trống phía dưới bên trái cho chữ và nút.",
+    hint:
+      "Banner ảnh của danh mục, nằm dưới khối câu chuyện. Kích thước chuẩn: 1500 × 1000 px (tỉ lệ 3 : 2), tối đa 4 MB; chừa khoảng trống phía dưới bên trái cho chữ và nút.",
     aspectRatio: "3 / 2",
     kind: "media",
     title: "Dòng chuỗi",
@@ -120,15 +126,15 @@ export const contentSections: ContentSection[] = [
   {
     key: "home-intro",
     group: "home",
-    label: "Góc nhỏ Mộc Bàm (Tiêu đề và dòng chữ nhỏ phía trên)",
-    title: "Mỗi món quà nhỏ, một câu chuyện riêng",
+    label: "Khối câu chuyện (tiêu đề và dòng chữ nhỏ phía trên)",
+    title: "Một tiếng động nhỏ,\nkhởi đầu cho một ý\u00a0nghĩa lớn",
     content: "Góc nhỏ Mộc Bàm",
   },
   {
     key: "home-intro-media",
     group: "home",
-    label: "Ảnh / video khối giới thiệu (Góc nhỏ Mộc Bàm)",
-    hint: "Khối giới thiệu màu xanh trên trang chủ. Ảnh ngang đúng tỉ lệ 3 : 2, kích thước 1800 × 1200 px (tối thiểu 1200 × 800 px). Ảnh đúng tỉ lệ này hiện trọn vẹn, không bị cắt; ảnh khác tỉ lệ sẽ bị cắt bớt hai bên hoặc trên dưới.",
+    label: "Ảnh / video khối câu chuyện (ngay dưới banner)",
+    hint: "Khối câu chuyện màu xanh, ngay dưới banner trang chủ. Kích thước chuẩn: 1800 × 1200 px (ảnh ngang, tỉ lệ 3 : 2), JPG, PNG hoặc WebP tối đa 4 MB, hoặc video MP4 cùng tỉ lệ tối đa 20 MB. Ảnh đúng tỉ lệ này hiện trọn vẹn, không bị cắt.",
     aspectRatio: "3 / 2",
     kind: "media",
     title: "Một người bạn gỗ, được Mộc Bàm nâng niu",
@@ -147,22 +153,23 @@ export const contentSections: ContentSection[] = [
     label: "Lời mời liên hệ",
     title: "Gửi Mộc Bàm một lời nhắn",
     content:
-      "Một câu hỏi, một ý tưởng, hay chỉ muốn chào nhau. Chúng mình luôn sẵn lòng nghe bạn.",
+      "Một câu hỏi, một ý tưởng hay chỉ muốn chào nhau. Chúng mình luôn sẵn lòng nghe bạn.",
   },
   {
     key: "about",
     group: "about",
     label: "Câu chuyện Mộc Bàm",
-    title: "Nhỏ thôi, nhưng có câu chuyện",
+    title: "MỘC BÀM – NÉT MỘC, TÂM AN",
     content:
-      "> Đôi khi, một ý tưởng bắt đầu từ sự tò mò rất đỗi giản dị.\n> Với Mộc Bàm, đó là lần chúng mình biết đến hạt bàm bàm qua sự chia sẻ tình cờ của một người bạn. Hình dáng đặc biệt của loại hạt này gợi lên sự thích thú và thôi thúc chúng mình thử khám phá những điều có thể tạo nên từ nó. Từ cảm hứng ban đầu ấy, Mộc Bàm dần hình thành với mong muốn biến hạt bàm bàm thành những sản phẩm decor mang hình hài và nét đáng yêu riêng.\n> Mộc Bàm có hai dòng sản phẩm chính, mỗi dòng là một cách kể chuyện khác nhau. Dòng Chuỗi kết nối những hạt bàm bàm thành các phong cảnh được trang trí tỉ mỉ, gợi mở những khung cảnh để ngắm nhìn và tưởng tượng. Trong khi đó, dòng Búp bê mang đến những nhân vật được tạo hình từ hạt bàm bàm, mỗi sản phẩm có một dáng vẻ riêng để bạn yêu thích và lựa chọn.\n> Một bên là phong cảnh, một bên là nhân vật. Dù khác nhau về hình thức, cả hai đều bắt đầu từ niềm yêu thích hạt bàm bàm và mong muốn sáng tạo từ những vật liệu gần gũi.\n> Tên gọi Mộc Bàm gửi gắm tinh thần ấy: từ những vật liệu mộc mạc, tạo nên những góc nhỏ có câu chuyện. “Mộc” gợi nét giản dị, gần gũi; “Bàm” nhắc đến loại hạt đã khơi nguồn cảm hứng cho thương hiệu.\n> Với slogan “Gom nét mộc, tạo góc xinh”, Mộc Bàm mong muốn mang đến những sản phẩm decor có dấu ấn riêng, góp thêm nét duyên cho không gian sống hoặc trở thành món quà được lựa chọn bằng sự quan tâm.\n> Từ hạt bàm bàm đến những phong cảnh và nhân vật mang hình hài riêng, Mộc Bàm vẫn đang tiếp tục hành trình khám phá và sáng tạo, gom góp những điều mộc mạc để tạo nên những góc xinh theo cách của riêng mình.",
+      "> Từ những hạt mộc mạc, gửi trao những lời chúc bình an.\n\n## 1. Khởi nguồn từ một phát hiện thú vị\n\n> Mọi chuyện bắt đầu từ một lần tình cờ biết đến hạt bàm bàm.\n> Một người bạn của chúng mình tình cờ xem được video về loại hạt có hình dáng đặc biệt này trên mạng và chia sẻ lại với cả nhóm. Sự tò mò về một loại vật liệu mới đã thôi thúc chúng mình tìm hiểu và khám phá xem có thể sáng tạo điều gì từ những hạt nhỏ bé ấy.\n> Trong một lần cầm hạt bàm bàm lên và nhẹ nhàng lắc thử, chúng mình bất ngờ nghe thấy một âm thanh nhỏ phát ra từ bên trong. Điều gì đang ẩn giấu trong lớp vỏ mộc mạc ấy?\n> Từ sự tò mò đó, chúng mình bắt đầu tìm hiểu thêm trên Internet và biết được rằng bên trong hạt bàm bàm có một hạt đậu được gọi là đậu bình an. Cái tên ấy khiến chúng mình đặc biệt ấn tượng. Bởi giữa cuộc sống với nhiều bộn bề và lo toan, bình an đôi khi lại là điều giản dị mà ai cũng mong muốn: một ngày trôi qua nhẹ nhàng, một góc nhỏ để nghỉ ngơi hay đơn giản là những người mình yêu thương luôn được bình an.\n> Từ một tiếng động nhỏ bên trong hạt bàm bàm, chúng mình tìm thấy một ý nghĩa muốn gìn giữ và lan tỏa. Đó cũng là khởi đầu cho Mộc Bàm – thương hiệu sáng tạo những sản phẩm decor từ hạt bàm bàm, mang theo lời chúc bình an trong từng món đồ.\n\n## 2. Từ hạt bàm bàm đến những sản phẩm mang ý nghĩa riêng\n\n> Với Mộc Bàm, mỗi hạt bàm bàm không chỉ là một chất liệu sáng tạo mà còn là nơi khởi nguồn cho những ý tưởng độc đáo. Từ một loại hạt tự nhiên, chúng mình phát triển thành hai dòng sản phẩm chính: dòng Chuỗi và dòng Búp bê. Mỗi dòng mang một hình thức riêng, nhưng đều giữ lại điều đặc biệt bên trong hạt bàm bàm: hạt đậu bình an.\n\n## Dòng Chuỗi – Bình an trong từng góc nhỏ\n\n> Dòng Chuỗi tái hiện những phong cảnh thu nhỏ thông qua sự kết hợp giữa hạt bàm bàm, rêu khô, đất sét tạo hình và các chi tiết trang trí. Mỗi sản phẩm là một khung cảnh riêng, được tạo nên từ nhiều chi tiết nhỏ, mang đến điểm nhấn thú vị cho không gian sống. Đặt trên bàn làm việc, kệ sách hay góc nhỏ trong nhà, sản phẩm không chỉ làm đẹp không gian mà còn gợi nhắc chúng ta dành một chút thời gian để nghỉ ngơi và tận hưởng những khoảnh khắc bình yên. Đặc biệt, khi nhẹ nhàng cầm sản phẩm lên và lắc khẽ, bạn có thể cảm nhận tiếng hạt đậu nhỏ bên trong – âm thanh đặc trưng gắn liền với câu chuyện bình an của Mộc Bàm.\n\n## Dòng Búp bê – Bình an luôn đồng hành\n\n> Dòng Búp bê biến những hạt bàm bàm thành các nhân vật nhỏ nhắn với hình dáng và biểu cảm đáng yêu riêng. Thông qua cách tạo hình và trang trí, mỗi hạt được thổi vào một diện mạo mới, mang nét cá tính và câu chuyện riêng. Mỗi nhân vật có thể trở thành một người bạn nhỏ trên bàn học, bàn làm việc hay trong góc không gian cá nhân. Không chỉ mang đến sự dễ thương, mỗi sản phẩm còn chứa đựng ý nghĩa của hạt đậu bình an bên trong. Một cái lắc nhẹ, một tiếng hạt đậu khẽ vang lên cũng đủ nhắc chúng ta về thông điệp mà Mộc Bàm muốn gửi gắm: dù ở bất cứ đâu, ai cũng xứng đáng có được những khoảnh khắc bình an của riêng mình.\n> Nếu dòng Chuỗi mang đến một góc nhỏ bình yên cho không gian, thì dòng Búp bê lại là người bạn nhỏ mang theo lời chúc bình an bên cạnh mỗi người.\n\n## 3. Bình an – Giá trị Mộc Bàm muốn gửi trao\n\n> Mộc Bàm tin rằng bình an không nhất thiết phải đến từ những điều lớn lao. Đôi khi, đó chỉ là một góc nhỏ khiến ta cảm thấy dễ chịu, một vật nhỏ đồng hành mỗi ngày hay một món quà chứa đựng lời chúc chân thành. Đó có thể là món quà dành tặng người bạn vừa bắt đầu công việc mới, thay cho lời chúc mọi chuyện thuận lợi và luôn giữ được sự bình an trên hành trình phía trước. Hay một món quà dành cho người thân, bạn bè vào dịp sinh nhật, như một lời nhắn nhủ rằng dù cuộc sống có bận rộn đến đâu, chúng ta vẫn luôn mong những người mình yêu thương được bình an.\n> Với Mộc Bàm, hạt đậu bình an không phải là lời hứa về những điều kỳ diệu, mà là biểu tượng cho một mong muốn chân thành. Mỗi sản phẩm khi được trao đi đều có thể trở thành một lời chúc nhỏ, được gửi gắm bằng sự quan tâm và tình cảm của người tặng.\n> Chúng mình mong muốn mỗi khách hàng khi lựa chọn Mộc Bàm đều có thể tìm thấy một điều ý nghĩa cho riêng mình: một món đồ làm đẹp không gian, một người bạn nhỏ đồng hành hoặc một món quà thay lời muốn nói.\n> Đó cũng chính là niềm tin mà Mộc Bàm theo đuổi: Bình an có thể bắt đầu từ những điều nhỏ bé và được lan tỏa qua những điều giản dị nhất.\n\n## 4. Nét mộc – Tâm an: Tinh thần của Mộc Bàm\n\n> Đằng sau mỗi sản phẩm Mộc Bàm là quá trình sáng tạo thủ công, nơi những hạt bàm bàm được kết hợp cùng các vật liệu trang trí để tạo nên những phong cảnh và nhân vật mang hình hài riêng. Từng chi tiết được chăm chút để giữ lại nét đặc trưng của chất liệu, đồng thời tạo nên sự khác biệt trong mỗi sản phẩm.\n> Tên gọi Mộc Bàm cũng bắt nguồn từ chính tinh thần ấy.\n> “Mộc” đại diện cho vẻ đẹp giản dị, gần gũi của vật liệu tự nhiên và cảm hứng sáng tạo bắt đầu từ những điều bình thường.\n> “Bàm” gắn liền với hạt bàm bàm – nguồn cảm hứng khơi đầu hành trình sáng tạo và trở thành dấu ấn đặc trưng trong các dòng sản phẩm của thương hiệu.\n> Nếu nét mộc tạo nên hình hài của sản phẩm, thì tâm an chính là ý nghĩa được gửi gắm qua hạt đậu nhỏ bên trong.\n> Trong tương lai, Mộc Bàm mong muốn trở thành thương hiệu quà tặng và decor sáng tạo từ hạt bàm bàm, mang đến những sản phẩm có hình thức riêng và ý nghĩa tinh thần gần gũi. Chúng mình hy vọng có thể đưa những món quà nhỏ mang thông điệp bình an đến gần hơn với mọi người, để mỗi sản phẩm không chỉ làm đẹp một góc không gian mà còn trở thành một cách gửi trao yêu thương. Bởi đôi khi, bình an không cần bắt đầu từ những điều lớn lao. Nó có thể bắt đầu từ một hạt nhỏ, một tiếng động khẽ và một món quà được trao đi bằng cả tấm lòng.\n\n## MỘC BÀM – NÉT MỘC, TÂM AN.\n\n*Nét mộc từ tự nhiên, lời chúc bình an từ những điều giản dị.*",
   },
   {
     key: "about-media",
     group: "about",
-    label: "Ảnh / video câu chuyện",
-    hint: "Ảnh mở đầu trang Chúng tôi. Gợi ý ảnh ngang 1200 × 1000 px, giữ chủ thể ở giữa.",
-    aspectRatio: "6 / 5",
+    label: "Ảnh / video đầu trang Chúng tôi",
+    hint:
+      "Banner đầu trang Chúng tôi, trải hết chiều ngang như banner trang chủ. Kích thước chuẩn: 2400 × 1050 px (tỉ lệ 16 : 7), JPG, PNG hoặc WebP tối đa 4 MB, hoặc video MP4 cùng tỉ lệ tối đa 20 MB. Giữ chủ thể ở giữa.",
+    aspectRatio: "16 / 7",
     kind: "media",
     title: "Thế giới nhỏ của Mộc Bàm",
     content: "/images/verdant/story.webp",
@@ -170,23 +177,23 @@ export const contentSections: ContentSection[] = [
   {
     key: "about-natural",
     group: "about",
-    label: "Giá trị: tự nhiên",
-    title: "Tự nhiên",
-    content: "Để những đường vân riêng kể câu chuyện của gỗ.",
+    label: "Giá trị: mộc mạc",
+    title: "Mộc mạc",
+    content: "Từ hạt bàm bàm giản dị, nơi mọi thứ bắt đầu",
   },
   {
     key: "about-craft",
     group: "about",
     label: "Giá trị: tỉ mỉ",
     title: "Tỉ mỉ",
-    content: "Trân trọng từng chi tiết, từ tạo hình đến đóng gói.",
+    content: "Làm tay từng chi tiết, mỗi món một dáng riêng",
   },
   {
     key: "about-warmth",
     group: "about",
-    label: "Giá trị: ấm áp",
-    title: "Ấm áp",
-    content: "Những món đồ nhỏ, dành cho bạn và người bạn thương.",
+    label: "Giá trị: bình an",
+    title: "Bình an",
+    content: "Hạt đậu nhỏ bên trong, lời chúc gửi đến bạn",
   },
   {
     key: "about-invitation",
@@ -194,8 +201,8 @@ export const contentSections: ContentSection[] = [
     label: "Lời mời cuối trang",
     // First line is the heading; the next line shows as a smaller sentence.
     title:
-      "Một góc xinh, một câu chuyện của riêng bạn\nBạn sẽ đặt Mộc Bàm ở góc nào, hay dành tặng ai? Chúng mình rất muốn được nghe câu chuyện ấy",
-    content: "Chia sẻ cùng Mộc Bàm",
+      "Bạn sẽ gửi bình an này đến ai?\nĐặt ở một góc bàn của riêng bạn, hay trao cho người bạn thương? Mộc Bàm rất muốn nghe câu chuyện của bạn.",
+    content: "Kể cho Mộc Bàm nghe",
   },
   {
     key: "shopping-guide",
@@ -257,8 +264,8 @@ export const contentSections: ContentSection[] = [
 ];
 
 // Owner feedback 06/11: admin edits only the brand story and the policies as
-// text; every other entry is just its image or video. Fixed wording stays as
-// saved.
+// text; every other entry is just its image or video. The fixed wording lives
+// in this file.
 export function isEditableContent(section: ContentSection) {
   return (
     !section.hidden &&
@@ -268,34 +275,13 @@ export function isEditableContent(section: ContentSection) {
   );
 }
 
-// Earlier seed copy that the owner replaced in her 11/10 feedback. Saved rows
-// still holding it show the current default instead.
-const replacedSeedCopy: Record<string, { title: string; content?: string }> = {
-  "home-featured": { title: "Nhỏ xinh, đủ thương." },
-  "home-intro": {
-    title: "Những điều nhỏ, làm nên bình yên",
-    content:
-      "Nhân vật gỗ và phụ kiện thủ công, mang một chút mộc mạc và ấm áp vào mỗi ngày.",
-  },
-};
-
 export function contentEntry(entries: SiteContent[], key: string): SiteContent {
   const fallback = contentSections.find((section) => section.key === key);
   const entry = entries.find((item) => item.key === key);
-  const replaced = replacedSeedCopy[key];
-  if (
-    entry &&
-    fallback &&
-    replaced &&
-    entry.title === replaced.title &&
-    (replaced.content === undefined || entry.content === replaced.content)
-  )
-    return {
-      key,
-      title: fallback.title,
-      content:
-        replaced.content === undefined ? entry.content : fallback.content,
-    };
+  // Wording admin no longer edits comes from here, so the owner's latest
+  // brief applies even where an older saved row exists (19/11).
+  if (fallback && fallback.kind !== "media" && !isEditableContent(fallback))
+    return { key, title: fallback.title, content: fallback.content };
   if (entry)
     return fallback?.kind === "media"
       ? { ...entry, content: contentMediaSource(key, entry.content) }

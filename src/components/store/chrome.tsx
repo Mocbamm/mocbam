@@ -43,7 +43,7 @@ function Brand({ footer = false }: { footer?: boolean }) {
       className={`store-brand${footer ? " store-brand-footer" : ""}`}
     >
       <span>MỘC BÀM</span>
-      <small>Gom nét mộc, tạo góc xinh</small>
+      <small>Nét mộc - Tâm an</small>
     </Link>
   );
 }
@@ -292,7 +292,7 @@ export function StoreHeader() {
                   </button>
                 </SheetClose>
               </div>
-              <SheetDescription>Gom nét mộc, tạo góc xinh</SheetDescription>
+              <SheetDescription>Nét mộc - Tâm an</SheetDescription>
               <nav aria-label="Menu di động">
                 {navigation.map((item) => (
                   <Link
@@ -492,7 +492,7 @@ export function StoreFooter({ settings }: { settings?: SiteSettings }) {
         <div className="store-footer-brand">
           <Brand footer />
           <StoreImage
-            src="/images/logo-moc-bam.webp"
+            src="/images/logo-net-moc-tam-an.webp"
             alt="Logo Mộc Bàm"
             width={132}
             height={132}

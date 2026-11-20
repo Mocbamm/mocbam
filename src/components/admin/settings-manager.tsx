@@ -60,7 +60,8 @@ export function SettingsManager({
     { key: "facebook_url", label: "Facebook" },
     { key: "instagram_url", label: "Instagram" },
     { key: "tiktok_url", label: "TikTok" },
-    { key: "zalo_url", label: "Zalo" },
+    // Owner brief 19/11: the old Zalo setting now holds the Threads address.
+    { key: "zalo_url", label: "Threads" },
     { key: "shopee_url", label: "Shopee" },
   ] as const;
   return (

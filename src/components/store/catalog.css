@@ -853,19 +853,28 @@
   }
 }
 
-/* Owner feedback 06/11: description under the photos, purchase panel beside. */
+/* Owner brief 19/11: the description spans both columns under the photos and
+   purchase panel, in a centred reading width. */
 .store-product-detail-grid {
   grid-template-areas:
     "gallery panel"
-    "description panel";
-  grid-template-rows: auto 1fr;
-  row-gap: 32px;
+    "description description";
+  row-gap: 48px;
 }
 .store-product-gallery {
   grid-area: gallery;
 }
 .store-product-detail-grid > .store-product-description {
   grid-area: description;
+  justify-self: center;
+  width: 100%;
+  max-width: 960px;
+  white-space: normal;
+}
+.storefront .store-product-description .store-prose {
+  color: #504545;
+  font-size: 16px;
+  line-height: 1.8;
 }
 .store-product-purchase-panel {
   grid-area: panel;

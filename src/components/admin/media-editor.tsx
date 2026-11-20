@@ -422,3 +422,62 @@ export function ContentEditor({
     </div>
   );
 }
+
+// Formatting without media, for short texts such as product descriptions
+// (owner brief 19/11: bold and the other styles in product descriptions).
+export function FormattedTextField({
+  id,
+  value,
+  onChange,
+  disabled,
+  rows = 8,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  rows?: number;
+}) {
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  const [preview, setPreview] = useState(false);
+  return (
+    <div className="space-y-3">
+      <FormattingToolbar
+        textarea={textarea}
+        onChange={onChange}
+        disabled={disabled}
+        preview={preview}
+        onPreviewChange={setPreview}
+      />
+      <Textarea
+        ref={textarea}
+        className="text-base md:text-sm"
+        id={id}
+        value={value}
+        rows={rows}
+        required
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <p className="text-xs leading-5 text-[#788273]">
+        Bấm nút định dạng (in đậm, nghiêng, chữ màu…) rồi gõ, bấm lại để tắt —
+        hoặc bôi đen chữ có sẵn rồi bấm nút. Cách các đoạn bằng một dòng trống.
+      </p>
+      {preview ? (
+        <section
+          aria-label="Xem trước nội dung"
+          className="rounded-xl border border-[#dfe5d8] bg-[#fbfbf8] p-5"
+        >
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-[#788273]">
+            Xem trước
+          </p>
+          {value.trim() ? (
+            <Prose content={value} />
+          ) : (
+            <p className="text-sm text-[#788273]">Chưa có nội dung.</p>
+          )}
+        </section>
+      ) : null}
+    </div>
+  );
+}

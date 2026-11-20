@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HandHeart, Headset, Leaf } from "lucide-react";
+import { HandHeart, HeartHandshake, Sprout } from "lucide-react";
 import {
   getProducts,
   getCategories,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/catalog";
 import { ContactForm } from "@/components/store/contact";
 import { SocialIcons } from "@/components/store/social";
+import { GiftWishes } from "@/components/store/gift-wishes";
 import { ProductCard } from "@/components/store/products";
 import { StoreCarousel } from "@/components/store/carousel";
 import { BlogCard } from "@/components/store/blog";
@@ -18,7 +19,6 @@ import { getPageContent } from "@/lib/site-content-server";
 import { ContentVisual, Prose } from "@/components/store/content";
 import { HeroMedia } from "@/components/store/hero-media";
 import { HeroSlideshow } from "@/components/store/hero-slideshow";
-import { contentSections } from "@/lib/site-content";
 import { JsonLd } from "@/components/store/json-ld";
 import { organizationJsonLd, pageMetadata, siteDescription } from "@/lib/seo";
 
@@ -76,7 +76,7 @@ export default async function HomePage() {
         aria-labelledby="home-title"
       >
         <h1 id="home-title" className="sr-only">
-          Mộc Bàm – Gom nét mộc, tạo góc xinh
+          Mộc Bàm: Nét mộc - Tâm an
         </h1>
         <div
           className={`store-home-hero${heroSlides.length ? "" : " store-home-hero-text"}`}
@@ -110,72 +110,106 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      {/* Owner brief 19/11: the story comes right after the banner. */}
       <section
-        className="store-container store-category-banners"
-        aria-label="Danh mục sản phẩm"
+        className="store-container store-home-story"
+        aria-labelledby="home-story-title"
       >
-        {categories.map((category) => {
-          const media = categoryMedia[category.slug];
-          const entry = media ? content[media.key] : undefined;
-          const copy = media ? content[media.copyKey] : undefined;
-          const seedCopy = media
-            ? contentSections.find((section) => section.key === media.copyKey)
-            : undefined;
-          const label =
-            copy && copy.title !== seedCopy?.title ? copy.title : category.name;
-          const image =
-            entry?.content && entry.content !== "none"
-              ? entry.content
-              : media?.image ||
-                products.find((product) => product.category_id === category.id)
-                  ?.image_url ||
-                "/images/verdant/rabbit-photo.webp";
-          return (
+        <div className="store-story-panel">
+          {introMedia.content !== "none" ? (
+            <div className="store-story-media">
+              <ContentVisual
+                url={
+                  /^\/images\/product-0[1-8]\.svg$/.test(introMedia.content)
+                    ? "/images/story.svg"
+                    : introMedia.content
+                }
+                alt={introMedia.title}
+                fallbackSrc="/images/verdant/story.webp"
+                sizes="(max-width: 1099px) 95vw, 50vw"
+              />
+            </div>
+          ) : null}
+          <div className="store-story-copy">
+            <p className="store-eyebrow">{intro.content}</p>
+            <h2 id="home-story-title">{intro.title}</h2>
             <Link
-              key={category.id}
-              href={`/san-pham?danh-muc=${encodeURIComponent(category.slug)}`}
-              className="store-category-banner"
+              href="/chung-toi"
+              className="store-button store-button-light-outline"
             >
-              <div className="store-category-banner-media">
-                <ContentVisual
-                  url={image}
-                  alt={entry?.title || category.name}
-                  fallbackSrc={media?.image}
-                  sizes="(max-width: 768px) 95vw, 48vw"
-                  controls={false}
-                />
-              </div>
-              <div className="store-category-banner-copy">
-                {copy?.content ? <p>{copy.content}</p> : null}
-                <h2>{label}</h2>
-                <span className="store-button store-button-primary">
-                  Khám phá
-                </span>
-              </div>
+              Hiểu hơn về Mộc Bàm
             </Link>
-          );
-        })}
+          </div>
+        </div>
+      </section>
+      <section
+        className="store-container store-home-categories"
+        aria-labelledby="home-categories-title"
+      >
+        <h2 id="home-categories-title" className="store-section-heading">
+          Một hạt đậu, hai cách bình an
+        </h2>
+        <div className="store-category-banners">
+          {categories.map((category) => {
+            const media = categoryMedia[category.slug];
+            const entry = media ? content[media.key] : undefined;
+            const copy = media ? content[media.copyKey] : undefined;
+            const label = copy?.title || category.name;
+            const image =
+              entry?.content && entry.content !== "none"
+                ? entry.content
+                : media?.image ||
+                  products.find(
+                    (product) => product.category_id === category.id,
+                  )?.image_url ||
+                  "/images/verdant/rabbit-photo.webp";
+            return (
+              <Link
+                key={category.id}
+                href={`/san-pham?danh-muc=${encodeURIComponent(category.slug)}`}
+                className="store-category-banner"
+              >
+                <div className="store-category-banner-media">
+                  <ContentVisual
+                    url={image}
+                    alt={entry?.title || category.name}
+                    fallbackSrc={media?.image}
+                    sizes="(max-width: 768px) 95vw, 48vw"
+                    controls={false}
+                  />
+                </div>
+                <div className="store-category-banner-copy">
+                  {copy?.content ? <p>{copy.content}</p> : null}
+                  <h3>{label}</h3>
+                  <span className="store-button store-button-primary">
+                    Khám phá
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </section>
       <section
         className="store-benefits store-container"
         aria-label="Những điều Mộc Bàm trân trọng"
       >
-        {/* Owner brief 09/11: fixed wording for the three values. */}
+        {/* Owner brief 19/11: fixed wording for the three values. */}
         {[
           {
             icon: HandHeart,
-            title: "Thủ công từ tâm",
-            text: "Chăm chút từng chi tiết nhỏ",
+            title: "Gửi gắm sự bình yên",
+            text: "Tỉ mỉ trong từng chi tiết, dịu dàng trong từng nét nhỏ.",
           },
           {
-            icon: Leaf,
-            title: "Nét đẹp độc bản",
-            text: "Mỗi hạt mang một vẻ riêng",
+            icon: Sprout,
+            title: "Vẻ đẹp của an nhiên",
+            text: "Mỗi hạt bàm bàm mở ra một góc nhỏ bình yên.",
           },
           {
-            icon: Headset,
-            title: "Tận tâm cùng bạn",
-            text: "Đồng hành từ lựa chọn đến trải nghiệm",
+            icon: HeartHandshake,
+            title: "Đồng hành cùng bạn",
+            text: "Mang đến những lựa chọn giúp không gian thêm thư thái.",
           },
         ].map(({ icon: Icon, title, text }) => (
           <div key={title} className="store-benefit">
@@ -189,6 +223,7 @@ export default async function HomePage() {
           </div>
         ))}
       </section>
+      <GiftWishes />
       <PromotionBanner promotions={promotions} products={products} />
       <section className="store-container store-home-products">
         <StoreCarousel
@@ -223,34 +258,6 @@ export default async function HomePage() {
             />
           ))}
         </StoreCarousel>
-      </section>
-      <section className="store-container store-home-story">
-        <div className="store-story-panel">
-          {introMedia.content !== "none" ? (
-            <div className="store-story-media">
-              <ContentVisual
-                url={
-                  /^\/images\/product-0[1-8]\.svg$/.test(introMedia.content)
-                    ? "/images/story.svg"
-                    : introMedia.content
-                }
-                alt={introMedia.title}
-                fallbackSrc="/images/verdant/story.webp"
-                sizes="(max-width: 768px) 95vw, 50vw"
-              />
-            </div>
-          ) : null}
-          <div className="store-story-copy">
-            <p className="store-eyebrow">{intro.content}</p>
-            <h2>{intro.title}</h2>
-            <Link
-              href="/chung-toi"
-              className="store-button store-button-light-outline"
-            >
-              Hiểu hơn về Mộc Bàm
-            </Link>
-          </div>
-        </div>
       </section>
       <section className="store-container store-home-journal">
         <StoreCarousel

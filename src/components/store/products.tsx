@@ -23,6 +23,7 @@ import { money } from "./format";
 import { useSales } from "./sale-context";
 import { salePrice } from "@/lib/sale-price";
 import { ProductGallery, productImages } from "./product-media";
+import { Prose } from "./content";
 import "./catalog.css";
 
 // Original price struck through next to the price after the public voucher.
@@ -504,11 +505,6 @@ export function ProductDetails({
         product={product}
         variantImage={variantImage}
       />
-      {/* Owner feedback 06/11: the description sits under the photos so the
-          purchase controls stay near the top. */}
-      {product.description ? (
-        <p className="store-product-description">{product.description}</p>
-      ) : null}
       <div className="store-product-purchase-panel">
         {category ? (
           <Link
@@ -521,6 +517,13 @@ export function ProductDetails({
         <h1>{product.name}</h1>
         <ProductActions product={product} onVariantChange={setVariantImage} />
       </div>
+      {/* Owner brief 19/11: the description runs across the page under the
+          photos and purchase panel, centred, with admin formatting. */}
+      {product.description ? (
+        <div className="store-product-description">
+          <Prose content={product.description} />
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { Leaf, Heart, Hand } from "lucide-react";
 import { getPageContent } from "@/lib/site-content-server";
@@ -6,7 +7,7 @@ import { pageMetadata } from "@/lib/seo";
 export const metadata = pageMetadata({
   title: "Câu chuyện Mộc Bàm",
   description:
-    "Mộc Bàm làm phụ kiện handmade từ gỗ, hạt và chất liệu tự nhiên, tỉ mỉ từng chi tiết. Đọc câu chuyện và cách chúng mình làm nên mỗi món đồ nhỏ.",
+    "Câu chuyện Mộc Bàm: từ tiếng hạt đậu bình an bên trong hạt bàm bàm đến những món decor handmade mang lời chúc bình an. Nét mộc – Tâm an.",
   path: "/chung-toi",
 });
 export default async function AboutPage() {
@@ -19,26 +20,39 @@ export default async function AboutPage() {
   const invitationText = invitationLines.join(" ").trim();
   return (
     <div className="store-page store-about-page">
-      {/* Owner feedback 06/11: the title runs on one line above the story. */}
-      <h1 className="store-page-title store-about-title">
-        {about?.title || "Nhỏ thôi, nhưng có câu chuyện"}
-      </h1>
-      <div className="store-about-intro">
-        <div>
-          <div>
-            <Prose
-              content={
-                about?.content ||
-                "Mộc Bàm tạo nên những người bạn nhỏ từ gỗ, dành cho những niềm vui giản dị trong đời sống hằng ngày."
-              }
-            />
-          </div>
+      {/* Owner brief 19/11: the story is long, so the photo leads as a wide
+          banner and the text sits centred underneath. */}
+      {media.content !== "none" ? (
+        <div className="store-about-media store-about-banner">
+          <ContentVisual
+            url={media.content}
+            alt={media.title}
+            preload
+            sizes="(max-width: 1400px) 95vw, 1340px"
+          />
         </div>
-        {media.content !== "none" ? (
-          <div className="store-about-media relative aspect-square overflow-hidden">
-            <ContentVisual url={media.content} alt={media.title} preload />
-          </div>
-        ) : null}
+      ) : null}
+      <div className="store-about-story">
+        {/* Each side of the dash wraps as a unit, so "Nét mộc" never
+            splits across lines. */}
+        <h1 className="store-page-title store-about-title">
+          {(about?.title || "Mộc Bàm – Nét mộc, tâm an")
+            .split(" – ")
+            .map((part, index) => (
+              <Fragment key={index}>
+                {index ? " " : null}
+                <span className="inline-block">
+                  {index ? `– ${part}` : part}
+                </span>
+              </Fragment>
+            ))}
+        </h1>
+        <Prose
+          content={
+            about?.content ||
+            "Từ những hạt mộc mạc, gửi trao những lời chúc bình an."
+          }
+        />
       </div>
       <section
         className="store-about-values"

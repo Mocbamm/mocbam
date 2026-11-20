@@ -2,7 +2,7 @@ import { Mail } from "lucide-react";
 import type { SiteSettings } from "@/lib/types";
 
 // The shop's official accounts (owner brief, 06/11). Settings override them
-// when filled in; Threads has no setting yet.
+// when filled in.
 const officialLinks = {
   facebook: "https://www.facebook.com/mocbamm",
   instagram: "https://www.instagram.com/mocbamm",
@@ -58,6 +58,12 @@ function ThreadsIcon() {
   );
 }
 
+// The owner renamed the Zalo setting to Threads (19/11); the address is kept
+// in the same settings column, zalo_url.
+function threadsUrl(settings?: SiteSettings) {
+  return settings?.zalo_url || officialLinks.threads;
+}
+
 export function socialLinks(settings?: SiteSettings) {
   const email = settings?.shop_email || officialLinks.email;
   return [
@@ -76,7 +82,7 @@ export function socialLinks(settings?: SiteSettings) {
       href: settings?.tiktok_url || officialLinks.tiktok,
       icon: <TikTokIcon />,
     },
-    { label: "Threads", href: officialLinks.threads, icon: <ThreadsIcon /> },
+    { label: "Threads", href: threadsUrl(settings), icon: <ThreadsIcon /> },
     {
       label: `Gmail: ${email}`,
       href: `mailto:${email}`,
