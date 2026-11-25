@@ -1013,29 +1013,48 @@
   }
 }
 
-/* Owner brief 19/11: Chúng tôi opens with a wide 16 : 7 banner (2400 × 1050
-   px) and a centred reading column below it. */
+/* Owner feedback 24/11: Chúng tôi reads like a Nhật ký post. Photo, title,
+   story, values and invitation share one 960 px column, with the blog
+   cover's 1.7 : 1 photo and the blog's title and text sizes. */
+.storefront .store-about-page {
+  max-width: 1024px;
+}
 .storefront .store-about-banner {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 16 / 7;
-  border-radius: 16px;
+  aspect-ratio: 1.7;
+  border-radius: 24px;
 }
 .storefront .store-about-story {
-  max-width: 860px;
-  margin: 48px auto 0;
+  margin-top: 40px;
 }
 .storefront .store-about-story .store-about-title {
-  margin: 0 auto 32px;
+  max-width: none;
+  margin: 0 0 28px;
+  font-size: clamp(30px, 3vw, 40px);
   text-align: center;
+  text-wrap: balance;
+}
+.storefront .store-about-story .store-prose {
+  font-size: 17px;
+  line-height: 1.9;
 }
 @media (max-width: 767px) {
+  .storefront .store-about-page {
+    max-width: none;
+  }
   .storefront .store-about-banner {
-    aspect-ratio: 4 / 3;
     border-radius: 12px;
   }
   .storefront .store-about-story {
     margin-top: 28px;
+  }
+  .storefront .store-about-story .store-about-title {
+    margin-bottom: 20px;
+  }
+  .storefront .store-about-story .store-prose {
+    font-size: 16px;
+    line-height: 1.85;
   }
 }
 

@@ -112,7 +112,21 @@ describe("editable content media", () => {
     expect(contentEntry([], "returns").content).toMatch(/Hỗ trợ sau mua/);
     expect(
       contentSections.filter((section) => section.kind === "media"),
-    ).toHaveLength(8);
+    ).toHaveLength(10);
+    // Owner feedback 26/11: each banner slide has its own phone photo.
+    expect(
+      contentSections
+        .filter((section) => section.key.endsWith("-mobile-media"))
+        .map((section) => [section.key, section.aspectRatio]),
+    ).toEqual([
+      ["home-hero-mobile-media", "3 / 4"],
+      ["home-hero-slide-2-mobile-media", "3 / 4"],
+      ["home-hero-slide-3-mobile-media", "3 / 4"],
+    ]);
+    // Chúng tôi uses the Nhật ký cover size (24/11).
+    expect(
+      contentSections.find((section) => section.key === "about-media")?.hint,
+    ).toMatch(/1700 × 1000 px/);
     // Every image or video slot tells the owner its exact size.
     for (const section of contentSections.filter(
       (item) => item.kind === "media",

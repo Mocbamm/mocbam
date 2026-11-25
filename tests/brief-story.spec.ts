@@ -73,7 +73,7 @@ test("home leads with the story, then categories, values and gift wording", asyn
   ).toHaveAttribute("href", "/san-pham");
 });
 
-test("footer shows the new logo and slogan", async ({ page }) => {
+test("footer centres the name, slogan and round logo", async ({ page }) => {
   await page.goto("/");
   const footer = page.locator("footer");
   await expect(footer.getByText("Nét mộc - Tâm an")).toBeVisible();
@@ -83,20 +83,48 @@ test("footer shows the new logo and slogan", async ({ page }) => {
   await expect
     .poll(() => logo.evaluate((image: HTMLImageElement) => image.naturalWidth))
     .toBeGreaterThan(0);
+  // Owner feedback 24/11: a round logo, and the three items share one centre.
+  await expect(logo).toHaveCSS("border-radius", "50%");
+  const column = footer.locator(".store-footer-brand");
+  const centre = async (selector: string) => {
+    const box = (await column.locator(selector).first().boundingBox())!;
+    return box.x + box.width / 2;
+  };
+  const columnBox = (await column.boundingBox())!;
+  const middle = columnBox.x + columnBox.width / 2;
+  for (const selector of [".store-brand > span", ".store-brand small", "img"])
+    expect(Math.abs((await centre(selector)) - middle)).toBeLessThan(1);
 });
 
-test("Chúng tôi opens with a wide photo and centred story", async ({
-  page,
-}) => {
+test("Chúng tôi lines up like a Nhật ký post", async ({ page }) => {
   await page.goto("/chung-toi");
   const banner = page.locator(".store-about-banner");
   const title = page.getByRole("heading", { level: 1 });
-  const [bannerBox, titleBox] = await Promise.all([
+  const story = page.locator(".store-about-story .store-prose");
+  const [bannerBox, titleBox, storyBox] = await Promise.all([
     banner.boundingBox(),
     title.boundingBox(),
+    story.boundingBox(),
   ]);
+  // Photo first, in the blog cover's 1.7 : 1 frame and 960 px column.
   expect(bannerBox!.y + bannerBox!.height).toBeLessThanOrEqual(titleBox!.y);
-  expect(bannerBox!.width / bannerBox!.height).toBeCloseTo(16 / 7, 1);
+  expect(bannerBox!.width / bannerBox!.height).toBeCloseTo(1.7, 1);
+  expect(bannerBox!.width).toBeCloseTo(960, 0);
+  // Title, story, values and invitation share the photo's edges.
+  for (const box of [
+    titleBox,
+    storyBox,
+    await page.locator(".store-about-values").boundingBox(),
+    await page.locator(".store-about-invitation").boundingBox(),
+  ]) {
+    expect(Math.abs(box!.x - bannerBox!.x)).toBeLessThan(1);
+    expect(Math.abs(box!.width - bannerBox!.width)).toBeLessThan(1);
+  }
+  // The title reads as one line on a laptop screen.
+  const lineHeight = await title.evaluate((element) =>
+    parseFloat(getComputedStyle(element).lineHeight),
+  );
+  expect(titleBox!.height).toBeLessThan(lineHeight * 1.5);
   await expect(title).toHaveCSS("text-align", "center");
   for (const value of ["Mộc mạc", "Tỉ mỉ", "Bình an"])
     await expect(

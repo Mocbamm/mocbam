@@ -20,29 +20,30 @@ export default async function AboutPage() {
   const invitationText = invitationLines.join(" ").trim();
   return (
     <div className="store-page store-about-page">
-      {/* Owner brief 19/11: the story is long, so the photo leads as a wide
-          banner and the text sits centred underneath. */}
+      {/* Owner feedback 24/11: laid out like a Nhật ký post. The photo has
+          the blog cover's size and the same width as the text under it. */}
       {media.content !== "none" ? (
         <div className="store-about-media store-about-banner">
           <ContentVisual
             url={media.content}
             alt={media.title}
             preload
-            sizes="(max-width: 1400px) 95vw, 1340px"
+            sizes="(max-width: 1024px) 95vw, 960px"
           />
         </div>
       ) : null}
       <div className="store-about-story">
-        {/* Each side of the dash wraps as a unit, so "Nét mộc" never
-            splits across lines. */}
+        {/* One line on wide screens; on phones each side of the dash wraps
+            as a unit, so "Nét mộc" never splits across lines. */}
         <h1 className="store-page-title store-about-title">
           {(about?.title || "Mộc Bàm – Nét mộc, tâm an")
             .split(" – ")
-            .map((part, index) => (
+            .map((part, index, parts) => (
               <Fragment key={index}>
                 {index ? " " : null}
+                {/* The dash ends the first line, never starts the next. */}
                 <span className="inline-block">
-                  {index ? `– ${part}` : part}
+                  {index < parts.length - 1 ? `${part} –` : part}
                 </span>
               </Fragment>
             ))}

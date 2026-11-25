@@ -19,6 +19,12 @@ type ContentSection = SiteContent & {
   hidden?: boolean;
 };
 
+// Owner feedback 26/11: every slide of the home banner has its own upright
+// photo for phones, so swiping on a phone never shows a cropped wide banner.
+function phoneBannerHint(slide: number) {
+  return `Không bắt buộc. Ảnh dọc cho điện thoại của Banner trượt ${slide}. Kích thước chuẩn: 900 × 1200 px (tỉ lệ 3 : 4), tối đa 4 MB; chừa khoảng trống phía dưới bên trái cho 2 nút bấm. Nếu bỏ trống, điện thoại cắt phần giữa của Banner trượt ${slide}.`;
+}
+
 export const contentSections: ContentSection[] = [
   {
     key: "home-hero",
@@ -34,7 +40,7 @@ export const contentSections: ContentSection[] = [
     group: "home",
     label: "Banner trượt 1",
     hint:
-      "Ảnh đầu tiên của banner trượt trên trang chủ. Kích thước chuẩn: 2400 × 1050 px (tỉ lệ 16 : 7); ảnh JPG, PNG hoặc WebP tối đa 4 MB, hoặc video MP4 cùng tỉ lệ tối đa 20 MB. Giữ chủ thể ở giữa, chừa góc dưới bên trái cho 2 nút bấm. Ảnh dọc riêng cho điện thoại đặt ở mục Banner trên điện thoại.",
+      "Ảnh đầu tiên của banner trượt trên trang chủ. Kích thước chuẩn: 2400 × 1050 px (tỉ lệ 16 : 7); ảnh JPG, PNG hoặc WebP tối đa 4 MB, hoặc video MP4 cùng tỉ lệ tối đa 20 MB. Giữ chủ thể ở giữa, chừa góc dưới bên trái cho 2 nút bấm. Ảnh dọc riêng cho điện thoại đặt ở mục Banner trượt 1 trên điện thoại.",
     aspectRatio: "16 / 7",
     kind: "media",
     title: "Những món đồ gỗ nhỏ xinh trong không gian xanh của Mộc Bàm",
@@ -43,12 +49,11 @@ export const contentSections: ContentSection[] = [
   {
     key: "home-hero-mobile-media",
     group: "home",
-    label: "Banner trên điện thoại",
+    label: "Banner trượt 1 trên điện thoại",
     kind: "media",
     title: "Không gian nhỏ xinh của Mộc Bàm trên điện thoại",
     content: "none",
-    hint:
-      "Không bắt buộc. Kích thước chuẩn: 900 × 1200 px (ảnh dọc, tỉ lệ 3 : 4), tối đa 4 MB; chừa khoảng trống phía dưới bên trái cho chữ. Nếu không chọn tệp, điện thoại dùng banner chính. Banner chính phải được bật.",
+    hint: phoneBannerHint(1),
     aspectRatio: "3 / 4",
   },
   {
@@ -63,6 +68,16 @@ export const contentSections: ContentSection[] = [
     content: "/images/verdant/story.webp",
   },
   {
+    key: "home-hero-slide-2-mobile-media",
+    group: "home",
+    label: "Banner trượt 2 trên điện thoại",
+    kind: "media",
+    title: "Những người bạn gỗ nhỏ của Mộc Bàm trên điện thoại",
+    content: "none",
+    hint: phoneBannerHint(2),
+    aspectRatio: "3 / 4",
+  },
+  {
     key: "home-hero-slide-3-media",
     group: "home",
     label: "Banner trượt 3",
@@ -72,6 +87,16 @@ export const contentSections: ContentSection[] = [
     kind: "media",
     title: "Góc nhỏ xinh của Mộc Bàm",
     content: "none",
+  },
+  {
+    key: "home-hero-slide-3-mobile-media",
+    group: "home",
+    label: "Banner trượt 3 trên điện thoại",
+    kind: "media",
+    title: "Góc nhỏ xinh của Mộc Bàm trên điện thoại",
+    content: "none",
+    hint: phoneBannerHint(3),
+    aspectRatio: "3 / 4",
   },
   {
     key: "home-hero-note",
@@ -168,8 +193,8 @@ export const contentSections: ContentSection[] = [
     group: "about",
     label: "Ảnh / video đầu trang Chúng tôi",
     hint:
-      "Banner đầu trang Chúng tôi, trải hết chiều ngang như banner trang chủ. Kích thước chuẩn: 2400 × 1050 px (tỉ lệ 16 : 7), JPG, PNG hoặc WebP tối đa 4 MB, hoặc video MP4 cùng tỉ lệ tối đa 20 MB. Giữ chủ thể ở giữa.",
-    aspectRatio: "16 / 7",
+      "Ảnh đầu trang Chúng tôi, cùng khổ với ảnh bìa bài Nhật ký và rộng bằng phần chữ bên dưới. Kích thước chuẩn: 1700 × 1000 px (tỉ lệ 1,7 : 1), JPG, PNG hoặc WebP tối đa 4 MB, hoặc video MP4 cùng tỉ lệ tối đa 20 MB. Giữ chủ thể ở giữa.",
+    aspectRatio: "1.7",
     kind: "media",
     title: "Thế giới nhỏ của Mộc Bàm",
     content: "/images/verdant/story.webp",

@@ -44,11 +44,18 @@ export default async function HomePage() {
   const introMedia = content["home-intro-media"];
   // Owner feedback 11/10: the banner is an image slideshow with only the two
   // buttons on top. Slides set to “none” are skipped.
+  // Owner feedback 26/11: each slide carries its own upright phone photo.
   const heroSlides = [
-    heroMedia,
-    content["home-hero-slide-2-media"],
-    content["home-hero-slide-3-media"],
-  ].filter((slide) => slide.content !== "none");
+    { desktop: heroMedia, mobile: content["home-hero-mobile-media"] },
+    {
+      desktop: content["home-hero-slide-2-media"],
+      mobile: content["home-hero-slide-2-mobile-media"],
+    },
+    {
+      desktop: content["home-hero-slide-3-media"],
+      mobile: content["home-hero-slide-3-mobile-media"],
+    },
+  ].filter((slide) => slide.desktop.content !== "none");
   const featured = [...products].sort(
     (a, b) => Number(b.featured) - Number(a.featured),
   );
@@ -82,16 +89,14 @@ export default async function HomePage() {
           className={`store-home-hero${heroSlides.length ? "" : " store-home-hero-text"}`}
         >
           {heroSlides.length ? (
-            <HeroSlideshow labels={heroSlides.map((slide) => slide.title)}>
+            <HeroSlideshow
+              labels={heroSlides.map((slide) => slide.desktop.title)}
+            >
               {heroSlides.map((slide, index) => (
                 <HeroMedia
-                  key={slide.key}
-                  desktop={slide}
-                  mobile={
-                    index === 0
-                      ? content["home-hero-mobile-media"]
-                      : { ...slide, content: "none" }
-                  }
+                  key={slide.desktop.key}
+                  desktop={slide.desktop}
+                  mobile={slide.mobile}
                   priority={index === 0}
                 />
               ))}

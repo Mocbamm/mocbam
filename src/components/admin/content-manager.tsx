@@ -49,6 +49,8 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
     draft.title !== savedDrafts[selected].title ||
     draft.content !== savedDrafts[selected].content;
   const section = contentSections.find((item) => item.key === selected)!;
+  // Phone photos fall back to cropping the matching wide banner.
+  const phoneBanner = selected.endsWith("-mobile-media");
   const visible = contentSections.filter(
     (item) =>
       item.group === group &&
@@ -292,17 +294,13 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
                   onChange={(url) => update("content", url || "none")}
                   aspectRatio={section.aspectRatio}
                   fit={section.fit || "cover"}
-                  removeLabel={
-                    selected === "home-hero-mobile-media"
-                      ? "Dùng banner chính"
-                      : undefined
-                  }
+                  removeLabel={phoneBanner ? "Dùng banner ngang" : undefined}
                   disabled={saving}
                   onUploadingChange={setUploading}
                 />
                 <p className="text-xs text-[#788273]">
-                  {selected === "home-hero-mobile-media"
-                    ? "Không chọn tệp riêng: điện thoại dùng banner chính (hoặc ảnh dọc của banner mẫu)."
+                  {phoneBanner
+                    ? "Không chọn tệp riêng: điện thoại cắt phần giữa của banner ngang cùng số."
                     : "Gỡ tệp rồi lưu để ẩn hình minh họa ở mục này."}
                 </p>
               </div>
@@ -365,9 +363,7 @@ export function ContentManager({ entries }: { entries: SiteContent[] }) {
                   setMediaChoice(null);
                 }}
               >
-                {selected === "home-hero-mobile-media"
-                  ? "Dùng banner chính"
-                  : "Dùng ảnh mẫu"}
+                {phoneBanner ? "Dùng banner ngang" : "Dùng ảnh mẫu"}
               </Button>
             ) : null}
             <p role="status" className="w-full text-sm text-[#6b7867]">
