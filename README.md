@@ -1,5 +1,7 @@
 # Mộc Bàm
 
+**Reviewing the work done?** Start with the [summary of work delivered](docs/WORK-SUMMARY.md).
+
 A Vietnamese graduation-project shop: Next.js App Router, TypeScript, Tailwind CSS/shadcn/ui and Supabase. The public storefront and protected admin are one application. Payments use COD or manual bank transfer with a locally generated QR; submitting an order does not move money or confirm receipt of payment.
 
 Live demo: [mocbam.vercel.app](https://mocbam.vercel.app). Production HTTP and browser verification using the owner account passed COD checkout, payment recording, paid cancellation and refund recording. QA resources were removed; seeded data and permanent owner access were retained. See [project status](docs/PROJECT-STATUS.md).
