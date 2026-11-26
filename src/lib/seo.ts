@@ -5,6 +5,9 @@ import { storefrontImageSource } from "./storefront-media";
 import type { BlogPost, Category, Product, SiteSettings } from "./types";
 
 export const siteName = "Mộc Bàm";
+// Ways people type the name without Vietnamese marks, so Google treats them
+// and “Mộc Bàm” as the same shop.
+export const siteAlternateNames = ["Moc Bam", "MocBam"];
 export const siteDescription =
   "Mộc Bàm – phụ kiện handmade lấy cảm hứng từ thiên nhiên: móc khóa, vòng tay, dây chuyền và nhân vật gỗ nhỏ xinh, làm tỉ mỉ từng chi tiết.";
 // 1200×630, the size Facebook, Zalo and X expect for link previews.
@@ -22,7 +25,11 @@ export function absoluteUrl(path: string) {
 // A search-result length summary (Google shows roughly 150–160 characters),
 // cut at a word boundary.
 export function metaDescription(text: string, max = 160) {
-  const clean = plainText(text)
+  const lines = plainText(text).split("\n");
+  // Section labels such as “MÔ TẢ SẢN PHẨM” read as noise in a search result.
+  const prose = lines.filter((line) => !isSectionLabel(line));
+  const clean = (prose.some((line) => line.trim()) ? prose : lines)
+    .join("\n")
     .replace(/^#{1,3}\s+/gm, "")
     .replace(/^(-|\d+\.)\s+/gm, "")
     .replace(/\s+/g, " ")
@@ -31,6 +38,17 @@ export function metaDescription(text: string, max = 160) {
   const cut = clean.slice(0, max - 1);
   const space = cut.lastIndexOf(" ");
   return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:–-]+$/, "")}…`;
+}
+
+// A short line written all in capitals, used as a heading inside the text.
+function isSectionLabel(line: string) {
+  const text = line.replace(/^#{1,3}\s+/, "").replace(/[:：]\s*$/, "").trim();
+  return (
+    text.length > 0 &&
+    text.length <= 60 &&
+    /\p{L}/u.test(text) &&
+    !/\p{Ll}/u.test(text)
+  );
 }
 
 type PageSeo = {
@@ -128,6 +146,7 @@ export function organizationJsonLd(settings: SiteSettings) {
       "@type": "OnlineStore",
       "@id": organizationId,
       name: siteName,
+      alternateName: siteAlternateNames,
       url: siteUrl,
       logo: absoluteUrl("/images/logo.png"),
       image: absoluteUrl(defaultShareImage.url),
@@ -141,6 +160,7 @@ export function organizationJsonLd(settings: SiteSettings) {
       "@context": "https://schema.org",
       "@type": "WebSite",
       name: siteName,
+      alternateName: siteAlternateNames,
       url: siteUrl,
       inLanguage: "vi",
       publisher: { "@id": organizationId },

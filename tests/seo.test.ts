@@ -11,6 +11,7 @@ import {
   productJsonLd,
 } from "@/lib/seo";
 import { JsonLd } from "@/components/store/json-ld";
+import robots from "@/app/robots";
 import {
   internalLinks,
   otherPosts,
@@ -26,6 +27,23 @@ describe("search descriptions", () => {
     const long = metaDescription("móc khóa gỗ ".repeat(40));
     expect(long.length).toBeLessThanOrEqual(160);
     expect(long).toMatch(/gỗ…$|khóa…$|móc…$/);
+  });
+
+  it("leaves out all-caps section labels", () => {
+    expect(
+      metaDescription(
+        "## 1. MÔ TẢ SẢN PHẨM \n\nMột góc Việt thu nhỏ.\n\n**ĐẶC ĐIỂM NỔI BẬT:**\nMái nhà tranh.",
+      ),
+    ).toBe("Một góc Việt thu nhỏ. Mái nhà tranh.");
+    // Text that is only a label is kept rather than left empty.
+    expect(metaDescription("MÓC KHÓA GỖ")).toBe("MÓC KHÓA GỖ");
+  });
+
+  it("lets search engines fetch uploaded photos but no other API", () => {
+    const rules = robots().rules;
+    const rule = Array.isArray(rules) ? rules[0] : rules;
+    expect(rule.allow).toContain("/api/media/");
+    expect(rule.disallow).toContain("/api");
   });
 
   it("gives every page a canonical address and a full share card", () => {
@@ -130,6 +148,15 @@ describe("structured data", () => {
       "@type": "OnlineStore",
       sameAs: ["https://facebook.com/mocbam"],
     });
+  });
+
+  it("ties the unaccented spellings to the Mộc Bàm name", () => {
+    const [shop, site] = organizationJsonLd(demoSettings);
+    for (const entity of [shop, site])
+      expect(entity).toMatchObject({
+        name: "Mộc Bàm",
+        alternateName: ["Moc Bam", "MocBam"],
+      });
   });
 
   it("cannot be broken out of by shop text", () => {

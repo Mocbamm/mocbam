@@ -5,7 +5,9 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
+      // Uploaded photos are served from /api/media; Google needs them for
+      // image search and product results. The longer rule wins over /api.
+      allow: ["/", "/api/media/"],
       // Private or per-visitor pages have nothing worth indexing.
       disallow: [
         "/admin",
