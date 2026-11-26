@@ -1,18 +1,19 @@
 # Mộc Bàm website: summary of work delivered
 
-Read this first. It summarises everything built for the Mộc Bàm shop from 3 October to 20 November 2026, including work that does not appear as code in this repository. Every figure links to, or can be checked against, the repository and its history.
+Read this first. It summarises everything built for the Mộc Bàm shop from 3 October to 26 November 2026, including work that does not appear as code in this repository. Every figure links to, or can be checked against, the repository and its history.
 
 ## At a glance
 
 | | |
 |---|---|
-| Timeline | About 7 weeks: 3 Oct to 20 Nov 2026, with work on 15 separate days |
-| Rounds of owner feedback | 7 rounds after the first build (listed below) |
-| Releases to the live site | 54 commits on `main`; each one deploys to production |
-| Code | About 29,700 lines of application code in `src/` (177 files) |
+| Timeline | About 8 weeks: 3 Oct to 26 Nov 2026, with releases on 16 separate days |
+| Rounds of owner feedback | 7 rounds after the first build (listed below), plus smaller fixes since |
+| Releases to the live site | 55 commits on `main` (not counting this summary); each one deploys to production |
+| Pages | 24 pages (13 storefront and account, 11 admin) and 25 server endpoints |
+| Code | About 29,800 lines of application code in `src/` (177 files) |
 | Tests | About 11,600 lines across 52 test files (unit, database, API and browser) |
 | Database | 17 migrations (`supabase/migrations/`), about 2,200 lines of SQL |
-| Status | Live at `www.mocbam.com`, taking real customer orders |
+| Status | Live at `www.mocbam.com` and open to real customers |
 
 The owner's requirements came mostly from her briefs in Google Docs and from Messenger messages, so they are not all stored in this repository. `docs/REQUIREMENTS.md` is an early draft from the first day and does not reflect what was later requested and built.
 
